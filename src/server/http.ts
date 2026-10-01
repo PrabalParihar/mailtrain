@@ -1,4 +1,14 @@
 import { fail } from './errors';
+export function requestPath(request: Request) {
+  try {
+    return new URL(request.url).pathname
+      .split('/')
+      .slice(2)
+      .map((part) => decodeURIComponent(part));
+  } catch {
+    fail(400, 'PATH_INVALID', 'The request path is invalid.');
+  }
+}
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function assertRouteMethod(path: string[], method: string) {
   const [root, id, command] = path;
@@ -8,6 +18,10 @@ export function assertRouteMethod(path: string[], method: string) {
     methods = ['GET'];
   if (root === 'local-session' && path.length === 1) methods = ['POST'];
   if (root === 'session' && path.length === 1) methods = ['DELETE'];
+  if (root === 'api-keys') {
+    if (!id) methods = ['GET', 'POST'];
+    else if (uuid.test(id) && ['rotate', 'revoke'].includes(command)) methods = ['POST'];
+  }
   if (root === 'workspaces' && path.length === 1) methods = ['GET', 'POST'];
   if (root === 'brands') {
     if (!id) methods = ['GET', 'POST'];

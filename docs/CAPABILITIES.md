@@ -52,7 +52,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-046 | 5.13 Shopify and Stripe customer events | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-047 | 5.13 Webhooks and n8n recipes | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-048 | 5.14 REST and TS SDK | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-049 | 5.14 Workspace API keys and limits | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
+| REQ-049 | 5.14 Workspace API keys and limits | Partial / tested development | Explicit scopes, hashed one-time secrets, atomic rotation/revocation, current issuer/queued checks, shared configurable rolling limits and signed key pagination pass actual HTTP/Chromium. Approved commercial entitlements, production identity/MFA, security and operational acceptance remain open. |
 | REQ-050 | 5.14 Domain and campaign event contracts | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-051 | 5.15 Plan trial annual and seat billing | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-052 | 5.15 Cost and usage control | Partial / development | Immutable reserve/consume/release and zero finite allowance; catalog/economics pending |

@@ -29,8 +29,15 @@ export async function operation(tx: Tx, p: Principal, type: string, input: unkno
   }
   const id = randomUUID();
   await tx.query(
-    'INSERT INTO operations(workspace_id,id,type,input,created_by) VALUES($1,$2,$3,$4,$5)',
-    [p.workspace, id, type, JSON.stringify(input), p.user],
+    'INSERT INTO operations(workspace_id,id,type,input,created_by,created_api_key_id) VALUES($1,$2,$3,$4,$5,$6)',
+    [
+      p.workspace,
+      id,
+      type,
+      JSON.stringify(input),
+      p.api_key?.delegator ?? p.user,
+      p.api_key?.id ?? null,
+    ],
   );
   if (units)
     await tx.query(

@@ -4,7 +4,7 @@ import { load } from 'cheerio';
 import { tenant, sessionQuery, closeDb } from './db';
 import { safeFetchHtml } from './safe-fetch';
 import { generateProposal } from './ai';
-import { allowed } from '../domain/permissions';
+import { queuedAuthorized } from './queue-authorization';
 import { AppError } from './errors';
 let stopped = false;
 process.on('SIGTERM', () => (stopped = true));
@@ -15,18 +15,12 @@ async function tick() {
     if (stopped) return;
     const operation = await tenant(job.workspace_id, job.created_by, async (tx) => {
       const queued = (
-        await tx.query("SELECT id FROM operations WHERE id=$1 AND state='queued' FOR UPDATE", [
+        await tx.query("SELECT * FROM operations WHERE id=$1 AND state='queued' FOR UPDATE", [
           job.id,
         ])
       ).rows[0];
       if (!queued) return null;
-      const m = (
-        await tx.query(
-          "SELECT m.role FROM memberships m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 AND m.workspace_id=$2 AND m.status='active' AND w.status='active'",
-          [job.created_by, job.workspace_id],
-        )
-      ).rows[0];
-      if (!m || !allowed(m.role, 'edit')) {
+      if (!(await queuedAuthorized(tx, queued))) {
         await tx.query(
           "UPDATE operations SET state='failed',error=$1,completed_at=now() WHERE id=$2 AND state='queued'",
           [

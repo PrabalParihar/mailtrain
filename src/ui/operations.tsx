@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import { ApiKeys } from './api-keys';
 import { Users, ShieldCheck, Plus, CalendarDays, AlertCircle } from 'lucide-react';
 import { api } from './api';
 import { CsvImport } from './csv-import';
@@ -366,11 +367,12 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
         <h2>Production setup register</h2>
         <p>
           Identity/MFA, invites/SSO, realtime collaboration, asset storage, signed billing, service
-          keys, data rights, provider contracts and operational evidence remain tracked release
-          work. These controls are unavailable until implemented and verified.
+          data rights, provider contracts and operational evidence remain tracked release work.
+          These controls are unavailable until implemented and verified.
         </p>
         <a href="/docs">Read the current capability and release status</a>
       </section>
+      <ApiKeys workspace={workspace} role={role} />
     </>
   );
 }

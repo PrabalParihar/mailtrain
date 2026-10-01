@@ -6,7 +6,14 @@ import { digest } from './audit';
 import { sessionQuery, userQuery, tenant, type Tx } from './db';
 import { fail } from './errors';
 import { allowed, type Role, type Action } from '../domain/permissions';
-export type Principal = { user: string; workspace: string; role: Role };
+import { resolveApiKey } from './api-keys';
+import { requestPath } from './http';
+export type Principal = {
+  user: string;
+  workspace: string;
+  role: Role;
+  api_key?: { id: string; scopes: string[]; delegator: string };
+};
 export function localMode() {
   return (
     process.env.LOCAL_DEVELOPMENT === 'true' &&
@@ -17,6 +24,12 @@ export function localMode() {
   );
 }
 export function checkOrigin(request: Request) {
+  if (request.headers.has('authorization')) {
+    const [root] = requestPath(request);
+    if (['local-session', 'session', 'workspaces', 'api-keys'].includes(root))
+      fail(403, 'SESSION_REQUIRED', 'This action requires an authorized signed-in session.');
+    return; // bearer is validated by principal; never falls back to a cookie
+  }
   if (!['GET', 'HEAD'].includes(request.method)) {
     const origin = request.headers.get('origin');
     if (origin !== process.env.APP_ORIGIN)
@@ -36,6 +49,7 @@ export async function identity() {
   return (await auth()).userId;
 }
 export async function principal(request: Request, action: Action): Promise<Principal> {
+  if (request.headers.has('authorization')) return resolveApiKey(request, action);
   const user = await identity();
   if (!user) fail(401, 'AUTH_REQUIRED', 'Sign in to continue.');
   const workspace = request.headers.get('x-workspace-id');

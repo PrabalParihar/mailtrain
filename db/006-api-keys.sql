@@ -1,0 +1,13 @@
+ALTER TABLE api_keys ADD COLUMN prefix text NOT NULL DEFAULT 'legacy';
+ALTER TABLE workspaces ADD COLUMN api_rpm integer NOT NULL DEFAULT 10 CHECK(api_rpm BETWEEN 1 AND 1000);
+ALTER TABLE operations ADD COLUMN created_api_key_id uuid;
+ALTER TABLE operations ADD CONSTRAINT operation_api_key_tenant FOREIGN KEY(workspace_id,created_api_key_id) REFERENCES api_keys(workspace_id,id);
+CREATE TABLE api_rate_events(workspace_id uuid NOT NULL,id uuid NOT NULL DEFAULT gen_random_uuid(),credential_id uuid NOT NULL,occurred_at timestamptz NOT NULL DEFAULT clock_timestamp(),PRIMARY KEY(workspace_id,id),FOREIGN KEY(workspace_id,credential_id) REFERENCES api_keys(workspace_id,id));
+CREATE INDEX api_rate_window ON api_rate_events(workspace_id,occurred_at);
+ALTER TABLE api_rate_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_rate_events FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_context ON api_rate_events USING(workspace_id::text=current_setting('app.workspace_id',true)) WITH CHECK(workspace_id::text=current_setting('app.workspace_id',true));
+GRANT SELECT,INSERT,DELETE ON api_rate_events TO mailcraft_runtime;
+CREATE FUNCTION mailcraft_key_context(p_hash text) RETURNS TABLE(workspace_id uuid,id uuid,created_by text,scopes jsonb) LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,public AS $$ SELECT k.workspace_id,k.id,k.created_by,k.scopes FROM public.api_keys k WHERE k.key_hash=p_hash AND p_hash~'^[0-9a-f]{64}$' AND k.revoked_at IS NULL AND k.expires_at>now() $$;
+REVOKE ALL ON FUNCTION mailcraft_key_context(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION mailcraft_key_context(text) TO mailcraft_runtime;

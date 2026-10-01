@@ -1552,3 +1552,39 @@ td {
 .preference-topic input {
   min-height: 24px;
 }
+.api-key-panel fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.key-scopes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+.api-key-panel small {
+  display: block;
+}
+.api-key-panel td {
+  overflow-wrap: anywhere;
+}
+.key-reveal {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.api-key-panel table {
+  min-width: 660px;
+}
+.api-key-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+.api-key-panel .table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}

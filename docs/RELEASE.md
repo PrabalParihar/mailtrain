@@ -11,7 +11,7 @@ Full Baseline A remains required. Public deployment has not occurred. No paid ac
 | 05 ESP export | Five capabilities disclosed; no remote success claimed | Blocked by test accounts, OAuth/entitlement and adapter implementation |
 | 06 Audience/delivery | Mapped bulk fixture import, signed topic/frequency preferences, explicit DOI proof and shared cap; confirmation delivery/dispatch disabled | Partial; legal consent policy, signed events, four adapters and authorization-race evidence pending |
 | 07 Billing/economics | Zero AI allowance, reservation ledger, no paid prices | Blocked by approved spend, catalog, Stripe fixtures, cost data |
-| 08 Operations | Local Docker PostgreSQL/Redis, canonical Desktop build and passing GitHub CI (source 200be38) | Pending production restore/load/on-call/monitoring drills |
+| 08 Operations | Local Docker PostgreSQL/Redis, canonical Desktop build and passing GitHub CI (source 07c71cd) | Pending production restore/load/on-call/monitoring drills |
 | 09 Security assessment | Targeted tenant/parser/URL negative tests | Pending independent assessment and all blockers resolved |
 | 10 Legal/claims | No certification/delivery claim; real lists disabled | Pending legal, privacy, DPA, retention and sender review |
 | 11 Experience | Real Chromium local journeys and screenshots recorded | Partial; assistive tech, real device, zoom, RTL and complete failure-state evidence pending |

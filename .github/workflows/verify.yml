@@ -48,6 +48,7 @@ jobs:
           npm run smoke:api
           npm run smoke:import
           npm run smoke:preferences
+          npm run smoke:keys
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

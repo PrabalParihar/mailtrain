@@ -15,7 +15,8 @@
     "release:check": "node --import tsx scripts/release-check.ts",
     "smoke:api": "node --import tsx scripts/smoke-api.ts",
     "smoke:import": "node --import tsx scripts/smoke-import.ts",
-    "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts"
+    "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts",
+    "smoke:keys": "node --import tsx scripts/smoke-keys.ts && node --import tsx scripts/smoke-key-review.ts"
   },
   "dependencies": {
     "next": "16.3.8",

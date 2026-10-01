@@ -15,6 +15,8 @@ import { audienceRoute } from '@/server/audience-routes';
 import { organizationRoute } from '@/server/organization-routes';
 import { allowed } from '@/domain/permissions';
 import { assertRouteMethod, readJson } from '@/server/http';
+import { keyRoute, requireKeyScope } from '@/server/api-keys';
+import { operationScope } from '@/domain/api-keys';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 type Context = { params: Promise<{ path: string[] }> };
@@ -42,6 +44,8 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if (root === 'api-keys')
+      return json(await keyRoute(req, path, body, key), method === 'POST' && !id ? 201 : 200);
     if (root === 'local-session' && method === 'POST') {
       const local = await localBootstrap(String(body.secret ?? ''));
       const res = json({ workspace_id: local.workspace });
@@ -319,6 +323,7 @@ async function handle(req: Request, ctx: Context) {
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
           const row = (await tx.query('SELECT * FROM operations WHERE id=$1', [id])).rows[0];
           if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');
+          requireKeyScope(p, operationScope(row.type, command === 'cancel'));
           if (row.type === 'contacts.import' && !allowed(p.role, 'audience'))
             fail(403, 'INSUFFICIENT_SCOPE', 'Your role cannot access recipient import data.');
           if (command === 'cancel') return { operation: await cancelOperation(tx, p, id) };
@@ -387,6 +392,9 @@ async function handle(req: Request, ctx: Context) {
           },
         },
         e.status,
+        e.status === 429
+          ? { 'Retry-After': String((e.details as { retry_after?: number })?.retry_after ?? 60) }
+          : {},
       );
     console.error('mailcraft_error', request_id, e instanceof Error ? e.name : 'Unknown');
     return json(
