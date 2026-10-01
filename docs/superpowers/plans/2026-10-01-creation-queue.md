@@ -32,10 +32,10 @@ Interfaces produces CreationWake.strict({workspace_id:UUID,operation_id:UUID}), 
 
 ### Task2: Restricted durable SQL/storage
 Files create db/023-creation-queue.sql, src/server/creation-queue-store.ts, tests/creation-queue-db.test.ts; modify src/server/operations.ts admission limit and tests fixtures as necessary.
-Consumes Task1 contracts. Produces claimCreation(pool,wake):Promise<CreationClaim|null>, beginCreationAttempt(pool,claim):Promise<CreationContext|null>, settleCreation(pool,claim,outcome):Promise<boolean>, renewCreation(pool,claim):Promise<boolean>, dueCreation(pool):Promise<CreationWake[]>, recoverCreation(pool):Promise<void>. Claim{workspace_id,operation_id,token,lease_until,deadline_at}; private context includes original type/input and bounded current same-tenant brand/memory only after token/authority check.
-- [ ] RED real PostgreSQL owned tests: narrow runtime/scheduler/worker permissions, missing/foreign context, capacity/fairness between two workspaces, duplicate claims, exact immutable evidence, cancel/revoke/expired key admission, stale token, post-start crash accounting versus safe pre-start recovery and idempotent settle/release.
-- [ ] Run focused test expecting absent migration/store FAIL, then implement additive constrained tables/functions and service; preserve old data and future webhook workers.
-- [ ] Migrate owned DB; focused tests→PASS, full tests/lint/typecheck→PASS. Commit.
+Consumes Task1 contracts. Produces claimCreation(pool,wake):Promise<CreationClaim|null>, beginCreationAttempt(pool,claim):Promise<CreationContext|null>, settleCreation(pool,claim,outcome):Promise<boolean>, renewCreation(pool,claim):Promise<boolean>, dueCreation(pool):Promise<CreationWake[]>, recoverCreation(pool,wake):Promise<boolean>. Claim{workspace_id,operation_id,token,lease_until,deadline_at}; private context includes original type/input and bounded current same-tenant brand/memory only after token/authority check.
+- [x] RED real PostgreSQL owned tests: narrow runtime/scheduler/worker permissions, missing/foreign context, capacity/fairness between two workspaces, duplicate claims, exact immutable evidence, cancel/revoke/expired key admission, stale token, post-start crash accounting versus safe pre-start recovery and idempotent settle/release.
+- [x] Run focused test expecting absent migration/store FAIL, then implement additive constrained tables/functions and service; preserve old data and future webhook workers.
+- [x] Migrate owned DB; focused tests→PASS, full tests/lint/typecheck→PASS. Commit.
 
 ### Task3: Separate rebuildable queues and actual process recovery
 Files create src/server/creation-queues.ts, src/server/creation-engine.ts, src/server/creation-worker.ts, tests/creation-engine.test.ts, tests/creation-worker-restart.test.ts and owned process fixture; modify existing src/server/worker.ts to guarded compatibility entry, ai.ts/safe-fetch.ts cancellation adapters, package scripts/CI/env example.

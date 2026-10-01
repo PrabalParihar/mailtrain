@@ -28,7 +28,7 @@ export async function operation(tx: Tx, p: Principal, type: string, input: unkno
       );
   }
   const id = randomUUID();
-  await tx.query(
+  try{await tx.query(
     'INSERT INTO operations(workspace_id,id,type,input,created_by,created_api_key_id) VALUES($1,$2,$3,$4,$5,$6)',
     [
       p.workspace,
@@ -38,7 +38,11 @@ export async function operation(tx: Tx, p: Principal, type: string, input: unkno
       p.api_key?.delegator ?? p.user,
       p.api_key?.id ?? null,
     ],
-  );
+  );}catch(error){
+    if(error instanceof Error&&error.message==='CREATION_BACKLOG_FULL')
+      fail(503,'CREATION_BACKLOG_FULL','Creation capacity is full. Cancel unused queued work or retry the same command later. Your draft is preserved.');
+    throw error;
+  }
   if (units)
     await tx.query(
       "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) VALUES($1,$2,'generation','reserve',$3)",
