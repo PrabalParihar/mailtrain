@@ -29,7 +29,12 @@ type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec };
 type Revision = { id: string; revision_no: number; artifact_hash: string; subject: string };
 type Anchor = { epoch: number; version: number; spec: string };
 type Frozen = Revision & { anchor: Anchor };
-type Report = { state: string; artifact_hash: string; findings: Finding[] };
+type Report = {
+  state: string;
+  artifact_hash: string;
+  rule_set_version: string;
+  findings: Finding[];
+};
 export function Editor({ workspace, id, role }: { workspace: string; id: string; role: Role }) {
   const editRole = allowed(role, 'edit');
   const router = useRouter(),
@@ -862,7 +867,8 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
             </span>
           </div>
           <p className="small muted">
-            Frozen artifact {report.artifact_hash} · Missing real-client captures remain incomplete.
+            Frozen artifact {report.artifact_hash} · Rules {report.rule_set_version} · Missing
+            real-client captures remain incomplete.
           </p>
           <div className="finding-list">
             {report.findings.map((f, i) => (

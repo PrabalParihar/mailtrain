@@ -11,7 +11,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-005 | 5.1 Enterprise SAML/OIDC and later SCIM | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-006 | 5.2 Brand extraction from URL and assets | Partial / development | Manual kit + public extraction proposal; fixture performance/asset extraction pending |
 | REQ-007 | 5.2 Brand Memory and retrieval | Partial / development | Pinned immutable brand versions; retrieval/source erasure pending |
-| REQ-008 | 5.2 Voice Guard | Partial / development | Exact phrase lint; located tone rules pending |
+| REQ-008 | 5.2 Voice Guard | Partial / development | Located visible-copy/alt exact-phrase lint with shared compiler sanitization tested; configured tone rules pending |
 | REQ-009 | 5.3 Prompt, goal and persona aware generation | Partial / development | Real structured AI adapter gated by provider/allowance; live corpus unverified |
 | REQ-010 | 5.3 Series and delay hints | Partial / development | Series proposals with delay hints gated by AI access |
 | REQ-011 | 5.3 Remix template or past email | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
@@ -26,7 +26,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-020 | 5.5 AI images and editing | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-021 | 5.5 GIFs and static fallback | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-022 | 5.6 Real client preflight | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-023 | 5.6 Lint links spam and dark mode | Partial / development | Static severity/voice/footer/alt lint; links/contrast/weight fixtures pending |
+| REQ-023 | 5.6 Lint links spam and dark mode | Partial / development | Frozen-artifact rule-versioned severity, located voice/footer/alt, static URL syntax, known-token contrast/HTML-byte warnings and spam advisory tested. Live availability/image measurement, opaque contrast/dark mode, client conformance and labeled catch-rate acceptance remain required. |
 | REQ-024 | 5.6 Blocking and report sharing | Partial / development | Missing real-client evidence remains incomplete; sharing/override not implemented |
 | REQ-025 | 5.7 Twenty plus locales and RTL | Partial / development | 22 locale selectors and semantic dir; translation/client fixtures pending |
 | REQ-026 | 5.7 Linked localized variants | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |

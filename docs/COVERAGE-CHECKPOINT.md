@@ -2,7 +2,7 @@
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 
-Source publication: `6b2d1b54764a77bc2f56c0ac7bcb7e2a0f51f61d` is remote main and canonical Desktop. Local30tests,14HTTPgroups, key/preference/import/browser suites, lint/typecheck/build pass. [Remote CI36862156874](https://github.com/PrabalParihar/mailtrain/actions/runs/36862156874) failed on an ambiguous preference alert selector after earlier checks passed; narrowed fixture selector is under recheck and next publication. Never describe this run as green.
+Source publication: `b43bb417f1ec893582d299baa0484712849ae664` is remote main and canonical Desktop. Local36tests,14HTTPgroups, key/preference/import/contract/browser suites, lint/typecheck/build and clean Linux image validation pass. [Remote CI36866499913](https://github.com/PrabalParihar/mailtrain/actions/runs/36866499913) succeeded including fresh installs/migrations/full checks/actual HTTP+Chromium and closed release gate. This supersedes the earlier6b2d1b5 failed-selector run.
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
@@ -27,4 +27,4 @@ REQ-039, REQ-046, REQ-054, REQ-059, REQ-065
 - REQ-045/051–053: intended Stripe test/private config and approved catalog/trial/refund/overage policy; billing implementation unfinished.
 - REQ-055/056/058/060/061/064: retention/region/legal/ops owners, independent assessment, partners, load/restore/on-call and signoffs; rights/admin/ops implementation unfinished.
 
-Railway browser access to exact requested workspace is verified; hosting budget US$30/month is approved. Shared Pro fees/other workload usage, taxes and all-in spending enforcement remain unverified. None of these access changes closes a release gate. All13scope, identity/isolation, artifact, real-client, ESP, audience/delivery, billing/economics, operations, security, privacy/legal, partners, public-experience and final-release gates remain partial/pending/blocked in RELEASE.md.
+Railway browser access to exact requested workspace is verified; hosting budget US$30/month is approved. A private concrete shared-workspace resource/budget plan is prepared; tax treatment, available capacity and all-in spending enforcement still require verification before provisioning. None of these access changes closes a release gate. All13scope, identity/isolation, artifact, real-client, ESP, audience/delivery, billing/economics, operations, security, privacy/legal, partners, public-experience and final-release gates remain partial/pending/blocked in RELEASE.md.

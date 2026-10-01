@@ -1,3 +1,4 @@
+import { LINT_RULES_VERSION } from '@/domain/preflight';
 import { resourcePage } from '@/server/pagination';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
@@ -108,7 +109,11 @@ async function handle(req: Request, ctx: Context) {
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
           if (method === 'GET') {
             if (id === 'current')
-              return { brand: (await tx.query('SELECT * FROM brands ORDER BY version DESC LIMIT 1')).rows[0] ?? null };
+              return {
+                brand:
+                  (await tx.query('SELECT * FROM brands ORDER BY version DESC LIMIT 1')).rows[0] ??
+                  null,
+              };
             return resourcePage(req, tx, p, { resource: 'brands', from: 'brands', fields: '*' });
           }
           if (id === 'from-url') {
@@ -292,13 +297,15 @@ async function handle(req: Request, ctx: Context) {
               const brand = (
                 await tx.query('SELECT data FROM brands WHERE id=$1', [r.spec.brand_kit_version_id])
               ).rows[0];
-              const findings = lintEmail(r.spec, brand?.data.forbidden_phrases ?? []);
+              const findings = lintEmail(r.spec, brand?.data.forbidden_phrases ?? [], {
+                html: r.html,
+              });
               const state = findings.some((x) => x.severity === 'blocking')
                 ? 'blocked'
                 : 'incomplete';
               const report = (
                 await tx.query(
-                  'INSERT INTO preflights(workspace_id,revision_id,artifact_hash,state,findings) VALUES($1,$2,$3,$4,$5) RETURNING *',
+                  'INSERT INTO preflights(workspace_id,revision_id,artifact_hash,state,findings,rule_set_version) VALUES($1,$2,$3,$4,$5,$6) RETURNING *',
                   [
                     p.workspace,
                     id,
@@ -314,6 +321,7 @@ async function handle(req: Request, ctx: Context) {
                           '20-profile real-client service has not been procured. This is incomplete evidence.',
                       },
                     ]),
+                    LINT_RULES_VERSION,
                   ],
                 )
               ).rows[0];

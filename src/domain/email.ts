@@ -3,6 +3,7 @@ import { createElement as h } from 'react';
 import { render } from '@react-email/render';
 import sanitizeHtml from 'sanitize-html';
 import { createHash } from 'node:crypto';
+import { staticLint } from './preflight';
 
 const str = z.string().max(10000),
   id = z.string().min(1).max(80);
@@ -244,69 +245,14 @@ export type Finding = {
   location: string;
   message: string;
 };
-export function lintEmail(spec: EmailSpec, forbidden: string[] = []): Finding[] {
-  const findings: Finding[] = [];
-  const add = (code: string, severity: Finding['severity'], location: string, message: string) =>
-    findings.push({ code, severity, location, message });
-  if (!spec.subject.trim()) add('SUBJECT_REQUIRED', 'blocking', 'subject', 'Add a subject.');
-  if (!spec.preheader.trim())
-    add('PREHEADER_EMPTY', 'warning', 'preheader', 'Add a useful preheader.');
-  if (spec.subject.length > 70)
-    add('SUBJECT_LENGTH', 'warning', 'subject', 'Long subject may be truncated.');
-  const nodes = spec.sections.flatMap((b) =>
-    b.type === 'columns' ? [b, ...b.columns.flat()] : [b],
-  );
-  if (spec.editing_mode === 'structured' && !nodes.some((b) => b.type === 'legal_footer'))
-    add(
-      'FOOTER_REQUIRED',
-      'blocking',
-      'sections',
-      'A sender identity, address and unsubscribe footer are required.',
-    );
-  for (const b of nodes) {
-    if (b.type === 'legal_footer' && (!b.identity.trim() || !b.address.trim()))
-      add(
-        'SENDER_ADDRESS_REQUIRED',
-        'blocking',
-        b.id,
-        'Confirm sender identity and postal address.',
-      );
-    if (b.type === 'image') {
-      if (!b.alt.trim() && !b.decorative)
-        add('ALT_REQUIRED', 'blocking', b.id, 'Provide alt text or mark decorative.');
-      add(
-        'ASSET_NOT_SNAPSHOTTED',
-        'warning',
-        b.id,
-        'External image is not an immutable published asset.',
-      );
-    }
-    if (b.type === 'button' && b.href === 'https://example.com')
-      add('CTA_PLACEHOLDER', 'blocking', b.id, 'Replace the placeholder CTA.');
-  }
-  const content = JSON.stringify(spec);
-  for (const phrase of forbidden.filter(Boolean)) {
-    if (content.toLocaleLowerCase().includes(phrase.toLocaleLowerCase()))
-      add('VOICE_FORBIDDEN', 'blocking', 'content', `Brand rule prohibits “${phrase}”.`);
-  }
-  if (spec.editing_mode === 'raw_html') {
-    if (!spec.raw_html?.includes('UNSUBSCRIBE_URL'))
-      add(
-        'UNSUBSCRIBE_REQUIRED',
-        'blocking',
-        'raw_html',
-        'Include the explicit UNSUBSCRIBE_URL slot.',
-      );
-    add(
-      'RAW_REVIEW',
-      'warning',
-      'raw_html',
-      'Review raw HTML footer, VML and conversion limits manually.',
-    );
-  }
-  add('LINK_CHECK_UNAVAILABLE', 'info', 'links', 'Network link validation has not run.');
-  return findings;
+export function lintEmail(
+  spec: EmailSpec,
+  forbidden: string[] = [],
+  artifact?: { html: string },
+): Finding[] {
+  return staticLint(spec, forbidden, (source) => sanitizeRaw(source).html, artifact);
 }
+
 function block(b: Block, accent: string): ReturnType<typeof h> {
   const props = { key: b.id };
   switch (b.type) {

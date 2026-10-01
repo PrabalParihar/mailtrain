@@ -52,6 +52,7 @@ jobs:
           npm run smoke:preferences
           npm run smoke:keys
           npm run smoke:contract
+          npm run smoke:preflight
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then
