@@ -40,5 +40,5 @@ Routes GET/v1/memberships, GET/v1/membership-changes, GET/v1/memberships/summary
 - [x] GREEN actual HTTP role/scope/MFA-unconfigured/CSRF/encoded/foreign/cursor/replay tests and Chromium empty/offline/errors/repeated clicks/lost response/reload/staleCAS/self-demotion/workspace navigation/mobile. Inspect mobile pixels. Full tests/lint/typecheck/API/build plus existing authority/key/contract regressions. Commit Task3.
 
 ### Task4: Fresh review and publication
-- [ ] Exactly one fresh Astra high whole-slice reviewer of task1–3/plan/spec/ledger/review focus; grade effect, one blocking fix pass RED→GREEN only, defer Minors.
+- [x] Exactly one fresh Astra high whole-slice reviewer of task1–3/plan/spec/ledger/review focus; grade effect, one blocking fix pass RED→GREEN only, defer Minors.
 - [ ] Final full suite/checks/HTTP/Chromium, record every ruling and full-GA gap; tracked-only canonical sync from verified clean expected head; authorized ordinary main push; exact-head CI readback. Continue invitations/approved entitlement and remaining fullGA work.

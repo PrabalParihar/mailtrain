@@ -33,7 +33,11 @@ export async function beginMembershipCommand(workspace:string,actor:string,path:
 }
 export function finishMembershipCommand(receipt:MembershipReceipt,provided?:RecoveryStorage){try{(provided??sessionStorage).removeItem(receipt.slot);}catch{}}
 export function reconcileMembershipRejection(receipt:MembershipReceipt,error:unknown,provided?:RecoveryStorage):boolean{
- if(!(error instanceof ApiError)||error.status!==409||error.code!=='MEMBERSHIP_VERSION_CONFLICT')return false;
+ // These codes originate inside the keyed transaction after successful-receipt
+ // lookup. They prove this exact command did not commit. Admission/MFA/transport
+ // errors can occur before lookup and must retain the original command identity.
+ const transactional:Record<string,number>={MEMBERSHIP_VERSION_CONFLICT:409,SEAT_POLICY_REQUIRED:409,LAST_OWNER_REQUIRED:409,MEMBERSHIP_UNCHANGED:409,MEMBERSHIP_INACTIVE:409,MEMBERSHIP_VERSION_EXHAUSTED:409,SELF_TRANSFER_DENIED:409,ROLE_PROTECTED:403,OWNER_REQUIRED:403};
+ if(!(error instanceof ApiError)||transactional[error.code]!==error.status)return false;
  try{const storage=provided??sessionStorage;storage.removeItem(receipt.slot);if(storage.getItem(receipt.slot)!==null)throw new Error('Receipt remains.');return true;}
  catch{throw new Error('Rejected member command could not be reconciled. Restore tab storage and reload.');}
 }
