@@ -41,4 +41,4 @@ Routes GET/v1/memberships, GET/v1/membership-changes, GET/v1/memberships/summary
 
 ### Task4: Fresh review and publication
 - [x] Exactly one fresh Astra high whole-slice reviewer of task1–3/plan/spec/ledger/review focus; grade effect, one blocking fix pass RED→GREEN only, defer Minors.
-- [ ] Final full suite/checks/HTTP/Chromium, record every ruling and full-GA gap; tracked-only canonical sync from verified clean expected head; authorized ordinary main push; exact-head CI readback. Continue invitations/approved entitlement and remaining fullGA work.
+- [x] Final full suite/checks/HTTP/Chromium, record every ruling and full-GA gap; tracked-only canonical sync from verified clean expected head; authorized ordinary main push; exact-head CI readback. Continue invitations/approved entitlement and remaining fullGA work.
