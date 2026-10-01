@@ -63,7 +63,7 @@ export function scopeForResource(
           ? 'campaigns:send'
           : 'campaigns:write';
   if (root === 'events') return read ? 'events:read' : 'unsupported';
-  if (root === 'webhook-endpoints') return read ? 'webhooks:read' : 'webhooks:write';
+  if (root === 'webhook-endpoints'||root==='webhook-deliveries') return read ? 'webhooks:read' : 'webhooks:write';
   if (root === 'integrations') return 'integrations:read';
   if (root === 'operations') return undefined; // checked against the fetched operation type
   return 'unsupported';

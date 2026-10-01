@@ -13,6 +13,1329 @@
     }
   ],
   "paths": {
+    "/v1/webhook-deliveries": {
+      "get": {
+        "operationId": "listWebhookDeliveries",
+        "summary": "list webhook deliveries",
+        "description": "Redacted durable receipts; started/authorized are not HTTP submission or email delivery evidence.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Opaque signed cursor bound to account, workspace, resource and filters; expires in15minutes."
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages."
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "enum": [
+                "pending",
+                "leased",
+                "acknowledged",
+                "blocked",
+                "terminal",
+                "dead_letter",
+                "disabled"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveriesPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "webhooks:read"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/webhook-deliveries/{id}": {
+      "get": {
+        "operationId": "getWebhookDelivery",
+        "summary": "get webhook delivery",
+        "description": "Implemented development behavior; all full-GA release obligations remain open.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "webhooks:read"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/webhook-deliveries/{id}/attempts": {
+      "get": {
+        "operationId": "listWebhookAttempts",
+        "summary": "list webhook attempts",
+        "description": "Implemented development behavior; all full-GA release obligations remain open.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Opaque signed cursor bound to account, workspace, resource and filters; expires in15minutes."
+          },
+          {
+            "name": "created_after",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages."
+          },
+          {
+            "name": "created_before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAttemptsPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "webhooks:read"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/webhook-deliveries/{id}/replay": {
+      "post": {
+        "operationId": "replayWebhookDelivery",
+        "summary": "replay webhook delivery",
+        "description": "Explicit duplicate-effect acknowledgment and current attempt CAS. Same logical event/delivery and original24h budget; acknowledged/leased/expired/revoked receipts cannot be replayed. Worker activation remains disabled.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookReplayInput"
+              },
+              "example": {
+                "expected_attempt": 1,
+                "acknowledge_duplicate_effect": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "webhooks:write"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": true
+      }
+    },
     "/v1/webhook-endpoints": {
       "get": {
         "operationId": "listWebhookEndpoints",
@@ -24831,6 +26154,228 @@
         ],
         "additionalProperties": true
       },
+      "WebhookDelivery": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "endpoint_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "leased",
+              "acknowledged",
+              "blocked",
+              "terminal",
+              "dead_letter",
+              "disabled"
+            ]
+          },
+          "failure_attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "attempt_number": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "next_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "authority_revoked",
+                  "event_integrity",
+                  "unsafe_target",
+                  "capacity",
+                  "aborted",
+                  "transient",
+                  "rate_deferred",
+                  "retry_budget_exhausted",
+                  "http_terminal",
+                  "key_unavailable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_version": {
+            "type": "number",
+            "const": 1
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "endpoint_id",
+          "event_id",
+          "state",
+          "failure_attempts",
+          "attempt_number",
+          "created_at",
+          "deadline",
+          "next_at",
+          "error_class",
+          "policy_version"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookAttempt": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "delivery_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "attempt_number": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "started",
+              "authorized",
+              "settled",
+              "recovered"
+            ]
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "secret_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "authority_revoked",
+                  "event_integrity",
+                  "unsafe_target",
+                  "capacity",
+                  "aborted",
+                  "transient",
+                  "rate_deferred",
+                  "retry_budget_exhausted",
+                  "http_terminal",
+                  "key_unavailable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "delivery_id",
+          "attempt_number",
+          "phase",
+          "recorded_at",
+          "status_code",
+          "secret_version",
+          "error_class"
+        ],
+        "additionalProperties": false
+      },
+      "WebhookReplayInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expected_attempt": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "acknowledge_duplicate_effect": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "expected_attempt",
+          "acknowledge_duplicate_effect"
+        ],
+        "additionalProperties": false
+      },
       "EmailsPage": {
         "type": "object",
         "properties": {
@@ -25391,6 +26936,112 @@
           "endpoint",
           "configuration",
           "secret_available"
+        ],
+        "additionalProperties": true
+      },
+      "WebhookDeliveriesPage": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookDelivery"
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/WebhookConfiguration"
+          }
+        },
+        "required": [
+          "request_id",
+          "data",
+          "has_more",
+          "next_cursor",
+          "total_count",
+          "configuration"
+        ],
+        "additionalProperties": true
+      },
+      "WebhookAttemptsPage": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookAttempt"
+            }
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/WebhookConfiguration"
+          }
+        },
+        "required": [
+          "request_id",
+          "data",
+          "has_more",
+          "next_cursor",
+          "total_count",
+          "configuration"
+        ],
+        "additionalProperties": true
+      },
+      "WebhookDeliveryResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/WebhookDelivery"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/WebhookConfiguration"
+          }
+        },
+        "required": [
+          "request_id",
+          "delivery",
+          "configuration"
         ],
         "additionalProperties": true
       },

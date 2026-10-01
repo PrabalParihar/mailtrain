@@ -6,7 +6,7 @@ const server=spawn(process.execPath,['node_modules/next/dist/bin/next','dev','--
 try{
  let ready=false;for(let attempt=0;attempt<60;attempt++){if(server.exitCode!==null)throw new Error('Owned fixture server exited');try{const response=await fetch(origin+'/v1/health',{signal:AbortSignal.timeout(1000)});if(response.ok){ready=true;break;}}catch{}await new Promise((resolve)=>setTimeout(resolve,200));}
  if(!ready)throw new Error('Owned fixture server did not become healthy');
- const smoke=spawn(process.execPath,['--import','tsx','scripts/smoke-webhooks.ts'],{cwd:process.cwd(),env:fixtureEnv,stdio:'inherit'});const code=await new Promise<number|null>((resolve,reject)=>{smoke.once('error',reject);smoke.once('exit',resolve);});if(code!==0)throw new Error('Configured webhook fixture failed with exit '+code);
+ const smoke=spawn(process.execPath,['--import','tsx',process.argv.includes('--history')?'scripts/smoke-webhook-history.ts':'scripts/smoke-webhooks.ts'],{cwd:process.cwd(),env:fixtureEnv,stdio:'inherit'});const code=await new Promise<number|null>((resolve,reject)=>{smoke.once('error',reject);smoke.once('exit',resolve);});if(code!==0)throw new Error('Configured webhook fixture failed with exit '+code);
  console.log('Ephemeral private wrapping key existed only in the owned fixture process; no environment file or external endpoint activation.');
 }catch(error){console.error(logs.slice(-1200).replace(/[0-9a-f]{64}/g,'[redacted]'));throw error;}
 finally{

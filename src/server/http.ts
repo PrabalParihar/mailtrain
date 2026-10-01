@@ -28,6 +28,7 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && !command) methods = ['GET'];
     else if (uuid.test(id) && ['rotate','pause'].includes(command)) methods = ['POST'];
   }
+  if(root==='webhook-deliveries'){if(!id)methods=['GET'];else if(uuid.test(id)&&(!command||command==='attempts'))methods=['GET'];else if(uuid.test(id)&&command==='replay')methods=['POST'];}
   if (root === 'dispatch-controls') {
     if (!id) methods = ['GET'];
     else if (id === 'workspace' && !command) methods = ['POST'];

@@ -6,6 +6,7 @@ import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
+import{WebhookDelivery,WebhookAttempt,WebhookReplayInput,WebhookDeliveryState}from'../src/domain/webhook-history';
 import { WebhookEndpointInput, WebhookVersionInput, WebhookRotateInput, WebhookEndpoint } from '../src/domain/webhooks';
 import { EventEnvelopeShape, EventType } from '../src/domain/events';
 import { DispatchPolicyInput, DispatchProvider } from '../src/domain/dispatch-controls';
@@ -201,6 +202,7 @@ const schemas: Record<string, Schema> = {
     ['id', 'type', 'state'],
   ),
 };
+schemas.WebhookDelivery=fromZod(WebhookDelivery);schemas.WebhookAttempt=fromZod(WebhookAttempt);schemas.WebhookReplayInput=fromZod(WebhookReplayInput);
 const envelope = (props: Record<string, unknown>, required = Object.keys(props)) =>
   object({ request_id: string, ...props }, ['request_id', ...required]);
 for (const [name, item] of Object.entries({
@@ -225,6 +227,8 @@ schemas.DispatchControlsResponse = envelope({ controls: object({ global: nullabl
 schemas.WebhookEndpointsPage = envelope({data:array(ref('WebhookEndpoint')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},configuration:ref('WebhookConfiguration')});
 schemas.WebhookEndpointResponse = envelope({endpoint:ref('WebhookEndpoint'),configuration:ref('WebhookConfiguration')});
 schemas.WebhookEndpointCommandResponse = envelope({endpoint:ref('WebhookEndpoint'),configuration:ref('WebhookConfiguration'),secret:{type:'string',pattern:'^[0-9a-f]{64}$'},secret_available:{type:'boolean'},issued_secret_version:{type:'integer',minimum:1}},['endpoint','configuration','secret_available']);
+for(const [name,item]of Object.entries({WebhookDeliveries:'WebhookDelivery',WebhookAttempts:'WebhookAttempt'}))schemas[name+'Page']=envelope({data:array(ref(item)),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},configuration:ref('WebhookConfiguration')});
+schemas.WebhookDeliveryResponse=envelope({delivery:ref('WebhookDelivery'),configuration:ref('WebhookConfiguration')});
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
@@ -319,6 +323,7 @@ type Definition = {
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  WebhookReplayInput:{expected_attempt:1,acknowledge_duplicate_effect:true},
   WebhookEndpointInput:{name:'Example paused receiver',url:'https://example.org/webhook',subscriptions:['contact.unsubscribed']},
   WebhookVersionInput:{expected_version:1},
   WebhookRotateInput:{expected_version:1,retire_previous:false,acknowledge_key_cutover:false},
@@ -463,6 +468,10 @@ function add(d: Definition) {
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({id:'listWebhookDeliveries',path:'/v1/webhook-deliveries',method:'GET',response:'WebhookDeliveriesPage',paged:true,scope:'webhooks:read',query:[{name:'endpoint_id',in:'query',schema:{type:'string',format:'uuid'}},{name:'state',in:'query',schema:fromZod(WebhookDeliveryState)}],description:'Redacted durable receipts; started/authorized are not HTTP submission or email delivery evidence.'});
+add({id:'getWebhookDelivery',path:'/v1/webhook-deliveries/{id}',method:'GET',response:'WebhookDeliveryResponse',scope:'webhooks:read'});
+add({id:'listWebhookAttempts',path:'/v1/webhook-deliveries/{id}/attempts',method:'GET',response:'WebhookAttemptsPage',paged:true,scope:'webhooks:read'});
+add({id:'replayWebhookDelivery',path:'/v1/webhook-deliveries/{id}/replay',method:'POST',body:'WebhookReplayInput',response:'WebhookDeliveryResponse',keyed:true,scope:'webhooks:write',description:'Explicit duplicate-effect acknowledgment and current attempt CAS. Same logical event/delivery and original24h budget; acknowledged/leased/expired/revoked receipts cannot be replayed. Worker activation remains disabled.'});
 add({id:'listWebhookEndpoints',path:'/v1/webhook-endpoints',method:'GET',response:'WebhookEndpointsPage',paged:true,scope:'webhooks:read',description:'Current Owner/Admin and explicit bearer webhook read scope; query credentials and wrapped signing keys are excluded.'});
 add({id:'getWebhookEndpoint',path:'/v1/webhook-endpoints/{id}',method:'GET',response:'WebhookEndpointResponse',scope:'webhooks:read'});
 add({id:'createWebhookEndpoint',path:'/v1/webhook-endpoints',method:'POST',body:'WebhookEndpointInput',response:'WebhookEndpointCommandResponse',status:201,keyed:true,scope:'webhooks:write',description:'DNS-only public HTTPS target validation, encrypted secret shown once outside replay receipts. Endpoint stays paused; no target availability, external delivery or TLS conformance claim.'});
