@@ -8,6 +8,8 @@ import { fail } from './errors';
 import { allowed, type Role, type Action } from '../domain/permissions';
 import { resolveApiKey } from './api-keys';
 import { requestPath } from './http';
+import { scopeForResource } from '../domain/api-keys';
+import { assertCurrentAuthority } from './current-authority';
 export type Principal = {
   user: string;
   workspace: string;
@@ -84,7 +86,12 @@ export async function withPrincipal<T>(
   fn: (tx: Tx, p: Principal) => Promise<T>,
 ) {
   const p = await principal(request, action);
-  return tenant(p.workspace, p.user, (tx) => fn(tx, p));
+  const [root, , command] = requestPath(request);
+  const scope = p.api_key ? scopeForResource(root, request.method, command) : undefined;
+  return tenant(p.workspace, p.user, async (tx) => {
+    const current = await assertCurrentAuthority(tx, p, action, scope);
+    return fn(tx, current);
+  });
 }
 export async function localBootstrap(secret: string) {
   if (

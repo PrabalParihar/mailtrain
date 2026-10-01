@@ -120,17 +120,15 @@ async function handle(req: Request, ctx: Context) {
       );
       const data = await Promise.all(
         memberships.map((m) =>
-          tenant(m.workspace_id, user, async (tx) => ({
-            ...(
-              await tx.query('SELECT id,name,status,timezone FROM workspaces WHERE id=$1', [
-                m.workspace_id,
-              ])
-            ).rows[0],
-            role: m.role,
-          })),
+          tenant(m.workspace_id, user, async (tx) => (
+            await tx.query(
+              "SELECT w.id,w.name,w.status,w.timezone,m.role FROM workspaces w JOIN memberships m ON m.workspace_id=w.id WHERE w.id=$1 AND m.user_id=$2 AND m.status='active' FOR SHARE OF w,m",
+              [m.workspace_id,user],
+            )
+          ).rows[0]),
         ),
       );
-      return json({ data });
+      return json({ data: data.filter(Boolean) });
     }
     if (root === 'integrations')
       return json(await withPrincipal(req, 'read', async () => ({ data: integrations })));

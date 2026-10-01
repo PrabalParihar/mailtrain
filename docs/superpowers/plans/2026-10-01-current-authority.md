@@ -30,11 +30,11 @@ Interface: assertCurrentAuthority(tx:Tx,p:Principal,action:Action,scope?:string)
 - [ ] Run focused tests; Expected all pass, no fixture leakage. Commit task.
 
 ### Task2: Wire existing requests and prove concurrency
-Files: modify src/server/auth.ts; expand current-authority-db.test.ts; create scripts/smoke-current-authority.ts.
+Files: modify src/server/auth.ts and src/app/v1/[...path]/route.ts current workspace list; expand current-authority-db.test.ts; create scripts/smoke-current-authority.ts.
 Interface: withPrincipal retains existing signature; resolves current route scope then calls Task1 helper before fn.
 - [ ] Add real concurrent transaction test: hold admitted authority while separate owned admin revocation tries UPDATE; verify pg_locks waiting, finish admitted transaction, observe committed revocation, then denial.
 - [ ] Add real HTTP/Chromium fixture checks: existing brands/email page works, membership revocation denies reload/create/repeated click, workspace navigation remains tenant-bound, same-request API quota recheck unaffected.
-- [ ] Run RED missing wiring/concurrency behavior, then wire helper; Expected GREEN. No arbitrary fake Clerk/MFA assertions.
+- [ ] Run RED missing wiring/workspace-list fence behavior, then wire helper; Expected GREEN. No arbitrary fake Clerk/MFA assertions.
 - [ ] Run npm test plus lint/typecheck/API/build and smoke:api/keys/contract/browser fixture; Expected all pass. Commit task.
 
 ### Task3: Fresh review and publication

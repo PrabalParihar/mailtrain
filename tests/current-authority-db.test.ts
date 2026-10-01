@@ -11,11 +11,11 @@ const admin = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL
 const workspace = randomUUID(), other = randomUUID(), user = 'authority-' + randomUUID(), key = randomUUID();
 const session: Principal = { workspace, user, role: 'Owner' };
 const delegated: Principal = { workspace, user: 'api-key:' + key, role: 'Owner', api_key: { id: key, scopes: ['emails:read', 'emails:write'], delegator: user } };
-const module = await import('../src/server/current-authority').catch(() => null);
+const authorityModule = await import('../src/server/current-authority').catch(() => null);
 const code = (expected: string) => (e: unknown) => e instanceof AppError && e.code === expected;
 async function check(p: Principal, action: 'read' | 'edit' | 'manage', scope?: string) {
-  assert.ok(module?.assertCurrentAuthority, 'The current transaction authority helper must exist.');
-  return tenant(p.workspace, p.user, tx => module.assertCurrentAuthority(tx, p, action, scope));
+  assert.ok(authorityModule?.assertCurrentAuthority, 'The current transaction authority helper must exist.');
+  return tenant(p.workspace, p.user, tx => authorityModule.assertCurrentAuthority(tx, p, action, scope));
 }
 before(async () => {
   await admin.query("INSERT INTO workspaces(id,name)VALUES($1,'Authority fixture'),($2,'Authority foreign')", [workspace, other]);
@@ -68,11 +68,39 @@ test('current API scopes, expiry, revocation, issuer and workspace binding fence
   }
 });
 test('missing/foreign transaction context and inactive workspaces deny private resource authority', async () => {
-  assert.ok(module?.assertCurrentAuthority,'The current transaction authority helper must exist.');
-  await assert.rejects(tenant('',user,tx => module.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
-  await assert.rejects(tenant(other,user,tx => module.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
-  await assert.rejects(tenant(workspace,'someone-else',tx => module.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
+  assert.ok(authorityModule?.assertCurrentAuthority,'The current transaction authority helper must exist.');
+  await assert.rejects(tenant('',user,tx => authorityModule.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
+  await assert.rejects(tenant(other,user,tx => authorityModule.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
+  await assert.rejects(tenant(workspace,'someone-else',tx => authorityModule.assertCurrentAuthority(tx,session,'read')),code('RESOURCE_NOT_FOUND'));
   await admin.query("UPDATE workspaces SET status='locked' WHERE id=$1",[workspace]);
   try { await assert.rejects(check(session,'read'),code('WORKSPACE_LOCKED')); }
   finally { await admin.query("UPDATE workspaces SET status='active' WHERE id=$1",[workspace]); }
+});
+test('a current transaction holds authority until commit and later admission observes committed revocation', async () => {
+  assert.ok(authorityModule?.assertCurrentAuthority,'The current transaction authority helper must exist.');
+  let release!:()=>void,admitted!:()=>void,runtimePid=0;
+  const hold=new Promise<void>(r=>{release=r;}),ready=new Promise<void>(r=>{admitted=r;});
+  const transaction=tenant(workspace,user,async tx=>{
+    await authorityModule.assertCurrentAuthority(tx,session,'read');
+    runtimePid=(await tx.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+    admitted();await hold;
+    return (await tx.query('SELECT name FROM workspaces WHERE id=$1',[workspace])).rows[0].name;
+  });
+  const changer=await admin.connect();let update:Promise<pg.QueryResult>|undefined;
+  try{
+    await Promise.race([ready,new Promise<never>((_,reject)=>{const t=setTimeout(()=>reject(new Error('Admission timed out')),3000);t.unref();})]);
+    update=changer.query("UPDATE memberships SET status='revoked' WHERE workspace_id=$1",[workspace]);
+    let blocked=false;
+    for(let i=0;i<100;i++){
+      blocked=!!(await admin.query('SELECT 1 FROM pg_stat_activity WHERE $1::int=ANY(pg_blocking_pids(pid))',[runtimePid])).rowCount;
+      if(blocked)break;
+      await new Promise(r=>setTimeout(r,10));
+    }
+    assert.ok(blocked,'Revocation must wait for the admitted transaction to commit.');
+    release();assert.equal(await transaction,'Authority fixture');await update;
+    await assert.rejects(check(session,'read'),code('RESOURCE_NOT_FOUND'));
+  }finally{
+    release();await transaction.catch(()=>undefined);await update?.catch(()=>undefined);changer.release();
+    await admin.query("UPDATE memberships SET status='active' WHERE workspace_id=$1",[workspace]);
+  }
 });

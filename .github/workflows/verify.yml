@@ -69,6 +69,7 @@ jobs:
           npm run smoke:webhooks
           npm run smoke:webhook-history
           npm run smoke:brand-memory
+          npm run smoke:authority
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then
