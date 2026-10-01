@@ -1,3 +1,4 @@
+import { withCreationQueueFixture } from './fixtures/creation-queue-lock';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -7,7 +8,7 @@ import env from '@next/env';
 env.loadEnvConfig(process.cwd());
 const admin = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL });
 after(() => admin.end());
-test('queued API creation rechecks revoked, expired and narrowed credentials', async () => {
+test('queued API creation rechecks revoked, expired and narrowed credentials', async () => withCreationQueueFixture(async () => {
   const workspace = randomUUID(),
     user = 'key-worker-' + randomUUID(),
     jobs = [randomUUID(), randomUUID(), randomUUID()],
@@ -60,4 +61,4 @@ test('queued API creation rechecks revoked, expired and narrowed credentials', a
       await admin.query('DELETE FROM ' + table + ' WHERE workspace_id=$1', [workspace]);
     await admin.query('DELETE FROM workspaces WHERE id=$1', [workspace]);
   }
-});
+}));

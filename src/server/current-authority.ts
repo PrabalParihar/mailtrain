@@ -12,9 +12,11 @@ export async function assertCurrentAuthority(
   p: Principal,
   action: Action,
   scope?: string,
+  workspaceLock: 'shared' | 'exclusive' = 'shared',
 ): Promise<Principal> {
+  if (workspaceLock === 'exclusive') await tx.query("SET LOCAL lock_timeout='2s'");
   const workspace = (await tx.query<{ status: string }>(
-    "SELECT status FROM workspaces WHERE id=$1 AND id::text=current_setting('app.workspace_id',true) AND current_setting('app.user_id',true)=$2 FOR SHARE",
+    "SELECT status FROM workspaces WHERE id=$1 AND id::text=current_setting('app.workspace_id',true) AND current_setting('app.user_id',true)=$2 " + (workspaceLock === 'exclusive' ? 'FOR UPDATE' : 'FOR SHARE'),
     [p.workspace, p.user],
   )).rows[0];
   if (!workspace) fail(404, 'RESOURCE_NOT_FOUND', 'Workspace not found.');

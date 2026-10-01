@@ -84,12 +84,20 @@ export async function withPrincipal<T>(
   request: Request,
   action: Action,
   fn: (tx: Tx, p: Principal) => Promise<T>,
+  options: { workspaceLock?: 'shared' | 'exclusive' } = {},
 ) {
   const p = await principal(request, action);
   const [root, , command] = requestPath(request);
   const scope = p.api_key ? scopeForResource(root, request.method, command) : undefined;
   return tenant(p.workspace, p.user, async (tx) => {
-    const current = await assertCurrentAuthority(tx, p, action, scope);
+    let current: Principal;
+    try {
+      current = await assertCurrentAuthority(tx, p, action, scope, options.workspaceLock);
+    } catch (error) {
+      if ((error as { code?: string }).code === '55P03')
+        fail(503, 'AUTHORITY_BUSY', 'Workspace controls are busy. Keep the same command and retry shortly.');
+      throw error;
+    }
     return fn(tx, current);
   });
 }

@@ -1,3 +1,4 @@
+import { withCreationQueueFixture } from './fixtures/creation-queue-lock';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -7,7 +8,7 @@ import env from '@next/env';
 env.loadEnvConfig(process.cwd());
 const admin = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL });
 after(() => admin.end());
-test('queued worker rechecks the target workspace, not another Owner membership', async () => {
+test('queued worker rechecks the target workspace, not another Owner membership', async () => withCreationQueueFixture(async () => {
   const other = randomUUID(),
     target = randomUUID(),
     job = randomUUID(),
@@ -48,4 +49,4 @@ test('queued worker rechecks the target workspace, not another Owner membership'
     await admin.query('DELETE FROM memberships WHERE user_id=$1', [user]);
     await admin.query('DELETE FROM workspaces WHERE id IN($1,$2)', [target, other]);
   }
-});
+}));

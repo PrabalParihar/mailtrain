@@ -1,3 +1,4 @@
+import { withCreationQueueFixture } from './fixtures/creation-queue-lock';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import pg from 'pg';
@@ -25,7 +26,7 @@ async function fixture(state: string) {
   );
   return { w, id, p: { workspace: w, user: 'fixture', role: 'Owner' as const } };
 }
-test('only queued cancellation refunds; in-flight cancellation preserves its finite reservation', async () => {
+test('only queued cancellation refunds; in-flight cancellation preserves its finite reservation', async () => withCreationQueueFixture(async () => {
   for (const state of ['queued', 'running']) {
     const f = await fixture(state);
     const result = await tenant(f.w, f.p.user, (tx) => cancelOperation(tx, f.p, f.id));
@@ -39,7 +40,7 @@ test('only queued cancellation refunds; in-flight cancellation preserves its fin
       state === 'queued' ? 1 : 0,
     );
   }
-});
+}));
 test('cancellation cannot replace completion committed while it waits for the row lock', async () => {
   const f = await fixture('running'),
     c = await admin.connect();
