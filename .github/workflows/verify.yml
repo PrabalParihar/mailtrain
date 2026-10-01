@@ -7,6 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
+      redis:
+        image: redis:7.4-alpine
+        ports: ["56379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s --health-timeout 3s --health-retries 20
       postgres:
         image: postgres:17-alpine
         env:
@@ -25,6 +31,7 @@ jobs:
       LOCAL_BOOTSTRAP_SECRET: ci-fixture-only-not-production-access
       PREFERENCE_SIGNING_SECRET: ci-fixture-only-preference-secret-32bytes
       AI_GENERATION_ALLOWANCE: "0"
+      REDIS_URL: redis://127.0.0.1:56379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

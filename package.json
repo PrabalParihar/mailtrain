@@ -26,7 +26,8 @@
     "smoke:webhooks": "node --import tsx scripts/smoke-webhooks.ts",
     "smoke:webhook-configured": "node --import tsx scripts/smoke-webhook-configured.ts",
     "smoke:events": "node --import tsx scripts/smoke-events.ts",
-    "smoke:dispatch-controls": "node --import tsx scripts/smoke-dispatch-controls.ts"
+    "smoke:dispatch-controls": "node --import tsx scripts/smoke-dispatch-controls.ts",
+    "worker:webhooks": "node --import tsx src/server/webhook-worker.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

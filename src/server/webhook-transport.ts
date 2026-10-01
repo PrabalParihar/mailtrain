@@ -88,11 +88,11 @@ export async function postWebhook(input:string,body:Uint8Array,secret:string,key
    // Check the actual connected peer as well as the pinned DNS answer.
    const peer=res.socket.remoteAddress?.replace(/^::ffff:/,'');const expected=pinned.address.replace(/^::ffff:/,'');
    if(!peer||peer!==expected||!publicAddress(peer)){errorClass='unsafe_target';finish({status:null,error_class:errorClass});res.destroy();req.destroy();return;}
-   let size=0;
-   res.on('data',(chunk:Buffer)=>{size+=chunk.length;if(size>8192){errorClass='invalid_response';finish({status:null,error_class:errorClass});req.destroy();res.destroy();}});
-   res.on('end',()=>finish({status:res.statusCode??null,retry_after:typeof res.headers['retry-after']==='string'?res.headers['retry-after']:undefined,error_class:null}));
-   res.on('error',()=>finish({status:null,error_class:errorClass}));
-   res.on('aborted',()=>finish({status:null,error_class:errorClass}));
+   // Verified TLS response headers are the observed outcome; webhook responses have no body contract.
+   // Close immediately: untrusted/slow/oversized bodies cannot erase a known acknowledgment.
+   res.on('error',()=>{});
+   finish({status:res.statusCode??null,retry_after:typeof res.headers['retry-after']==='string'?res.headers['retry-after']:undefined,error_class:null});
+   res.destroy();req.destroy();
   });
   req.on('socket',(socket)=>socket.prependOnceListener('secureConnect',()=>{
    const peer=socket.remoteAddress?.replace(/^::ffff:/,'');

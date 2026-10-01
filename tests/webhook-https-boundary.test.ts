@@ -19,7 +19,7 @@ test('HTTPS boundary pins TLS peer before payload, refuses redirects, discards o
  const rate=await postWebhook('https://example.org/hook',body,key,2);assert.equal(rate.status,429);assert.equal(rate.retry_after,'60');
  status=302;const redirect=await postWebhook('https://example.org/hook',body,key,2);assert.equal(redirect.status,302);assert.equal(requests,2);
  peer='127.0.0.1';const denied=await postWebhook('https://example.org/hook',body,key,2);assert.equal(denied.error_class,'unsafe_target');assert.equal(sent,2);
- peer='93.184.216.34';responseBytes=8193;const oversized=await postWebhook('https://example.org/hook',body,key,2);assert.equal(oversized.error_class,'invalid_response');
+ peer='93.184.216.34';status=429;responseBytes=8193;const oversized=await postWebhook('https://example.org/hook',body,key,2);assert.equal(oversized.status,429);assert.equal(oversized.error_class,null);
  hold=true;responseBytes=0;const abort=new AbortController();const receiving=new Promise<void>((resolve)=>{ready=resolve;});const interrupted=postWebhook('https://example.org/hook',body,key,2,abort.signal);await receiving;abort.abort();assert.equal((await interrupted).error_class,'aborted');
  t.mock.timers.enable({apis:['setTimeout','Date']});const timeoutReady=new Promise<void>((resolve)=>{ready=resolve;});const timed=postWebhook('https://example.org/hook',body,key,2);await timeoutReady;t.mock.timers.tick(10000);assert.equal((await timed).error_class,'timeout');
 });
@@ -42,4 +42,10 @@ test('real Node request requests a compatible pinned DNS result before fixture d
  const workspace=randomUUID(),contact=randomUUID(),body=Buffer.from(JSON.stringify({id:randomUUID(),workspace_id:workspace,schema_version:1,type:'contact.unsubscribed',occurred_at:new Date().toISOString(),recorded_at:new Date().toISOString(),trace_id:randomUUID(),aggregate:{type:'contact',id:contact,version:2},data:{contact_id:contact,scope:'marketing',reason:'recipient_opt_out'}}));
  await postWebhook('https://example.org/hook',body,randomBytes(32).toString('hex'),1);
  assert.equal(lookups,1);assert.equal(observed,'FIXTURE_EGRESS_DENIED');assert.equal(compatible,true,'Pinned lookup must satisfy the real native request all/single contract');
+});
+test('known HTTP2xx stays observed when an oversized response is discarded',async(t)=>{
+ t.mock.method(Resolver.prototype,'resolve4',async()=>['93.184.216.34']);t.mock.method(Resolver.prototype,'resolve6',async()=>{throw Object.assign(new Error('No AAAA'),{code:'ENODATA'});});
+ t.mock.method(https,'request',((_url:URL,_options:https.RequestOptions,callback:(r:http.IncomingMessage)=>void)=>{const req=Object.assign(new EventEmitter(),{destroy(){return this;},end(){queueMicrotask(()=>{const res=Object.assign(new PassThrough(),{statusCode:200,socket:{remoteAddress:'93.184.216.34'},headers:{}});callback(res as unknown as http.IncomingMessage);res.end(Buffer.alloc(8193));});return this;}});return req as unknown as http.ClientRequest;})as typeof https.request);
+ const contact=randomUUID(),body=Buffer.from(JSON.stringify({id:randomUUID(),workspace_id:randomUUID(),schema_version:1,type:'contact.unsubscribed',occurred_at:new Date().toISOString(),recorded_at:new Date().toISOString(),trace_id:randomUUID(),aggregate:{type:'contact',id:contact,version:2},data:{contact_id:contact,scope:'marketing',reason:'recipient_opt_out'}}));
+ assert.equal((await postWebhook('https://example.org/hook',body,randomBytes(32).toString('hex'),1)).status,200);
 });

@@ -1,0 +1,16 @@
+import test from'node:test';import assert from'node:assert/strict';import{randomUUID,randomBytes}from'node:crypto';import{readFile}from'node:fs/promises';import pg from'pg';import env from'@next/env';import{signWebhook}from'../src/server/webhook-protocol';import{acceptWebhookEvent}from'../examples/webhook-consumer/consumer';env.loadEnvConfig(process.cwd());
+test('persistent consumer dedupes exact events through restart, rejects conflicts, tolerates reorder and checks rotation expiry',async()=>{
+ const db=new pg.Pool({connectionString:process.env.MIGRATION_DATABASE_URL}),schema='hook_receiver_'+randomUUID().replaceAll('-',''),workspace=randomUUID(),consumer=randomUUID(),contact=randomUUID(),key=randomBytes(32).toString('hex'),next=randomBytes(32).toString('hex');
+ async function receive(body:Buffer,version=1,keys:{secret_version:number;valid_until:string|null;secret:string}[]=[{secret_version:1,valid_until:null,secret:key}]){const tx=await db.connect();try{await tx.query('BEGIN');await tx.query('SET LOCAL search_path TO '+schema+',pg_catalog');const result=await acceptWebhookEvent(tx,consumer,workspace,body,{...signWebhook(body,version===1?key:next),'X-Lettercape-Key-Version':String(version)},keys);await tx.query('COMMIT');return result;}catch(error){await tx.query('ROLLBACK');throw error;}finally{tx.release();}}
+ const event=(version:number)=>Buffer.from(JSON.stringify({id:randomUUID(),workspace_id:workspace,schema_version:1,type:'contact.unsubscribed',occurred_at:new Date().toISOString(),recorded_at:new Date().toISOString(),trace_id:randomUUID(),aggregate:{type:'contact',id:contact,version},data:{contact_id:contact,scope:'marketing',reason:'recipient_opt_out'}}));
+ try{
+  await db.query('CREATE SCHEMA '+schema);const tx=await db.connect();try{await tx.query('SET search_path TO '+schema+',pg_catalog');await tx.query(await readFile('examples/webhook-consumer/schema.sql','utf8'));}finally{await tx.query('RESET search_path');tx.release();}
+  const newer=event(3),older=event(2);assert.equal((await receive(newer)).duplicate,false);assert.equal((await receive(newer)).duplicate,true);assert.equal((await receive(older)).duplicate,false);
+  // Fresh connection/process-independent function invocation sees the same durable receipt.
+  assert.equal((await receive(newer)).duplicate,true);assert.equal((await db.query('SELECT resource_version FROM '+schema+'.webhook_resource_observations')).rows[0].resource_version,3);
+  const changed=JSON.parse(newer.toString());changed.trace_id=randomUUID();await assert.rejects(()=>receive(Buffer.from(JSON.stringify(changed))),/identity conflict/i);
+  const overlap=[{secret_version:2,valid_until:null,secret:next},{secret_version:1,valid_until:new Date(Date.now()+60000).toISOString(),secret:key}];assert.equal((await receive(event(4),1,overlap)).duplicate,false);assert.equal((await receive(event(5),2,overlap)).duplicate,false);
+  await assert.rejects(()=>receive(event(6),1,[overlap[0],{...overlap[1],valid_until:new Date(Date.now()-1000).toISOString()}]),/expired/i);
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM '+schema+'.webhook_consumer_receipts')).rows[0].n,4);
+ }finally{await db.query('DROP SCHEMA IF EXISTS '+schema+' CASCADE');await db.end();}
+});

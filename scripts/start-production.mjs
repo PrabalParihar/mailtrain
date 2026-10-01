@@ -3,13 +3,16 @@ import { spawn } from 'node:child_process';
 const release = JSON.parse(readFileSync('release-gates.json', 'utf8'));
 const ids = Array.from({ length: 13 }, (_, i) => 'GATE-' + String(i + 1).padStart(2, '0'));
 const valid =
+  !!process.env.RELEASE_BUILD?.trim() &&
   release.baseline === 'A-full-GA' &&
   release.environment === 'production' &&
   ids.every((id) => {
     const e = release.evidence[id];
     return (
       release.gates[id] === 'passed' &&
-      e?.build === process.env.RELEASE_BUILD &&
+      typeof e?.build === 'string' &&
+      e.build.trim().length > 0 &&
+      e.build === process.env.RELEASE_BUILD &&
       e?.environment === 'production' &&
       e?.owner &&
       e?.time &&

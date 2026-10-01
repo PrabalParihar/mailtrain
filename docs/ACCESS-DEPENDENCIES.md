@@ -15,3 +15,5 @@ Independent implementation continues. This checklist names genuine account/decis
 | Domain | User intends to buy `lettercape.com`; ownership/DNS access is not yet evidenced. | Complete the purchase independently, then provide supported DNS-management access when deployment reaches domain setup. |
 
 Railway browser access is verified; production release evidence and an all-in US$30 shared-workspace cost plan remain blocked. No new OAuth grants, credential creation, purchases or marketing campaigns follow merely from willingness to provide access.
+
+Production webhooks additionally require an intended existing private secret manager/KMS, narrow worker database identity and owned receiver/n8n test account. The owner setup question is pending. Configure credentials privately; no production wrapping inventory, service identity or external delivery has been provisioned.

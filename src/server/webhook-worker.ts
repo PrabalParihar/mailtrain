@@ -1,0 +1,20 @@
+import env from'@next/env';import pg from'pg';import{Queue,Worker}from'bullmq';import{Redis}from'ioredis';import{readFileSync,existsSync}from'node:fs';import{parseWebhookVault}from'./webhook-secrets';import{runWebhookDelivery,type WebhookTransaction}from'./webhook-engine';
+env.loadEnvConfig(process.cwd());
+if(process.env.WEBHOOK_DELIVERY_ENABLED!=='true')throw new Error('Webhook delivery is disabled. Production activation requires private service configuration and complete release evidence.');
+if(!process.env.WEBHOOK_DATABASE_URL||!process.env.REDIS_URL||process.env.DATABASE_URL||process.env.MIGRATION_DATABASE_URL)throw new Error('Dedicated webhook service credentials are required; runtime/migration credentials must not reach this worker.');
+const gates=JSON.parse(readFileSync('release-gates.json','utf8'));
+if(!process.env.RELEASE_BUILD?.trim()||gates.baseline!=='A-full-GA'||gates.environment!=='production'||!Array.from({length:13},(_,i)=>'GATE-'+String(i+1).padStart(2,'0')).every((id)=>gates.gates[id]==='passed'&&typeof gates.evidence[id]?.build==='string'&&gates.evidence[id].build.trim().length>0&&gates.evidence[id].build===process.env.RELEASE_BUILD&&gates.evidence[id]?.environment==='production'&&gates.evidence[id]?.owner&&gates.evidence[id]?.time&&gates.evidence[id]?.path&&existsSync(gates.evidence[id].path)))throw new Error('Webhook worker production activation refused: full-GA evidence incomplete.');
+const vault=parseWebhookVault(process.env.WEBHOOK_ENCRYPTION_KEYS_JSON,process.env.WEBHOOK_ENCRYPTION_ACTIVE_KEY),pool=new pg.Pool({connectionString:process.env.WEBHOOK_DATABASE_URL,max:2,connectionTimeoutMillis:2000}),stop=new AbortController();
+const transaction:WebhookTransaction=async(fn)=>{const tx=await pool.connect();try{await tx.query('BEGIN');await tx.query("SET LOCAL ROLE mailcraft_webhook_worker;SET LOCAL statement_timeout='3s';SET LOCAL lock_timeout='1s'");const value=await fn(tx);await tx.query('COMMIT');return value;}catch(error){await tx.query('ROLLBACK');throw error;}finally{tx.release();}};
+try{
+ const authority=(await pool.query("SELECT r.rolsuper,r.rolbypassrls,r.rolcreatedb,r.rolcreaterole,pg_has_role(current_user,'mailcraft_webhook_worker','USAGE')AS worker,pg_has_role(current_user,'mailcraft_runtime','USAGE')AS runtime,pg_has_role(current_user,'mailcraft_webhook_authorizer','USAGE')AS authorizer FROM pg_roles r WHERE r.rolname=current_user")).rows[0];
+ if(!authority||!authority.worker||authority.runtime||authority.authorizer||authority.rolsuper||authority.rolbypassrls||authority.rolcreatedb||authority.rolcreaterole)throw new Error('Webhook service database authority is invalid');
+ const redis=new URL(process.env.REDIS_URL);if(!['redis:','rediss:'].includes(redis.protocol))throw new Error('Webhook Redis protocol invalid');
+ const connection=new Redis(process.env.REDIS_URL,{maxRetriesPerRequest:null,enableOfflineQueue:false});connection.on('error',()=>console.error('webhook_wakeup_unavailable'));
+ const queue=new Queue('lettercape-webhooks',{connection,defaultJobOptions:{removeOnComplete:true,removeOnFail:10}}),worker=new Worker('lettercape-webhooks',async()=>{for(let index=0;index<25&&!stop.signal.aborted;index++)if(!(await runWebhookDelivery({enabled:true,transaction,vault,signal:stop.signal})).claimed)break;},{connection,concurrency:2});
+ queue.on('error',()=>console.error('webhook_wakeup_unavailable'));worker.on('error',()=>console.error('webhook_worker_unavailable'));
+ for(const signal of['SIGTERM','SIGINT']as const)process.on(signal,()=>stop.abort());
+ // SQL owns pending/acknowledged truth. Redis stores only a bounded, rebuildable wake-up hint.
+ while(!stop.signal.aborted){await queue.add('wake',{}, {jobId:'durable-wake'}).catch(()=>console.error('webhook_wakeup_unavailable'));await new Promise<void>((resolve)=>{const timer=setTimeout(done,1500);function done(){clearTimeout(timer);stop.signal.removeEventListener('abort',done);resolve();}stop.signal.addEventListener('abort',done,{once:true});});}
+ await worker.close();await queue.close();await connection.quit();
+}finally{await pool.end();}
