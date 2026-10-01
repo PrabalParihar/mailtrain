@@ -1,0 +1,52 @@
+{
+  "name": "mailcraft",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "db:migrate": "node --import tsx scripts/migrate.ts",
+    "worker": "node --import tsx src/server/worker.ts",
+    "release:check": "node --import tsx scripts/release-check.ts",
+    "smoke:api": "node --import tsx scripts/smoke-api.ts"
+  },
+  "dependencies": {
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "4.6.5",
+    "pg": "8.23.1",
+    "drizzle-orm": "0.45.3",
+    "sanitize-html": "2.18.0",
+    "cheerio": "1.2.0",
+    "lucide-react": "1.49.0",
+    "@clerk/nextjs": "7.9.9",
+    "bullmq": "6.3.11",
+    "ioredis": "6.0.0",
+    "@react-email/components": "1.0.12",
+    "@react-email/render": "2.1.0",
+    "playwright": "1.63.0",
+    "csv-parse": "7.0.3",
+    "jose": "6.2.12",
+    "@fontsource/inter": "5.3.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "tsx": "4.23.15",
+    "@types/node": "26.6.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/pg": "8.23.1",
+    "@types/sanitize-html": "2.16.2",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.8"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

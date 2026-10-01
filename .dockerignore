@@ -1,0 +1,9 @@
+.git
+node_modules
+.next
+.env*
+!.env.example
+.playwright-cli
+output
+docs/Mailcraft-Development-PRD-v2.0.*
+*.tsbuildinfo

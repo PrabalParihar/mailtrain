@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env*
+!.env.example
+output/
+*.tsbuildinfo
+next-env.d.ts
+.playwright-cli/
+# Keep the user's authoritative development documents local; repo is public.
+docs/Mailcraft-Development-PRD-v2.0.md
+docs/Mailcraft-Development-PRD-v2.0.docx

@@ -1,0 +1,11 @@
+export const integrations=[
+ {id:'klaviyo',name:'Klaviyo',kind:'ESP',object:'HTML template',status:'not_connected',gate:'OAuth, templates:write, API revision and real destination fixture required'},
+ {id:'mailchimp',name:'Mailchimp',kind:'ESP',object:'Classic HTML template',status:'not_connected',gate:'OAuth and customer plan/template entitlement required'},
+ {id:'hubspot',name:'HubSpot',kind:'ESP',object:'Marketing email draft',status:'not_connected',gate:'Supported portal, coded template route and approved scopes required'},
+ {id:'brevo',name:'Brevo',kind:'ESP',object:'Marketing campaign draft',status:'not_connected',gate:'Test account, sender and native unsubscribe conformance required'},
+ {id:'omnisend',name:'Omnisend',kind:'ESP',object:'Template + draft',status:'not_connected',gate:'Content fidelity and independent template/campaign reconciliation required'},
+ ...['Amazon SES','Resend','SendGrid','Mailgun'].map(name=>({id:name.toLowerCase().replaceAll(' ','-'),name,kind:'Send provider',object:'Recipient delivery',status:'not_connected',gate:'Verified identity/account, signed events, approved budget and consent gates required'})),
+ {id:'litmus',name:'Real-client previews',kind:'Preview',object:'20 named configurations',status:'not_procured',gate:'Embedded API rights, manifest, cost and retention contract required'},
+ {id:'stripe',name:'Stripe',kind:'Billing',object:'Subscription',status:'not_connected',gate:'Approved price catalog, signed lifecycle fixtures and economics required'},
+ {id:'slack',name:'Slack',kind:'Notifications',object:'Approved channel',status:'not_connected',gate:'Workspace connection and explicit channel permission required'},
+];

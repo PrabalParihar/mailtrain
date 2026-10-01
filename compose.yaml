@@ -1,0 +1,23 @@
+name: mailcraft-local
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports: ["127.0.0.1:55439:5432"]
+    environment:
+      POSTGRES_USER: mailcraft_migration
+      POSTGRES_PASSWORD: mailcraft_local_migration
+      POSTGRES_DB: mailcraft
+    volumes: ["mailcraft_pg:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailcraft_migration -d mailcraft"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:56379:6379"]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["mailcraft_redis:/data"]
+volumes:
+  mailcraft_pg:
+  mailcraft_redis:

@@ -1,0 +1,54 @@
+name: Verify Lettercape
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: mailcraft_migration
+          POSTGRES_PASSWORD: mailcraft_local_migration
+          POSTGRES_DB: mailcraft
+        ports: ["55439:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mailcraft_migration -d mailcraft"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      LOCAL_DEVELOPMENT: "true"
+      APP_ORIGIN: http://127.0.0.1:3000
+      DATABASE_URL: postgresql://mailcraft_runtime:mailcraft_local_runtime@127.0.0.1:55439/mailcraft
+      MIGRATION_DATABASE_URL: postgresql://mailcraft_migration:mailcraft_local_migration@127.0.0.1:55439/mailcraft
+      LOCAL_BOOTSTRAP_SECRET: ci-fixture-only-not-production-access
+      PREFERENCE_SIGNING_SECRET: ci-fixture-only-preference-secret-32bytes
+      AI_GENERATION_ALLOWANCE: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate
+      - run: npm test
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Real local HTTP boundary checks
+        run: |
+          npm run dev > /tmp/lettercape-dev.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:3000/v1/health && break
+            sleep 1
+          done
+          npm run smoke:api
+      - name: Production release must remain closed
+        run: |
+          if node scripts/start-production.mjs; then
+            echo "Unexpected production startup without release evidence"
+            exit 1
+          fi
