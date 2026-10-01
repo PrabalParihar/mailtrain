@@ -1,3 +1,4 @@
+import { recordEvent } from './events';
 import { z } from 'zod';
 import { MappingSchema, inspectCsv, prepareImport, type ImportRow } from '../domain/contact-import';
 import { fail } from './errors';
@@ -223,10 +224,7 @@ export async function importCommand(
         JSON.stringify({ ...op.result, confirmed: true, imported: created.length, counts }),
         id,
       ]);
-      await tx.query(
-        "INSERT INTO outbox(workspace_id,type,aggregate_id,data) VALUES($1,'contacts.imported',$2,$3)",
-        [p.workspace, id, JSON.stringify(counts)],
-      );
+      await recordEvent(tx,p.workspace,{type:'contacts.imported',aggregate:{type:'operation',id,version:1},data:{operation_id:id,processed:counts.processed,created:counts.created,existing:counts.existing,opt_in_granted:0}});
       await audit(tx, p.workspace, p.user, 'contacts.imported', id);
       return { ...counts, counts };
     });

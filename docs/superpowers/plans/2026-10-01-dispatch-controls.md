@@ -39,4 +39,4 @@ Interfaces:GET `/dispatch-controls`; POST `/dispatch-controls/workspace` with `{
 ### Task3: Review, checkpoint and continue baseline
 - [x] Full tests/lint/typecheck/build/APIcheck and affected existing regressions.
 - [x] One fresh review and single Important/Critical fix pass; deferred Minor log and honest partial requirement register.
-- [ ] Sync tracked source hashes to canonical Desktop, ordinary authorized push and inspect exact-head CI; continue remaining modules.
+- [x] Sync tracked source hashes to canonical Desktop, ordinary authorized push and inspect exact-head CI; continue remaining modules.

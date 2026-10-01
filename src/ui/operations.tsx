@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { EventHistory } from './events';
 import { DispatchControls } from './dispatch-controls';
 import { ApiKeys } from './api-keys';
 import { Users, ShieldCheck, Plus, CalendarDays, AlertCircle } from 'lucide-react';
@@ -374,6 +375,7 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
           Load older audit events
         </button>
       )}
+      <EventHistory workspace={workspace} role={role} />
       <DispatchControls workspace={workspace} role={role} />
       <ApiKeys workspace={workspace} role={role} />
     </>

@@ -2,17 +2,17 @@
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 
-Source publication: `e4bed81e7a0d263ab21277c369e8a2d114e06f00` is the latest published checkpoint and synchronized canonical Desktop Git head. [CI36885180577](https://github.com/PrabalParihar/mailtrain/actions/runs/36885180577) passed both full app and dedicated sandboxed renderer jobs,53 tests/full checks/actual HTTP+Chromium and closed production gates. Source lineage completed one fresh review and Important fix pass. Current uncommitted dispatch controls pass55 local tests/full checks and real HTTP/Chromium; one fresh whole-slice review found no blocking defects;2 Minor UI freshness issues are deferred. Checkpoint publication/CI remains pending.
+Source publication: `a23bde5b6ff5d097a28cc1d3f7e291704c1ce707` is the latest published checkpoint and synchronized canonical Desktop Git head. [CI36889662097](https://github.com/PrabalParihar/mailtrain/actions/runs/36889662097) passed both full app and dedicated sandboxed renderer jobs,55 tests/full checks/actual HTTP+Chromium and closed production gates. Dispatch controls completed one fresh review with no blocking defect and2 deferred Minors. The new versioned event contract/history slice passes60 local tests and real HTTP/Chromium; one fresh review found no blocking defects and1 Minor timestamp interoperability issue is deferred; its publication/CI are pending.
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (36)
+## Partial local implementation with acceptance still required (38)
 
-REQ-001, REQ-002, REQ-003, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-037, REQ-038, REQ-041, REQ-048, REQ-049, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (24)
+## Required capability not delivered; implementation and/or configuration missing (22)
 
-REQ-004, REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-032, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-047, REQ-050, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-004, REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-032, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 

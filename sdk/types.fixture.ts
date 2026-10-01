@@ -22,6 +22,10 @@ export function typeExamples(client: LettercapeClient) {
   // @ts-expect-error only documented cursor pages can be iterated
   void client.pages('getEmail', { path: { id: 'example' } });
 
+  void client.pages('listEvents', {query:{type:'contact.unsubscribed'}});
+  void client.call('getEvent', {path:{id:'example'}});
+  // @ts-expect-error an unimplemented delivery proof is not a supported event filter
+  void client.pages('listEvents', {query:{type:'campaign.delivered'}});
   void client.call('getDispatchControls', {});
   void client.call('setWorkspaceDispatchPolicy', { body: { expected_version: 0, paused: true, reason: 'incident' } });
   // @ts-expect-error Unknown dispatch reasons cannot be submitted

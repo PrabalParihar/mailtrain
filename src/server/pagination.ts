@@ -14,7 +14,7 @@ const Cursor = z.object({
 });
 type Options = {
   resource:
-    'keys' | 'brands' | 'emails' | 'revisions' | 'contacts' | 'campaigns' | 'segments' | 'audit' | 'derivatives';
+    'keys' | 'brands' | 'emails' | 'revisions' | 'contacts' | 'campaigns' | 'segments' | 'audit' | 'derivatives' | 'events';
   from: string;
   fields: string;
   created?: string;

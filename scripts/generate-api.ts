@@ -6,6 +6,7 @@ import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
+import { EventEnvelopeShape, EventType } from '../src/domain/events';
 import { DispatchPolicyInput, DispatchProvider } from '../src/domain/dispatch-controls';
 import { RemixInput, LocaleDraftInput } from '../src/domain/derivation';
 type Schema = Record<string, unknown>;
@@ -25,6 +26,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  EventEnvelope: fromZod(EventEnvelopeShape),
   DispatchPolicyInput: { ...fromZod(DispatchPolicyInput), allOf: [{ if: { properties: { paused: { const: false } } }, then: { properties: { reason: { const: 'verified_recovery' } } } }] },
   DispatchPolicy: object({ scope: { type: 'string', enum: ['global','provider','workspace'] }, target: string, paused: { type: 'boolean' }, version: { type: 'integer', minimum: 0 }, reason: { type: 'string', enum: ['incident','abuse_review','maintenance','verified_recovery'] }, updated_at: nullable(time) }, undefined, false),
   Brand: fromZod(BrandSchema),
@@ -205,6 +207,7 @@ for (const [name, item] of Object.entries({
   Segments: 'Segment',
   Audit: 'Audit',
   Derivatives: 'Email',
+  Events: 'EventEnvelope',
 }))
   schemas[name + 'Page'] = envelope({
     data: array(ref(item)),
@@ -213,6 +216,7 @@ for (const [name, item] of Object.entries({
     total_count: { type: 'integer', minimum: 0 },
   });
 schemas.DispatchControlsResponse = envelope({ controls: object({ global: nullable(ref('DispatchPolicy')), providers: array(object({ provider: fromZod(DispatchProvider), policy: nullable(ref('DispatchPolicy')) },undefined,false)), workspace: ref('DispatchPolicy'), dispatch_enabled: { const: false }, notice: string },undefined,false) });
+schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
 schemas.BrandResponse = envelope({ brand: ref('BrandVersion') });
@@ -307,6 +311,7 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
   Empty: {},
+  EventEnvelope: fromZod(EventEnvelopeShape),
   DispatchPolicyInput: { expected_version: 0, paused: true, reason: 'incident' },
   RemixInput: { title: 'Remixed example' },
   LocaleDraftInput: { title: 'Arabic draft example', locale: 'ar-SA' },
@@ -446,6 +451,8 @@ function add(d: Definition) {
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({ id: 'listEvents', path: '/v1/events', method: 'GET', response: 'EventsPage', paged: true, scope: 'events:read', query: [{name:'type',in:'query',schema:fromZod(EventType)}], description: 'Current Owner/Admin authority plus explicit events:read bearer scope. Only immutable typed versioned receipts; legacy rows excluded, external webhook delivery unconfigured.' });
+add({ id: 'getEvent', path: '/v1/events/{id}', method: 'GET', response: 'EventResponse', scope: 'events:read', description: 'Returns a verified immutable typed event; a receipt is not an external delivery acknowledgment.' });
 add({ id: 'getDispatchControls', path: '/v1/dispatch-controls', method: 'GET', response: 'DispatchControlsResponse', session: true, description: 'Current Owner/Admin session only. Missing policy fails closed; this does not activate sending.' });
 add({ id: 'setWorkspaceDispatchPolicy', path: '/v1/dispatch-controls/workspace', method: 'POST', body: 'DispatchPolicyInput', response: 'DispatchControlsResponse', keyed: true, session: true, description: 'Current Owner/Admin session, exact workspace policy version. Replays acknowledge the original command and return current controls. Global/provider changes are operator-only and unavailable here.' });
 add({ id: 'health', path: '/v1/health', method: 'GET', response: 'Health', public: true });

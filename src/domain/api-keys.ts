@@ -12,6 +12,7 @@ export const KEY_SCOPES = [
   'campaigns:approve',
   'campaigns:send',
   'integrations:read',
+  'events:read',
 ] as const;
 export const KeyInput = z
   .object({
@@ -59,6 +60,7 @@ export function scopeForResource(
         : ['send', 'schedule', 'pause', 'resume', 'cancel'].includes(command ?? '')
           ? 'campaigns:send'
           : 'campaigns:write';
+  if (root === 'events') return read ? 'events:read' : 'unsupported';
   if (root === 'integrations') return 'integrations:read';
   if (root === 'operations') return undefined; // checked against the fetched operation type
   return 'unsupported';

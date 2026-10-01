@@ -1,3 +1,5 @@
+import { EventType } from '@/domain/events';
+import { readEventBody } from '@/server/events';
 import { LINT_RULES_VERSION } from '@/domain/preflight';
 import { resourcePage } from '@/server/pagination';
 import { NextResponse } from 'next/server';
@@ -54,6 +56,18 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if (root === 'events')
+      return json(await withPrincipal(req,'manage',async(tx,p)=>{
+        if(id){
+          const row=(await tx.query('SELECT * FROM outbox WHERE id=$1 AND event_schema_version=1 AND event_body IS NOT NULL',[id])).rows[0];
+          if(!row)fail(404,'RESOURCE_NOT_FOUND','Versioned event not found.');
+          return {event:readEventBody(row)};
+        }
+        const requested=new URL(req.url).searchParams.get('type');
+        const type=requested===null?null:EventType.parse(requested);
+        const page=await resourcePage(req,tx,p,{resource:'events',from:'outbox',fields:'id,workspace_id,type,aggregate_id,event_schema_version,event_body,event_hash,recorded_at',created:'recorded_at',where:'event_schema_version=1 AND event_body IS NOT NULL'+(type?' AND type=$1':''),values:type?[type]:[],filters:{event_type:type}});
+        return {...page,data:page.data.map((row)=>readEventBody(row))};
+      }));
     if (root === 'dispatch-controls')
       return json(await withPrincipal(req, 'manage', async (tx,p) => {
         if (method !== 'GET') await keyed(tx,p,'dispatch.workspace_policy',key,body,() => setWorkspaceDispatchPolicy(tx,p,DispatchPolicyInput.parse(body)));

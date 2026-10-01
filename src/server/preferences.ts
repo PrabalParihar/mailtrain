@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { recordEvent } from './events';
 import { tenant } from './db';
 import { fail } from './errors';
 import { PreferenceInput } from '../domain/preferences';
@@ -113,6 +114,10 @@ export async function savePreference(token: string, input: unknown) {
         [data.frequency, changed ? 1 : 0, c.contact],
       )
     ).rows[0];
+    // One form can remove several topics at a single consent version.
+    for (const topic of all.filter((id) => !wanted.has(id) && prior.some((p) => p.topic_id === id && p.subscription !== 'unsubscribed'))) {
+      await recordEvent(tx,c.workspace,{type:'contact.topic_unsubscribed',aggregate:{type:'contact',id:c.contact,version:updated.consent_version},data:{contact_id:c.contact,topic_id:topic,scope:'topic',reason:'recipient_opt_out'}});
+    }
     let confirmationRequested = false;
     if (newlyPending.length || data.reactivate_global) {
       if (!data.topics.length)
@@ -189,10 +194,8 @@ export async function unsubscribe(token: string, global = false) {
             JSON.stringify({ topic_id: c.topic, source: 'one_click_signed_link' }),
           ],
         );
-        await tx.query(
-          "INSERT INTO outbox(workspace_id,type,aggregate_id,data) VALUES($1,'contact.topic_unsubscribed',$2,$3)",
-          [c.workspace, c.contact, JSON.stringify({ topic_id: c.topic })],
-        );
+        const version=(await tx.query('SELECT consent_version FROM contacts WHERE id=$1',[c.contact])).rows[0].consent_version;
+        await recordEvent(tx,c.workspace,{type:'contact.topic_unsubscribed',aggregate:{type:'contact',id:c.contact,version},data:{contact_id:c.contact,topic_id:c.topic,scope:'topic',reason:'recipient_opt_out'}});
       }
       return { unsubscribed: true };
     }
@@ -219,15 +222,8 @@ export async function unsubscribe(token: string, global = false) {
           JSON.stringify({ scope: c.scope, source: 'signed_preference_link' }),
         ],
       );
-      await tx.query(
-        'INSERT INTO outbox(workspace_id,type,aggregate_id,data) VALUES($1,$2,$3,$4)',
-        [
-          c.workspace,
-          'contact.unsubscribed',
-          c.contact,
-          JSON.stringify({ contact_id: c.contact, scope: c.scope }),
-        ],
-      );
+      const version=(await tx.query('SELECT consent_version FROM contacts WHERE id=$1',[c.contact])).rows[0].consent_version;
+      await recordEvent(tx,c.workspace,{type:'contact.unsubscribed',aggregate:{type:'contact',id:c.contact,version},data:{contact_id:c.contact,scope:'marketing',reason:'recipient_opt_out'}});
     }
     return { unsubscribed: true };
   });
