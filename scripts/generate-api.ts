@@ -1,3 +1,4 @@
+import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { z } from 'zod';
@@ -29,6 +30,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  Membership:fromZod(Membership),MembershipChange:fromZod(MembershipChange),MembershipSummary:fromZod(MembershipSummary),RoleChangeInput:fromZod(RoleChangeInput),RemoveMemberInput:fromZod(RemoveMemberInput),TransferOwnerInput:fromZod(TransferOwnerInput),
   BrandSourceInput:fromZod(BrandSourceInput),BrandSource:fromZod(BrandSource),BrandMemoryChunk:fromZod(BrandMemoryChunk),BrandMemoryContext:fromZod(BrandMemoryContext),MemoryPreviewInput:fromZod(MemoryPreviewInput),
   WebhookEndpoint: fromZod(WebhookEndpoint),
   WebhookEndpointInput: {...fromZod(WebhookEndpointInput), allOf:[{properties:{subscriptions:{uniqueItems:true}}}]},
@@ -208,6 +210,7 @@ schemas.WebhookDelivery=fromZod(WebhookDelivery);schemas.WebhookAttempt=fromZod(
 const envelope = (props: Record<string, unknown>, required = Object.keys(props)) =>
   object({ request_id: string, ...props }, ['request_id', ...required]);
 for (const [name, item] of Object.entries({
+  Members:'Membership',MemberChanges:'MembershipChange',
   Emails: 'Email',
   Brands: 'BrandVersion',
   Keys: 'Key',
@@ -234,6 +237,8 @@ schemas.WebhookDeliveryResponse=envelope({delivery:ref('WebhookDelivery'),config
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
+schemas.MembershipCommandResponse=envelope({member:ref('Membership'),changes:array(ref('MembershipChange'))});
+schemas.MembershipSummaryResponse=envelope({summary:ref('MembershipSummary')});
 schemas.BrandSourceResponse=envelope({source:ref('BrandSource')});
 schemas.BrandSourceDetailResponse=envelope({source:ref('BrandSource'),chunks:array(ref('BrandMemoryChunk'))});
 schemas.BrandMemoryResponse=envelope({context:ref('BrandMemoryContext')});
@@ -329,6 +334,7 @@ type Definition = {
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  RoleChangeInput:{role:'Viewer',expected_version:1},RemoveMemberInput:{expected_version:1,acknowledge:true},TransferOwnerInput:{expected_version:1,expected_owner_version:1,acknowledge:true},
   WebhookReplayInput:{expected_attempt:1,acknowledge_duplicate_effect:true},
   WebhookEndpointInput:{name:'Example paused receiver',url:'https://example.org/webhook',subscriptions:['contact.unsubscribed']},
   WebhookVersionInput:{expected_version:1},
@@ -474,6 +480,12 @@ function add(d: Definition) {
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({id:'listMemberships',path:'/v1/memberships',method:'GET',response:'MembersPage',paged:true,session:true,description:'Current Owner/Admin session; tenant-bound membership metadata only, no provider identity lookup.'});
+add({id:'listMembershipChanges',path:'/v1/membership-changes',method:'GET',response:'MemberChangesPage',paged:true,session:true,description:'Immutable local membership and editing-seat impact; no Stripe reconciliation claim.'});
+add({id:'getMembershipSummary',path:'/v1/memberships/summary',method:'GET',response:'MembershipSummaryResponse',session:true});
+add({id:'changeMembershipRole',path:'/v1/memberships/{id}/role',method:'POST',body:'RoleChangeInput',response:'MembershipCommandResponse',keyed:true,session:true,description:'Current manager session plus recent verified MFA in production; current member CAS. Admin cannot touch Owner/Billing or grant Billing. Positive editing quantity requires approved capacity; no prices are assigned.'});
+add({id:'removeMembership',path:'/v1/memberships/{id}/remove',method:'POST',body:'RemoveMemberInput',response:'MembershipCommandResponse',keyed:true,session:true,description:'Current manager/MFA/CAS and explicit removal acknowledgment; final Owner cannot leave. Revokes issued keys, cancels queued creation and requests running cancellation. In-flight provider context and global identity/collaboration revocation remain separate obligations.'});
+add({id:'transferWorkspaceOwnership',path:'/v1/memberships/{id}/transfer-owner',method:'POST',body:'TransferOwnerInput',response:'MembershipCommandResponse',keyed:true,session:true,description:'Current Owner/MFA/target-and-initiator CAS plus explicit acknowledgment. Atomically promotes existing active editing member and demotes initiator to Admin. No approved capacity/billing/provider success implied.'});
 add({id:'listWebhookDeliveries',path:'/v1/webhook-deliveries',method:'GET',response:'WebhookDeliveriesPage',paged:true,scope:'webhooks:read',query:[{name:'endpoint_id',in:'query',schema:{type:'string',format:'uuid'}},{name:'state',in:'query',schema:fromZod(WebhookDeliveryState)}],description:'Redacted durable receipts; started/authorized are not HTTP submission or email delivery evidence.'});
 add({id:'getWebhookDelivery',path:'/v1/webhook-deliveries/{id}',method:'GET',response:'WebhookDeliveryResponse',scope:'webhooks:read'});
 add({id:'listWebhookAttempts',path:'/v1/webhook-deliveries/{id}/attempts',method:'GET',response:'WebhookAttemptsPage',paged:true,scope:'webhooks:read'});

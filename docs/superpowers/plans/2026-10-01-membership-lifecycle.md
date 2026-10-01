@@ -23,21 +23,21 @@
 
 ### Task1: Pure membership transitions and recent-factor policy
 Files create src/domain/memberships.ts and tests/memberships.test.ts.
-Produces role/seat helpers and strict inputs: RoleChangeInput{role:Admin|Editor|Viewer|Billing,expected_version:positive int}, RemoveMemberInput{expected_version,acknowledge:true}, TransferOwnerInput{expected_version,expected_owner_version,acknowledge:true}. Pure recentMfa(age:unknown):boolean requires exactly2finite nonnegative minute ages each≤10; no first-factor fallback. Pure transition validation takes current actor/target/status/active-owner-count and returns editing-seat delta or typed denial.
-- [ ] Write missing-module RED assertions for Owner/Admin/Editor/Viewer/Billing role matrix, final Owner denial, transfer same editing quantity, no resurrection, positive seat policy denial, strict malformed/negative/expired MFA.
-- [ ] Implement minimal typed helpers/strict Zod inputs, run focused tests→GREEN then npm test, commit Task1.
+Produces role/seat helpers and strict inputs: RoleChangeInput{role:Admin|Editor|Viewer|Billing,expected_version:positive int}, RemoveMemberInput{expected_version,acknowledge:true}, TransferOwnerInput{expected_version,expected_owner_version,acknowledge:true}. Pure recentMfa(age:unknown):boolean requires exactly2finite nonnegative minute ages each<10; no first-factor fallback. Pure transition validation takes current actor/target/status/active-owner-count and returns editing-seat delta or typed denial.
+- [x] Write missing-module RED assertions for Owner/Admin/Editor/Viewer/Billing role matrix, final Owner denial, transfer same editing quantity, no resurrection, positive seat policy denial, strict malformed/negative/expired MFA.
+- [x] Implement minimal typed helpers/strict Zod inputs, run focused tests→GREEN then npm test, commit Task1.
 
 ### Task2: Real transactional lifecycle storage/service
 Files create db/022-membership-lifecycle.sql, src/server/memberships.ts, tests/memberships-db.test.ts; modify current-authority.ts/auth.ts with server-owned optional exclusive workspace lock mode.
 Consumes Task1 inputs; produces changeMembership(tx,p,id,command,input):Promise<{member,changes}> plus readMembershipSummary(tx,p).
-- [ ] Write RED owned PostgreSQL tests for current version CAS/lastOwner/transfer, role+tenant+narrow privilege negatives, issued-key revocation/queue cancellation and finite reservations, equal/decreasing/positive seat counts, two concurrent managers/transfer-versus-removal with no deadlock, immutable journal/no repeated quantity changes.
-- [ ] Add SQL migration/functions and services, workspace-exclusive authority mode before other locks. Keep row SHARE privilege functional after narrowing runtime writes. Run migration/focused tests→GREEN and full suite, commit Task2.
+- [x] Write RED owned PostgreSQL tests for current version CAS/lastOwner/transfer, role+tenant+narrow privilege negatives, issued-key revocation/queue cancellation and finite reservations, equal/decreasing/positive seat counts, two concurrent managers/transfer-versus-removal with no deadlock, immutable journal/no repeated quantity changes.
+- [x] Add SQL migration/functions and services, workspace-exclusive authority mode before other locks. Keep row SHARE privilege functional after narrowing runtime writes. Run migration/focused tests→GREEN and full suite, commit Task2.
 
 ### Task3: Scoped session API, generated contract and real browser controls
 Files create src/server/membership-route.ts, src/ui/memberships.tsx, src/ui/membership-command.ts, scripts/smoke-memberships.ts; modify v1 route/http, pagination, OpenAPI generator/fixtures, settings and workflow/package scripts.
 Routes GET/v1/memberships, GET/v1/membership-changes, GET/v1/memberships/summary; POST/v1/memberships/:uuid/role|remove|transfer-owner. Current manager session only; mutations require current MFA before effect. Signed pages tenant/actor/resource bound. Typed metadata responses, no new key scopes.
-- [ ] RED404 owned HTTP and missing UI controls; implement routes and generated schemas/API fixtures plus paged manager UI/current seat count/confirmations/CAS/epoch fences/opaque receipts.
-- [ ] GREEN actual HTTP role/scope/MFA-unconfigured/CSRF/encoded/foreign/cursor/replay tests and Chromium empty/offline/errors/repeated clicks/lost response/reload/staleCAS/self-demotion/workspace navigation/mobile. Inspect mobile pixels. Full tests/lint/typecheck/API/build plus existing authority/key/contract regressions. Commit Task3.
+- [x] RED404 owned HTTP and missing UI controls; implement routes and generated schemas/API fixtures plus paged manager UI/current seat count/confirmations/CAS/epoch fences/opaque receipts.
+- [x] GREEN actual HTTP role/scope/MFA-unconfigured/CSRF/encoded/foreign/cursor/replay tests and Chromium empty/offline/errors/repeated clicks/lost response/reload/staleCAS/self-demotion/workspace navigation/mobile. Inspect mobile pixels. Full tests/lint/typecheck/API/build plus existing authority/key/contract regressions. Commit Task3.
 
 ### Task4: Fresh review and publication
 - [ ] Exactly one fresh Astra high whole-slice reviewer of task1–3/plan/spec/ledger/review focus; grade effect, one blocking fix pass RED→GREEN only, defer Minors.

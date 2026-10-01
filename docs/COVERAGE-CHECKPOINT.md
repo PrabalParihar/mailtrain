@@ -6,13 +6,13 @@ Source publication: `f0a4c8697bd1531812ed73fff872ec535f718bb0` is the latest pub
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (38)
+## Partial local implementation with acceptance still required (39)
 
-REQ-001, REQ-002, REQ-003, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (22)
+## Required capability not delivered; implementation and/or configuration missing (21)
 
-REQ-004, REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-032, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-032, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 
@@ -28,3 +28,5 @@ REQ-039, REQ-046, REQ-054, REQ-059, REQ-065
 - REQ-055/056/058/060/061/064: retention/region/legal/ops owners, independent assessment, partners, load/restore/on-call and signoffs; rights/admin/ops implementation unfinished.
 
 Railway browser access to exact requested workspace is verified; hosting budget US$30/month is approved. A private concrete shared-workspace resource/budget plan is prepared; tax treatment, available capacity and all-in spending enforcement still require verification before provisioning. None of these access changes closes a release gate. All13scope, identity/isolation, artifact, real-client, ESP, audience/delivery, billing/economics, operations, security, privacy/legal, partners, public-experience and final-release gates remain partial/pending/blocked in RELEASE.md.
+
+Membership lifecycle development adds existing-member role/removal/atomic transfer, current authorization and immutable local seat-impact history.107tests,API85,full local checks and owned HTTP/Chromium interruption fixtures pass; the fresh review/publication gate is pending. Invitations, approved capacity, production recent MFA, identity recovery, collaboration and billing reconciliation remain required. No entire GA requirement or release gate is accepted.

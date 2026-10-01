@@ -1,3 +1,4 @@
+import { membershipRoute } from '@/server/membership-route';
 import { EventType } from '@/domain/events';
 import { readEventBody } from '@/server/events';
 import { LINT_RULES_VERSION } from '@/domain/preflight';
@@ -59,6 +60,7 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
     if(root==='brand-sources'||(root==='brands'&&command==='memory-preview'))return json(await brandMemoryRoute(req,path,body,key),root==='brand-sources'&&method==='POST'&&!id?201:200);
     if(root==='webhook-deliveries')return json(await webhookHistoryRoute(req,path,body,key));
     if (root === 'webhook-endpoints')

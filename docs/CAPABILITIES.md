@@ -7,7 +7,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-001 | 5.1 Email/password, Google sign in and magic link | Partial / development | Local session + configurable Clerk; real identity flows unverified |
 | REQ-002 | 5.1 Workspaces and memberships | Partial / development | Membership + forced RLS negative tests; full surface matrix pending |
 | REQ-003 | 5.1 Owner, Admin, Editor, Viewer, Billing | Partial / development | Server policy negative tests; comprehensive endpoint/step-up coverage pending |
-| REQ-004 | 5.1 Invitations, seats, membership audit | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
+| REQ-004 | 5.1 Invitations, seats, membership audit | Partial / development | Existing-member role/removal/atomic ownership transfer, immutable seat-impact journal and current authority tested; invites, approved capacity, provider MFA and billing reconciliation remain required. |
 | REQ-005 | 5.1 Enterprise SAML/OIDC and later SCIM | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-006 | 5.2 Brand extraction from URL and assets | Partial / development | Manual kit + public extraction proposal; fixture performance/asset extraction pending |
 | REQ-007 | 5.2 Brand Memory and retrieval | Partial / development | Pinned immutable kits, forced-RLS immutable approved source chunks, bounded lexical retrieval and inspectable IDs/digests; monotonic removal excludes new retrieval. Historical kit pagination/capacity recovery tested. Embeddings/live model evaluation and physical erasure remain required |

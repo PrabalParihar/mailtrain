@@ -5,6 +5,7 @@ import { WebhookEndpoints } from './webhooks';
 import { EventHistory } from './events';
 import { DispatchControls } from './dispatch-controls';
 import { ApiKeys } from './api-keys';
+import { TeamMembers } from './memberships';
 import { Users, ShieldCheck, Plus, CalendarDays, AlertCircle } from 'lucide-react';
 import { useResourcePage } from './paged';
 import { api } from './api';
@@ -363,6 +364,7 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
           )}
         </section>
       </div>
+      <TeamMembers workspace={workspace} role={role}/>
       <section className="panel">
         <h2>Production setup register</h2>
         <p>

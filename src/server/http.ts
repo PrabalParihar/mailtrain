@@ -34,6 +34,8 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (id === 'workspace' && !command) methods = ['POST'];
   }
   if (root === 'workspaces' && path.length === 1) methods = ['GET', 'POST'];
+  if(root==='membership-changes'&&!id)methods=['GET'];
+  if(root==='memberships'){if(!id||id==='summary'&&!command)methods=['GET'];else if(uuid.test(id)&&['role','remove','transfer-owner'].includes(command))methods=['POST'];}
   if (root === 'brands') {
     if (!id) methods = ['GET', 'POST'];
     else if (id === 'from-url' && !command) methods = ['POST'];

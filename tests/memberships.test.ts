@@ -37,6 +37,12 @@ test('the final Owner survives role/removal and explicit transfer preserves edit
 });
 test('recent MFA requires real first and second factors without downgrade or malformed ages',()=>{
  assert.ok(membershipPolicy?.recentMfa,'Membership policy must exist.');
- assert.equal(membershipPolicy.recentMfa([0,0]),true);assert.equal(membershipPolicy.recentMfa([10,10]),true);
+ assert.equal(membershipPolicy.recentMfa([0,0]),true);assert.equal(membershipPolicy.recentMfa([10,10]),false);
  for(const age of [null,undefined,[],[0],[0,0,0],[-1,0],[0,-1],[0,11],[11,0],[0,Infinity],[NaN,0],['0',0],{first:0,second:0}])assert.equal(membershipPolicy.recentMfa(age),false);
+});
+test('recent MFA expires at the Clerk ten-minute factor-age boundary',()=>{
+ assert.ok(membershipPolicy?.recentMfa,'Membership policy must exist.');
+ assert.equal(membershipPolicy.recentMfa([9,9]),true);
+ assert.equal(membershipPolicy.recentMfa([10,0]),false);
+ assert.equal(membershipPolicy.recentMfa([0,10]),false);
 });

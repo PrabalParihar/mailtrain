@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Tx } from './db';
 import type { Principal } from './auth';
-import { RoleChangeInput, RemoveMemberInput, TransferOwnerInput } from '../domain/memberships';
+import { RoleChangeInput, RemoveMemberInput, TransferOwnerInput, MembershipCommandResult } from '../domain/memberships';
 import { fail } from './errors';
 import { audit, digest } from './audit';
 const errors:Record<string,{status:number;message:string}>={
@@ -13,7 +13,7 @@ export async function changeMembership(tx:Tx,p:Principal,id:string,command:'role
  const input=command==='role'?RoleChangeInput.parse(body):command==='remove'?RemoveMemberInput.parse(body):TransferOwnerInput.parse(body);
  let result:{member:Record<string,unknown>;changes:Record<string,unknown>[]};
  try{
-  result=(await tx.query('SELECT public.mailcraft_change_member($1,$2,$3,$4,$5,$6,$7)AS result',[p.workspace,id,input.expected_version,command,'role'in input?input.role:null,'expected_owner_version'in input?input.expected_owner_version:null,'acknowledge'in input?input.acknowledge:false])).rows[0].result;
+  result=MembershipCommandResult.parse((await tx.query('SELECT public.mailcraft_change_member($1,$2,$3,$4,$5,$6,$7)AS result',[p.workspace,id,input.expected_version,command,'role'in input?input.role:null,'expected_owner_version'in input?input.expected_owner_version:null,'acknowledge'in input?input.acknowledge:false])).rows[0].result);
  }catch(error){
   if((error as{code?:string}).code==='55P03')fail(503,'MEMBERSHIP_BUSY','Member controls are busy. Keep the same command and retry shortly.');
   const name=(error as{message?:string}).message??'',mapped=errors[name];
@@ -27,5 +27,6 @@ export async function readMembershipSummary(tx:Tx,p:Principal){
  const actor=(await tx.query("SELECT id,user_id,role,status,version FROM memberships WHERE workspace_id=$1 AND user_id=$2 AND status='active'",[p.workspace,p.user])).rows[0];
  if(!actor||!['Owner','Admin'].includes(actor.role))fail(403,'INSUFFICIENT_SCOPE','Your current role cannot manage members.');
  const editing=Number((await tx.query("SELECT count(*)::text AS count FROM memberships WHERE workspace_id=$1 AND status='active' AND role IN('Owner','Admin','Editor')",[p.workspace])).rows[0].count);
- return{actor,editing_seats:editing,capacity_policy_configured:false,billing_reconciled:false};
+ const owners=Number((await tx.query("SELECT count(*)::text AS count FROM memberships WHERE workspace_id=$1 AND status='active' AND role='Owner'",[p.workspace])).rows[0].count);
+ return{actor,editing_seats:editing,active_owners:owners,capacity_policy_configured:false,billing_reconciled:false};
 }

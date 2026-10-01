@@ -19,7 +19,7 @@ npm run worker
 
 Open http://127.0.0.1:3000/app. Use the private local key in `.env.local`. The initial owner is explicitly a local development identity; local bootstrap is disabled in production. Configure Clerk to test real identity flows. Do not copy the sample local DB passwords into production.
 
-Supported local flows: brand version confirmation; durable typed block editing; CAS save/conflict/recovery; immutable checkpoint/history restore; raw HTML sanitization; browser simulations; frozen HTML/plaintext/PNG/PDF download; provider-gated structured AI proposals; fixture CSV dry-run/import/hold/suppression; draft campaign intent/review/cancel; honest integration status and local audit/usage views.
+Supported local flows: brand version confirmation; durable typed block editing; CAS save/conflict/recovery; immutable checkpoint/history restore; raw HTML sanitization; browser simulations; frozen HTML/plaintext/PNG/PDF download; provider-gated structured AI proposals; fixture CSV dry-run/import/hold/suppression; draft campaign intent/review/cancel; honest integration status and local audit/usage views; existing-member role/removal/ownership controls with recoverable confirmations and seat-impact history. Invitations and approved seat capacity still require implementation/configuration.
 
 AI is not active until a model, server-only API key and finite approved `AI_GENERATION_ALLOWANCE` are configured. Default allowance is zero. No success is simulated. Browser render exports have remote networking disabled and do not count as real-client evidence.
 

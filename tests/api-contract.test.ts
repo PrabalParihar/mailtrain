@@ -42,6 +42,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       }
     }
   const roots = [
+    'memberships','membership-changes',
     'brand-sources',
     'webhook-deliveries',
     'webhook-endpoints',
@@ -69,8 +70,9 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'usage',
     'audit',
   ];
-  const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current', 'workspace'];
+  const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary'];
   const commands = [
+    'role','transfer-owner',
     '',
     'memory-preview',
     'remove',
