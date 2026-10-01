@@ -10,7 +10,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-004 | 5.1 Invitations, seats, membership audit | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-005 | 5.1 Enterprise SAML/OIDC and later SCIM | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-006 | 5.2 Brand extraction from URL and assets | Partial / development | Manual kit + public extraction proposal; fixture performance/asset extraction pending |
-| REQ-007 | 5.2 Brand Memory and retrieval | Partial / development | Pinned immutable brand versions; retrieval/source erasure pending |
+| REQ-007 | 5.2 Brand Memory and retrieval | Partial / development | Pinned immutable kits, forced-RLS immutable approved source chunks, bounded lexical retrieval and inspectable IDs/digests; monotonic removal excludes new retrieval. Historical kit pagination/capacity recovery tested. Embeddings/live model evaluation and physical erasure remain required |
 | REQ-008 | 5.2 Voice Guard | Partial / development | Located visible-copy/alt exact-phrase lint with shared compiler sanitization tested; configured tone rules pending |
 | REQ-009 | 5.3 Prompt, goal and persona aware generation | Partial / development | Real structured AI adapter gated by provider/allowance; live corpus unverified |
 | REQ-010 | 5.3 Series and delay hints | Partial / development | Series proposals with delay hints gated by AI access |

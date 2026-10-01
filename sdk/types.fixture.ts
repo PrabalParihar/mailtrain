@@ -22,6 +22,11 @@ export function typeExamples(client: LettercapeClient) {
   // @ts-expect-error only documented cursor pages can be iterated
   void client.pages('getEmail', { path: { id: 'example' } });
 
+  void client.pages('listBrandSources',{query:{brand_kit_version_id:'example'}});
+  void client.call('previewBrandMemory',{path:{id:'example'},body:{query:'cotton'}});
+  void client.call('addBrandSource',{body:{brand_kit_version_id:'example',title:'Owned brief',source_ref:'Document',text:'Facts',acknowledge_rights_and_no_private_data:true}});
+  // @ts-expect-error sources require explicit approval
+  void client.call('addBrandSource',{body:{brand_kit_version_id:'example',title:'Owned brief',source_ref:'Document',text:'Facts',acknowledge_rights_and_no_private_data:false}});
   void client.pages('listWebhookEndpoints',{});
   void client.call('createWebhookEndpoint',{body:{name:'Paused',url:'https://example.org/webhook',subscriptions:['contacts.imported']}});
   void client.call('rotateWebhookEndpoint',{path:{id:'example'},body:{expected_version:1}});

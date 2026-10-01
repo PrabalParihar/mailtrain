@@ -4,6 +4,7 @@ import { load } from 'cheerio';
 import { tenant, sessionQuery, closeDb } from './db';
 import { safeFetchHtml } from './safe-fetch';
 import { generateProposal } from './ai';
+import { retrieveBrandMemory } from './brand-memory';
 import { queuedAuthorized } from './queue-authorization';
 import { AppError } from './errors';
 let stopped = false;
@@ -83,24 +84,15 @@ async function tick() {
           ],
         };
       } else if (operation.type === 'email.generate') {
-        const brand = await tenant(
-          job.workspace_id,
-          job.created_by,
-          async (tx) =>
-            (
-              await tx.query('SELECT data FROM brands WHERE id=$1', [
-                operation.input.brand_kit_version_id,
-              ])
-            ).rows[0],
-        );
-        if (!brand)
-          throw new AppError(
-            404,
-            'RESOURCE_NOT_FOUND',
-            'The selected brand version is unavailable.',
-          );
+        const context=await tenant(job.workspace_id,job.created_by,async(tx)=>{
+          const current=(await tx.query("SELECT * FROM operations WHERE id=$1 AND state='running'",[job.id])).rows[0];
+          if(!current||!await queuedAuthorized(tx,current))throw new AppError(409,'PERMISSION_REVOKED','Generation authority changed before context retrieval.');
+          const brand=(await tx.query('SELECT data FROM brands WHERE id=$1',[operation.input.brand_kit_version_id])).rows[0];
+          if(!brand)throw new AppError(404,'RESOURCE_NOT_FOUND','The selected brand version is unavailable.');
+          return{brand:brand.data,memory:await retrieveBrandMemory(tx,operation.input.brand_kit_version_id,operation.input.prompt)};
+        });
         externalAttempt = !!process.env.OPENAI_API_KEY && !!process.env.OPENAI_MODEL;
-        result = await generateProposal(operation.input, brand.data);
+        result = await generateProposal(operation.input, context.brand,context.memory);
       } else
         throw new AppError(
           422,

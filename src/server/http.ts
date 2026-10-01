@@ -38,7 +38,9 @@ export function assertRouteMethod(path: string[], method: string) {
     if (!id) methods = ['GET', 'POST'];
     else if (id === 'from-url' && !command) methods = ['POST'];
     else if (id === 'current' && !command) methods = ['GET'];
+    else if(uuid.test(id)&&command==='memory-preview')methods=['POST'];
   }
+  if(root==='brand-sources'){if(!id)methods=['GET','POST'];else if(uuid.test(id)&&!command)methods=['GET'];else if(uuid.test(id)&&command==='remove')methods=['POST'];}
   if (root === 'emails') {
     if (!id) methods = ['GET', 'POST'];
     else if (id === 'generate' && !command) methods = ['POST'];

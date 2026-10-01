@@ -41,6 +41,7 @@ export function CreatePanel({ workspace }: { workspace: string }) {
     [error, setError] = useState(''),
     [result, setResult] = useState<{
       proposals: { spec: EmailSpec; review_notes: string[]; delay_hours: number }[];
+      provenance?:{model:string;prompt_version:string;brand_version:string;memory:{retrieval_version:string;retrieved_at:string;chunks:{id:string;source_id:string;content_digest:string}[]}};
     } | null>(null),
     [operationId, setOperationId] = useState(''),
     [series, setSeries] = useState(false),
@@ -257,6 +258,7 @@ export function CreatePanel({ workspace }: { workspace: string }) {
           {result && (
             <div className="panel proposal-card">
               <span className="badge info">Proposal · review before applying</span>
+              {result.provenance&&<details><summary>Generation evidence</summary><p className="small muted"style={{overflowWrap:'anywhere'}}>Model {result.provenance.model} · prompt {result.provenance.prompt_version}<br/>Brand version {result.provenance.brand_version}<br/>Retrieval {result.provenance.memory.retrieval_version} · {result.provenance.memory.retrieved_at}</p>{result.provenance.memory.chunks.length===0?<p>No source chunks were selected.</p>:result.provenance.memory.chunks.map((chunk)=><p className="small muted"key={chunk.id}style={{overflowWrap:'anywhere'}}>Source {chunk.source_id}<br/>Chunk {chunk.id}<br/>Digest {chunk.content_digest}</p>)}</details>}
               {result.proposals.map((p, i) => (
                 <article key={i}>
                   <h2>{p.spec.subject}</h2>

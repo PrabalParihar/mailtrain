@@ -1,0 +1,8 @@
+'use client';
+import{useState}from'react';import{useResourcePage}from'./paged';import{BrandMemoryPanel}from'./brand-memory';
+type Kit={id:string;version:number};
+export function BrandMemoryHistory(props:{workspace:string;brand:string;version:number}){return<ScopedHistory key={props.workspace+':'+props.brand}{...props}/>;}
+function ScopedHistory({workspace,brand,version}:{workspace:string;brand:string;version:number}){
+ const history=useResourcePage<Kit>(workspace,'brands'),[selected,setSelected]=useState<Kit>({id:brand,version}),kits=[{id:brand,version},...(selected.id!==brand?[selected]:[]),...history.data.filter((kit)=>kit.id!==brand&&kit.id!==selected.id)];
+ return<><section className="panel brand-memory-history"><h2>Source version history</h2><p className="muted">Inspect or remove sources from an earlier confirmed kit. Choosing a source version leaves your current brand form and existing email pins intact.</p>{history.error&&<p className="alert danger"role="alert">{history.error}</p>}<label htmlFor={workspace+'-memory-version'}>Source brand version</label><select id={workspace+'-memory-version'} value={selected.id}onChange={(event)=>{const kit=kits.find((item)=>item.id===event.target.value);if(kit)setSelected(kit);}}>{kits.map((kit)=><option key={kit.id}value={kit.id}>Brand v{kit.version}{kit.id===brand?' · current':''}</option>)}</select><div className="toolbar"><span>{history.total} confirmed versions</span><button disabled={history.busy}onClick={()=>void history.reload()}>Reload source versions</button>{history.hasMore&&<button disabled={history.busy}onClick={()=>void history.loadMore()}>Load older brand versions</button>}</div></section><BrandMemoryPanel workspace={workspace}brand={selected.id}version={selected.version}/></>;
+}

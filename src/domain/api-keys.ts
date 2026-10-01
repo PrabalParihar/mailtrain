@@ -33,7 +33,7 @@ export function scopeForResource(
   command: string | undefined,
 ): string | undefined {
   const read = method === 'GET';
-  if (root === 'brands') return read ? 'brands:read' : 'brands:write';
+  if (root === 'brands'||root==='brand-sources') return read||command==='memory-preview' ? 'brands:read' : 'brands:write';
   if (root === 'emails') return read ? 'emails:read' : 'emails:write';
   if (root === 'email-revisions')
     return command === 'download' || command === 'export'

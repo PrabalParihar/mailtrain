@@ -2,6 +2,7 @@ import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { z } from 'zod';
 import { BrandSchema } from '../src/domain/brand';
+import{BrandSourceInput,BrandSource,BrandMemoryChunk,BrandMemoryContext,MemoryPreviewInput}from'../src/domain/brand-memory';
 import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
 import { MappingSchema } from '../src/domain/contact-import';
@@ -28,6 +29,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  BrandSourceInput:fromZod(BrandSourceInput),BrandSource:fromZod(BrandSource),BrandMemoryChunk:fromZod(BrandMemoryChunk),BrandMemoryContext:fromZod(BrandMemoryContext),MemoryPreviewInput:fromZod(MemoryPreviewInput),
   WebhookEndpoint: fromZod(WebhookEndpoint),
   WebhookEndpointInput: {...fromZod(WebhookEndpointInput), allOf:[{properties:{subscriptions:{uniqueItems:true}}}]},
   WebhookVersionInput: fromZod(WebhookVersionInput),
@@ -232,6 +234,10 @@ schemas.WebhookDeliveryResponse=envelope({delivery:ref('WebhookDelivery'),config
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
+schemas.BrandSourceResponse=envelope({source:ref('BrandSource')});
+schemas.BrandSourceDetailResponse=envelope({source:ref('BrandSource'),chunks:array(ref('BrandMemoryChunk'))});
+schemas.BrandMemoryResponse=envelope({context:ref('BrandMemoryContext')});
+schemas.BrandSourcesPage=envelope({data:array(ref('BrandSource')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0}});
 schemas.BrandResponse = envelope({ brand: ref('BrandVersion') });
 schemas.CurrentBrandResponse = envelope({ brand: nullable(ref('BrandVersion')) });
 schemas.OperationResponse = envelope({ operation: ref('Operation') });
@@ -552,6 +558,11 @@ for (const [id, path, response, scope, session, query] of [
     paged: true,
     query: query ? [...query] : undefined,
   });
+add({id:'listBrandSources',path:'/v1/brand-sources',method:'GET',response:'BrandSourcesPage',paged:true,scope:'brands:read',query:[{name:'brand_kit_version_id',in:'query',required:true,schema:uuid}]});
+add({id:'getBrandSource',path:'/v1/brand-sources/{id}',method:'GET',response:'BrandSourceDetailResponse',scope:'brands:read'});
+add({id:'addBrandSource',path:'/v1/brand-sources',method:'POST',body:'BrandSourceInput',example:{brand_kit_version_id:exampleId,title:'Owned product brief',source_ref:'Approved document',text:'Verified product facts',acknowledge_rights_and_no_private_data:true},response:'BrandSourceResponse',status:201,keyed:true,scope:'brands:write',description:'Manually approved UTF8 text up to64KiB; source rights/no-private-data assertion required. Exact confirmed brand version; no URL fetch or embedding provider.'});
+add({id:'removeBrandSource',path:'/v1/brand-sources/{id}/remove',method:'POST',body:'Empty',response:'BrandSourceResponse',keyed:true,scope:'brands:write',description:'Monotonic tombstone excludes new retrieval; historical metadata remains. Does not certify privacy erasure.'});
+add({id:'previewBrandMemory',path:'/v1/brands/{id}/memory-preview',method:'POST',body:'MemoryPreviewInput',example:{query:'cotton product facts'},response:'BrandMemoryResponse',scope:'brands:read',description:'Read-only current selected-version lexical context; no provider/model request.'});
 add({
   id: 'getCurrentBrand',
   path: '/v1/brands/current',

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Check, Globe, Palette, ArrowUpRight } from 'lucide-react';
 import { api, poll } from './api';
 import type { Brand } from '@/domain/brand';
+import{BrandMemoryHistory}from'./brand-memory-history';
 const initial: Brand = {
   name: '',
   website: '',
@@ -19,16 +20,18 @@ const initial: Brand = {
 export function BrandPanel({ workspace }: { workspace: string }) {
   const [brand, setBrand] = useState<Brand>(initial),
     [version, setVersion] = useState(0),
+    [brandId,setBrandId]=useState(''),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(''),
     [url, setUrl] = useState('');
   useEffect(() => {
-    void api<{ brand: { version: number; data: Brand } | null }>(workspace, 'brands/current')
+    void api<{ brand: { id:string;version: number; data: Brand } | null }>(workspace, 'brands/current')
       .then((r) => {
         if (r.brand) {
           setBrand(r.brand.data);
           setVersion(r.brand.version);
+          setBrandId(r.brand.id);
         }
       })
       .catch((e) => setError(e.message));
@@ -118,11 +121,12 @@ export function BrandPanel({ workspace }: { workspace: string }) {
             setBusy('confirm');
             setError('');
             try {
-              const r = await api<{ brand: { version: number } }>(workspace, 'brands', 'POST', {
+              const r = await api<{ brand: { id:string;version: number } }>(workspace, 'brands', 'POST', {
                 ...brand,
                 provenance: brand.provenance.map((p) => ({ ...p, status: 'confirmed' })),
               });
               setVersion(r.brand.version);
+          setBrandId(r.brand.id);
               setNotice(
                 'Brand version ' +
                   r.brand.version +
@@ -298,6 +302,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
           </div>
         </aside>
       </div>
+      {brandId&&<BrandMemoryHistory workspace={workspace}brand={brandId}version={version}/>}
     </>
   );
 }

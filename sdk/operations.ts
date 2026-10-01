@@ -216,6 +216,46 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "listBrandSources": {
+    "method": "GET",
+    "path": "/v1/brand-sources",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
+  "getBrandSource": {
+    "method": "GET",
+    "path": "/v1/brand-sources/{id}",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "addBrandSource": {
+    "method": "POST",
+    "path": "/v1/brand-sources",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "removeBrandSource": {
+    "method": "POST",
+    "path": "/v1/brand-sources/{id}/remove",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "previewBrandMemory": {
+    "method": "POST",
+    "path": "/v1/brands/{id}/memory-preview",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
   "getCurrentBrand": {
     "method": "GET",
     "path": "/v1/brands/current",

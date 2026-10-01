@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { compileEmail, blankSpec, EmailSpecSchema, lintEmail, sanitizeRaw } from '@/domain/email';
 import { BrandSchema } from '@/domain/brand';
+import{brandMemoryRoute}from'@/server/brand-memory-route';
 import { identity, localBootstrap, checkOrigin, withPrincipal } from '@/server/auth';
 import { userQuery, tenant } from '@/server/db';
 import { AppError, fail } from '@/server/errors';
@@ -58,6 +59,7 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if(root==='brand-sources'||(root==='brands'&&command==='memory-preview'))return json(await brandMemoryRoute(req,path,body,key),root==='brand-sources'&&method==='POST'&&!id?201:200);
     if(root==='webhook-deliveries')return json(await webhookHistoryRoute(req,path,body,key));
     if (root === 'webhook-endpoints')
       return json(await webhookRoute(req,path,body,key),method==='POST'&&!id?201:200);
