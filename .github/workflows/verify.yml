@@ -55,6 +55,7 @@ jobs:
           npm run smoke:preflight
           npm run smoke:render-cache
           npm run smoke:derivation
+          npm run smoke:dispatch-controls
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

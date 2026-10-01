@@ -26,7 +26,7 @@ export function localMode() {
 export function checkOrigin(request: Request) {
   if (request.headers.has('authorization')) {
     const [root] = requestPath(request);
-    if (['local-session', 'session', 'workspaces', 'api-keys'].includes(root))
+    if (['local-session', 'session', 'workspaces', 'api-keys', 'dispatch-controls'].includes(root))
       fail(403, 'SESSION_REQUIRED', 'This action requires an authorized signed-in session.');
     return; // bearer is validated by principal; never falls back to a cookie
   }

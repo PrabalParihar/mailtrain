@@ -40,7 +40,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-034 | 5.9 Trial domain and warming | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-035 | 5.9 Immediate schedule approval | Partial / development | Frozen campaign intent/review request, approval blocked by missing evidence |
 | REQ-036 | 5.9 Recipient jobs and logs | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-037 | 5.9 Abuse controls | Partial / development | Sending disabled, real imports held; risk/appeal controls pending |
+| REQ-037 | 5.9 Abuse controls | Partial / development | Sending disabled; fail-closed global/provider/workspace policy fences and evidence. Risk checks, domain controls, appeal workflow and full dispatch authorization pending |
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial / development | Campaign snapshots; scheduling/calendar/UTM pending |
 | REQ-039 | 5.10 A/B subject testing | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-040 | 5.11 ESP adapters | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
@@ -63,7 +63,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-057 | 5.16 Encryption MFA and audit | Partial / development | Local hashed sessions, role/RLS and hash audit; KMS/TLS/MFA/full audit pending |
 | REQ-058 | 5.16 Assurance and penetration test | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-059 | 5.16 US and EU residency | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-060 | 5.17 Status flags and kill switches | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
+| REQ-060 | 5.17 Status flags and kill switches | Partial / development | Persisted global/four-provider/workspace stops, separate NOLOGIN operator SQL authority, current Owner/Admin session control, keyed CAS, shared policy race fence and opt-out availability. Real operator identity/MFA/service/UI, on-call/status incidents, production load/60-second proof and complete dispatch authorization remain required |
 | REQ-061 | 5.17 Internal admin | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-062 | 4 and 12 Public experience and docs | Partial / development | Honest marketing/docs/status/legal/support development routes |
 | REQ-063 | 10 AI evaluation and trust | Partial / development | Versioned no-tool structured AI prompt/validation; 50 real golden briefs pending |

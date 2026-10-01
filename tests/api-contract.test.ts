@@ -8,6 +8,7 @@ import {
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { assertRouteMethod } from '../src/server/http';
+import { DispatchPolicyInput } from '../src/domain/dispatch-controls';
 import { BrandSchema } from '../src/domain/brand';
 import { EmailSpecSchema } from '../src/domain/email';
 import { validateRule } from '../src/domain/segments';
@@ -41,6 +42,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       }
     }
   const roots = [
+    'dispatch-controls',
     'health',
     'workspaces',
     'session',
@@ -63,7 +65,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'usage',
     'audit',
   ];
-  const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current'];
+  const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current', 'workspace'];
   const commands = [
     '',
     'draft',
@@ -112,6 +114,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       }
   const sample = (path: string, method = 'post') =>
     spec.paths[path][method].requestBody.content['application/json'].example;
+  DispatchPolicyInput.parse(sample('/v1/dispatch-controls/workspace'));
   BrandSchema.parse(sample('/v1/brands'));
   EmailSpecSchema.parse(sample('/v1/emails/{id}/draft', 'patch').spec);
   validateRule(sample('/v1/segments').rule, []);

@@ -20,6 +20,8 @@ import { assertRouteMethod, readJson } from '@/server/http';
 import { keyRoute, requireKeyScope } from '@/server/api-keys';
 import { operationScope } from '@/domain/api-keys';
 import { RemixInput, LocaleDraftInput } from '@/domain/derivation';
+import { readDispatchControls, setWorkspaceDispatchPolicy } from '@/server/dispatch-controls';
+import { DispatchPolicyInput } from '@/domain/dispatch-controls';
 import { deriveEmail } from '@/server/derivation';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,6 +54,11 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if (root === 'dispatch-controls')
+      return json(await withPrincipal(req, 'manage', async (tx,p) => {
+        if (method !== 'GET') await keyed(tx,p,'dispatch.workspace_policy',key,body,() => setWorkspaceDispatchPolicy(tx,p,DispatchPolicyInput.parse(body)));
+        return { controls: await readDispatchControls(tx,p.workspace) };
+      }));
     if (root === 'api-keys')
       return json(await keyRoute(req, path, body, key), method === 'POST' && !id ? 201 : 200);
     if (root === 'local-session' && method === 'POST') {

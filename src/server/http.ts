@@ -22,6 +22,10 @@ export function assertRouteMethod(path: string[], method: string) {
     if (!id) methods = ['GET', 'POST'];
     else if (uuid.test(id) && ['rotate', 'revoke'].includes(command)) methods = ['POST'];
   }
+  if (root === 'dispatch-controls') {
+    if (!id) methods = ['GET'];
+    else if (id === 'workspace' && !command) methods = ['POST'];
+  }
   if (root === 'workspaces' && path.length === 1) methods = ['GET', 'POST'];
   if (root === 'brands') {
     if (!id) methods = ['GET', 'POST'];

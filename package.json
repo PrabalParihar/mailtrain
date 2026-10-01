@@ -22,7 +22,8 @@
     "smoke:keys": "node --import tsx scripts/smoke-keys.ts && node --import tsx scripts/smoke-key-review.ts",
     "api:generate": "node --import tsx scripts/generate-api.ts",
     "api:check": "node --import tsx scripts/generate-api.ts --check",
-    "smoke:contract": "node --import tsx scripts/smoke-pagination.ts && node --import tsx scripts/smoke-contract-review.ts"
+    "smoke:contract": "node --import tsx scripts/smoke-pagination.ts && node --import tsx scripts/smoke-contract-review.ts",
+    "smoke:dispatch-controls": "node --import tsx scripts/smoke-dispatch-controls.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

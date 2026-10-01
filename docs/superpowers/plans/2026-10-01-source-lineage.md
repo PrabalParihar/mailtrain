@@ -40,4 +40,4 @@ Interfaces:POST `/email-revisions/{id}/remix`, POST `/email-revisions/{id}/local
 ### Task3: Whole-slice acceptance/checkpoint
 - [x] Full tests/lint/typecheck/build/APIcheck and relevant existing local regressions.
 - [x] One fresh reviewer, reproduce Important/Critical findings before one fix pass; document deferred Minors and unconfigured translation/template-catalog/media/client acceptance.
-- [ ] Update capability/release/verification register, sync only tracked files to canonical Desktop, ordinary authorized checkpoint push, inspect CI. Preserve whole Baseline A and continue remaining modules.
+- [x] Update capability/release/verification register, sync only tracked files to canonical Desktop, ordinary authorized checkpoint push, inspect CI. Preserve whole Baseline A and continue remaining modules.

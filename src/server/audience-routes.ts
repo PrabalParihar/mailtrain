@@ -5,6 +5,8 @@ import { audit, digest } from './audit';
 import { importCommand, readImportErrors } from './contact-imports';
 import { fail } from './errors';
 import { resourcePage } from './pagination';
+import { dispatchPolicyFence } from './dispatch-controls';
+import { DispatchProvider } from '../domain/dispatch-controls';
 import { eligibility } from '../domain/audience';
 export async function audienceRoute(
   req: Request,
@@ -102,6 +104,15 @@ export async function audienceRoute(
             return { campaign: c };
           });
         return keyed(tx, p, 'campaign.' + cmd + ':' + id, key, body, async () => {
+          let dispatchProvider: string|null = null;
+          if (['send','schedule','resume'].includes(cmd)) {
+            const observed = (await tx.query('SELECT intent FROM campaigns WHERE id=$1',[id])).rows[0];
+            if (!observed) fail(404,'RESOURCE_NOT_FOUND','Campaign not found.');
+            const provider = DispatchProvider.safeParse(observed.intent.provider);
+            dispatchProvider = provider.success ? provider.data : null;
+            const policy = await dispatchPolicyFence(tx,p.workspace,provider.success ? provider.data : null);
+            if (!policy.allowed) fail(409,'DISPATCH_PAUSED','Dispatch is stopped by current policy or missing policy evidence. No mail was submitted.',{ reason: policy.reason });
+          }
           const c = (await tx.query('SELECT * FROM campaigns WHERE id=$1 FOR UPDATE', [id]))
             .rows[0];
           if (!c) fail(404, 'RESOURCE_NOT_FOUND', 'Campaign not found.');
@@ -148,12 +159,14 @@ export async function audienceRoute(
               'Production delivery gates have not been verified. No approval was issued.',
             );
           }
-          if (cmd === 'send' || cmd === 'schedule' || cmd === 'resume')
+          if (cmd === 'send' || cmd === 'schedule' || cmd === 'resume') {
+            if (c.intent.provider !== dispatchProvider) fail(409,'STATE_CONFLICT','The campaign provider changed during the policy check. Reload before trying again.');
             fail(
               409,
               'PROVIDER_NOT_READY',
               'Sending is disabled until identity, consent, preview, spend and delivery gates are verified. No mail was submitted.',
             );
+          }
           if (cmd === 'cancel' || cmd === 'pause') {
             const state = cmd === 'cancel' ? 'cancelled' : 'paused';
             await tx.query('UPDATE campaigns SET state=$1 WHERE id=$2', [state, id]);

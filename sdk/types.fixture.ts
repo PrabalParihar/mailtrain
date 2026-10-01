@@ -21,4 +21,9 @@ export function typeExamples(client: LettercapeClient) {
   void client.call('unverifiedSendSuccess');
   // @ts-expect-error only documented cursor pages can be iterated
   void client.pages('getEmail', { path: { id: 'example' } });
+
+  void client.call('getDispatchControls', {});
+  void client.call('setWorkspaceDispatchPolicy', { body: { expected_version: 0, paused: true, reason: 'incident' } });
+  // @ts-expect-error Unknown dispatch reasons cannot be submitted
+  void client.call('setWorkspaceDispatchPolicy', { body: { expected_version: 0, paused: false, reason: 'guess' } });
 }
