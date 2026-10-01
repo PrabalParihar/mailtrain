@@ -1,0 +1,7 @@
+# Persistent reference consumer process-restart verification
+
+Spec: full Baseline A REQ-047/050, TECH070/071/072, TST13; companion contract examples/webhook-consumer. This verification extends local evidence rather than activating production.
+Task1 RED: isolated PostgreSQL consumer schema; start owned loopback receiver process, send a real signed event, observe durable commit without an HTTP acknowledgment, kill only owned receiver, start fresh PID and retry exact bytes with new valid signature, prove204/one receipt/one effect; then an older event cannot roll back version and identity-conflict event is rejected. Missing child fixture must fail first.
+Task2 GREEN: bounded test-only stdin configuration/loopback bind, no credentials logged, BEGIN/COMMIT receipt+effect before response, held acknowledgment only in this explicit fixture, process readiness/exit deadlines, clean all owned processes/schema in finally. No production transport exception, worker activation, paid call, sender or external n8n claim.
+Task3: full suite/lint/typecheck/build/API, one fresh whole-slice review and one Important RED→GREEN pass, exact canonical/source/CI publication. Actual deployment/egress/KMS/n8n, process restart under representative production load and all13GA gates remain required.
+Review focus: meaningful actual distinct-process restart and lost-ack evidence, transaction-before-ack, exact bytes/signatures/persistent dedupe/reorder/conflict, bounded loopback-only child fixture configuration/cleanup/no secret output, honest scope and no production mutation.
