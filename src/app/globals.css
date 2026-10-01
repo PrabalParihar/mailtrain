@@ -1526,3 +1526,29 @@ td {
   margin: 0;
   min-width: 0;
 }
+/* Public preferences remain readable without an account on narrow displays. */
+.preference-topic {
+  flex-direction: row;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0;
+}
+.preference-topic input {
+  width: auto;
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+.preference-topic small {
+  display: block;
+}
+
+.preference-controls fieldset {
+  border: 0;
+  padding: 0;
+  margin: 28px 0 0;
+  min-width: 0;
+}
+.preference-topic input {
+  min-height: 24px;
+}

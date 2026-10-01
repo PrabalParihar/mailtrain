@@ -36,3 +36,29 @@ test('signed recipient GET has no opt-out side effects; repeated POST suppresses
   );
   await assert.rejects(readPreference(token.slice(0, -5) + 'wrong'), /invalid|expired/i);
 });
+
+import { frequencyWindowMs, PreferenceInput } from '../src/domain/preferences.js';
+test('caps use exact rolling UTC durations and schema rejects ambiguous commands', () => {
+  assert.equal(frequencyWindowMs('daily'), 24 * 60 * 60 * 1000);
+  assert.equal(frequencyWindowMs('weekly'), 7 * 24 * 60 * 60 * 1000);
+  assert.equal(frequencyWindowMs('monthly'), 30 * 24 * 60 * 60 * 1000);
+  assert.equal(
+    PreferenceInput.safeParse({ expected_version: 1, frequency: 'hourly', topics: [] }).success,
+    false,
+  );
+  assert.equal(
+    PreferenceInput.safeParse({
+      expected_version: 1,
+      frequency: 'weekly',
+      topics: [],
+      reactivate_global: 'true',
+    }).success,
+    false,
+  );
+  const id = 'f61024d7-c89e-42d5-b8f0-bf751570e789';
+  assert.equal(
+    PreferenceInput.safeParse({ expected_version: 1, frequency: 'weekly', topics: [id, id] })
+      .success,
+    false,
+  );
+});

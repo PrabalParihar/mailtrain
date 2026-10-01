@@ -1,13 +1,9 @@
 import { readPreference } from '@/server/preferences';
 import { AppError } from '@/server/errors';
+import { PreferenceControls } from '@/ui/preference-controls';
+export const dynamic = 'force-dynamic';
 
-export default async function Preferences({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ token: string }>;
-  searchParams: Promise<{ updated?: string }>;
-}) {
+export default async function Preferences({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   let pref: Awaited<ReturnType<typeof readPreference>> | undefined;
   let errorMessage: string | undefined;
@@ -24,17 +20,11 @@ export default async function Preferences({
         <p>{errorMessage}</p>
       </main>
     );
-  const updated = (await searchParams).updated === '1';
   return (
     <main id="main" className="auth-page">
       <section className="panel auth-panel">
         <p className="eyebrow">{pref.brand} · EMAIL PREFERENCES</p>
         <h1>{pref.unsubscribed ? 'You are unsubscribed.' : 'You control what reaches you.'}</h1>
-        {updated && (
-          <p className="alert success" role="status">
-            Your marketing unsubscribe is saved.
-          </p>
-        )}
         <p>Stop all marketing email from this sender without signing in or answering a survey.</p>
         {!pref.unsubscribed && (
           <form action={'/preferences/' + encodeURIComponent(token) + '/unsubscribe'} method="post">
@@ -44,8 +34,9 @@ export default async function Preferences({
         )}
         <p className="small muted">
           This does not recall messages already authorized or in flight. New dispatch authorizations
-          after suppression are denied. Topic/frequency controls remain unavailable.
+          after suppression are denied. Existing safety blocks remain in place.
         </p>
+        <PreferenceControls token={token} pref={pref} />
       </section>
     </main>
   );

@@ -14,7 +14,8 @@
     "worker": "node --import tsx src/server/worker.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
     "smoke:api": "node --import tsx scripts/smoke-api.ts",
-    "smoke:import": "node --import tsx scripts/smoke-import.ts"
+    "smoke:import": "node --import tsx scripts/smoke-import.ts",
+    "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts"
   },
   "dependencies": {
     "next": "16.3.8",

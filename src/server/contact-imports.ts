@@ -186,7 +186,7 @@ export async function importCommand(
       if (optouts.length) {
         const updated = (
           await tx.query(
-            "UPDATE contacts SET subscription='unsubscribed',consent_version=consent_version+1 WHERE email_lookup=ANY($1::text[]) AND subscription<>'unsubscribed' RETURNING id",
+            "UPDATE contacts c SET subscription='unsubscribed',consent_version=consent_version+1,preference_version=preference_version+1 WHERE email_lookup=ANY($1::text[]) AND (subscription<>'unsubscribed' OR EXISTS(SELECT 1 FROM opt_in_requests r WHERE r.contact_id=c.id AND r.status='pending' AND r.expires_at>now() AND r.expected_consent_version=c.consent_version)) RETURNING id",
             [optouts],
           )
         ).rows;
