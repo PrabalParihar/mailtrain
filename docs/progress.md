@@ -145,3 +145,5 @@ Final: Ruling: future team/invite/seat/last-Owner/membership audit remains requi
 Final: Ruling: future narrow runtime grants must preserve verified row SHARE locking — cost if wrong: availability/authority regressions before security release.
 Final: Ruling: future authority mutation flows need exclusive-before-shared ordering and new races — cost if wrong: future deadlock/admission regressions.
 Final: Ruling: production load/lock-wait/cancellation/security/full65baseline and13GA gates remain open — cost if wrong: configured independent signoffs before deployment.
+
+Published authority checkpointf0a4c8697bd1531812ed73fff872ec535f718bb0:263canonical tracked SHA256matches; clean expected-head advance and authorized ordinary main push. Both exact-head CI36930425201/36930423205 succeeded in full app+isolated renderer;92tests/API79/owned HTTP-Chromium and closed13GA gates. Membership lifecycle next-slice pure policy5tests RED→GREEN/full97tests follows locally; no production/provider changes.
