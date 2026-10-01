@@ -259,8 +259,10 @@ try {
       .screenshot({ path: 'output/playwright/lettercape-api-keys.png' });
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await page.getByRole('link', { name: 'Home', exact: true }).click();
+    await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Open navigation' }).click();
-    await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.locator('.sidebar.open').waitFor();
+    await page.locator('.sidebar.open').getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();
     assert.equal(await page.getByLabel('New API key secret').count(), 0);
     await db.query(

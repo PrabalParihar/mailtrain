@@ -10,6 +10,9 @@ import { allowed, type Action } from '../domain/permissions';
 import { consumeApiRate } from './api-rate';
 import { requestPath } from './http';
 import { resourcePage } from './pagination';
+// Rechecking current authority within one HTTP request must not charge it again.
+// Request identity remains server-owned; every new incoming request has its own receipt.
+const rateReceipts = new WeakMap<Request, { workspace: string; key: string; receipt: Promise<void> }>();
 export function requireKeyScope(p: Principal, scope: string) {
   if (p.api_key && !p.api_key.scopes.includes(scope))
     fail(403, 'INSUFFICIENT_SCOPE', 'This API key does not grant the required resource scope.');
@@ -45,7 +48,14 @@ export async function resolveApiKey(req: Request, action: Action): Promise<Princ
   );
   if (active?.status !== 'active')
     fail(409, 'WORKSPACE_LOCKED', 'This workspace cannot accept new work.');
-  await consumeApiRate(found.workspace_id, found.id);
+  let rate = rateReceipts.get(req);
+  if (!rate) {
+    rate = { workspace: found.workspace_id, key: found.id, receipt: consumeApiRate(found.workspace_id, found.id) };
+    rateReceipts.set(req, rate);
+  }
+  if (rate.workspace !== found.workspace_id || rate.key !== found.id)
+    fail(401, 'AUTH_CONTEXT_CHANGED', 'Request credential context changed.');
+  await rate.receipt;
   if (!allowed(membership.role, action))
     fail(403, 'INSUFFICIENT_SCOPE', 'The issuer cannot delegate this action.');
   const p: Principal = {

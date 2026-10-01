@@ -204,6 +204,7 @@ try {
   );
 } finally {
   for (const table of [
+    'render_downloads',
     'preflights',
     'idempotency',
     'audit_events',

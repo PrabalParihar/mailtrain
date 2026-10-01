@@ -14,6 +14,7 @@
     "worker": "node --import tsx src/server/worker.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
     "smoke:preflight": "node --import tsx scripts/smoke-preflight.ts",
+    "smoke:render-cache": "node --import tsx scripts/smoke-render-cache.ts && node --import tsx scripts/smoke-render-editor.ts",
     "smoke:api": "node --import tsx scripts/smoke-api.ts",
     "smoke:import": "node --import tsx scripts/smoke-import.ts",
     "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts",

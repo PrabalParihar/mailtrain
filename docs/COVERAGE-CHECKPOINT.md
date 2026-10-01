@@ -2,7 +2,7 @@
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 
-Source publication: `b43bb417f1ec893582d299baa0484712849ae664` is remote main and canonical Desktop. Local36tests,14HTTPgroups, key/preference/import/contract/browser suites, lint/typecheck/build and clean Linux image validation pass. [Remote CI36866499913](https://github.com/PrabalParihar/mailtrain/actions/runs/36866499913) succeeded including fresh installs/migrations/full checks/actual HTTP+Chromium and closed release gate. This supersedes the earlier6b2d1b5 failed-selector run.
+Source publication: `483de04344c2d35235164baddadafdd8d9e69b48` is the last published source checkpoint. [CI36869389152](https://github.com/PrabalParihar/mailtrain/actions/runs/36869389152) failed a mobile key navigation race after the earlier checks passed; the scoped navigation fix passes locally. Last fully successful published [CI36866499913](https://github.com/PrabalParihar/mailtrain/actions/runs/36866499913) belongs to b43bb417f1ec893582d299baa0484712849ae664. Current uncommitted renderer/cache slice passes50 local tests/full checks/actual HTTP/Chromium and isolated sandboxed Linux PNG/PDF probes; one fresh review and Important fix pass complete; replacement CI remains pending.
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 

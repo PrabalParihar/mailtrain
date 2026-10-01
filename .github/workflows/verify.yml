@@ -53,9 +53,34 @@ jobs:
           npm run smoke:keys
           npm run smoke:contract
           npm run smoke:preflight
+          npm run smoke:render-cache
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then
             echo "Unexpected production startup without release evidence"
+            exit 1
+          fi
+  renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build dedicated renderer
+        run: docker build -f renderer/Dockerfile -t lettercape-renderer:fixture .
+      - name: Actual sandboxed renderer HTTP fixtures
+        run: |
+          mkdir -p /tmp/lettercape-renderer-evidence
+          chmod 777 /tmp/lettercape-renderer-evidence
+          docker run --rm --network none \
+            --security-opt seccomp=renderer/seccomp-profile.json \
+            --read-only --tmpfs /tmp:rw,nosuid,nodev,size=256m \
+            --memory 1g --cpus 2 --pids-limit 256 \
+            --mount type=bind,src="$PWD/scripts/smoke-renderer.mjs",dst=/fixture.mjs,readonly \
+            --mount type=bind,src=/tmp/lettercape-renderer-evidence,dst=/evidence \
+            --entrypoint node lettercape-renderer:fixture /fixture.mjs
+      - name: Renderer production release must remain closed
+        run: |
+          if docker run --rm --network none lettercape-renderer:fixture; then
+            echo "Unexpected renderer startup without release evidence"
             exit 1
           fi

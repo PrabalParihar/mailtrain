@@ -433,6 +433,7 @@ try {
     'contact_fields',
     'tags',
     'lists',
+    'render_downloads',
     'preflights',
     'campaigns',
     'consent_events',

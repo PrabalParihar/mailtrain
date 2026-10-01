@@ -64,7 +64,9 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
   const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id);
   const history = historyPage.data;
   const epoch = useRef(0),
-    busyRef = useRef('');
+    busyRef = useRef(''),
+    editorActive = useRef(false),
+    exportController = useRef<AbortController | null>(null);
   const writable = editRole && !['raw', 'restore', 'reload', 'fork'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
@@ -83,7 +85,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
   }
   function matches(a: Anchor) {
     return (
-      !!live.current &&
+      editorActive.current && !!live.current &&
       a.epoch === epoch.current &&
       a.version === live.current.doc_version &&
       a.spec === JSON.stringify(live.current.spec)
@@ -109,6 +111,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
   }
   useEffect(() => {
     let mounted = true;
+    editorActive.current = true;
     void api<{ email: Doc }>(workspace, 'emails/' + id)
       .then((r) => {
         if (!mounted) return;
@@ -136,6 +139,8 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
       .catch((e) => setError(e.message));
     return () => {
       mounted = false;
+      editorActive.current = false;
+      exportController.current?.abort();
     };
   }, [workspace, id, storage, editRole]);
   const flushRef = useRef<() => Promise<boolean>>(async () => true);
@@ -262,6 +267,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     )
       return;
     epoch.current++;
+    exportController.current?.abort();
     setRenderEpoch(epoch.current);
     undo.current = [...undo.current.slice(-49), structuredClone(live.current.spec)];
     setUndoCount(undo.current.length);
@@ -904,22 +910,32 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
               key={format}
               onClick={() =>
                 void act('download', async () => {
-                  const r = revision && matches(revision.anchor) ? revision : await freeze();
-                  if (!r) return;
-                  const response = await fetch(
-                    '/v1/email-revisions/' + r.id + '/download?format=' + format,
-                    { headers: { 'X-Workspace-Id': workspace } },
-                  );
-                  if (!response.ok) {
-                    const j = await response.json();
-                    throw new Error(j.error?.message ?? 'Download failed');
+                  const controller = new AbortController();
+                  exportController.current = controller;
+                  try {
+                    const r = revision && matches(revision.anchor) ? revision : await freeze();
+                    if (!r || controller.signal.aborted || !matches(r.anchor)) return;
+                    const response = await fetch(
+                      '/v1/email-revisions/' + r.id + '/download?format=' + format,
+                      { headers: { 'X-Workspace-Id': workspace }, signal: controller.signal },
+                    );
+                    if (!response.ok) {
+                      const j = await response.json();
+                      throw new Error(j.error?.message ?? 'Download failed');
+                    }
+                    const blob = await response.blob();
+                    if (controller.signal.aborted || !matches(r.anchor)) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `email-v${r.revision_no}.${format}`;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                  } catch (error) {
+                    if (!controller.signal.aborted) throw error;
+                  } finally {
+                    if (exportController.current === controller) exportController.current = null;
                   }
-                  const url = URL.createObjectURL(await response.blob());
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `email-v${r.revision_no}.${format}`;
-                  a.click();
-                  setTimeout(() => URL.revokeObjectURL(url), 1000);
                 })
               }
             >

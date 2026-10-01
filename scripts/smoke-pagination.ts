@@ -246,6 +246,7 @@ try {
     'idempotency',
     'usage_ledger',
     'operations',
+    'render_downloads',
     'preflights',
     'revisions',
     'emails',

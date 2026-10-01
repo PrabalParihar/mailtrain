@@ -44,7 +44,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial / development | Campaign snapshots; scheduling/calendar/UTM pending |
 | REQ-039 | 5.10 A/B subject testing | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-040 | 5.11 ESP adapters | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-041 | 5.11 Export fidelity and downloads | Partial / development | Frozen HTML/txt/PNG/PDF; browser render isolation; destination fidelity pending |
+| REQ-041 | 5.11 Export fidelity and downloads | Partial / development | Frozen HTML/txt plus authenticated isolated Linux PNG/PDF and tenant/profile-bound immutable cache tested locally. Production sandbox/egress/queue/load/storage policy and destination fidelity remain pending. |
 | REQ-042 | 5.12 Delivery and engagement analytics | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-043 | 5.12 Tracking and attribution | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-044 | 5.12 CSV analytics export | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |

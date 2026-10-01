@@ -272,8 +272,8 @@ async function handle(req: Request, ctx: Context) {
         let data: Buffer | string = format === 'txt' ? row.plaintext : row.html;
         let mime = format === 'txt' ? 'text/plain' : 'text/html';
         if (format === 'png' || format === 'pdf') {
-          const { renderDownload } = await import('@/server/render-download');
-          data = await renderDownload(row.html, format);
+          const { frozenRenderDownload } = await import('@/server/render-cache');
+          data = await frozenRenderDownload(req, row, format);
           mime = format === 'png' ? 'image/png' : 'application/pdf';
         }
         return new Response(data as BodyInit, {
