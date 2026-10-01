@@ -50,8 +50,9 @@ export function assertRouteMethod(path: string[], method: string) {
   }
   if (root === 'audience-snapshots' && id && uuid.test(id) && !command) methods = ['GET'];
   if (root === 'contact-imports') {
-    if (!id) methods = ['POST'];
+    if (!id || (id === 'inspect' && !command)) methods = ['POST'];
     else if (uuid.test(id) && command === 'confirm') methods = ['POST'];
+    else if (uuid.test(id) && command === 'errors') methods = ['GET'];
   }
   if (root === 'campaigns') {
     if (!id) methods = ['GET', 'POST'];

@@ -293,6 +293,22 @@ button svg {
 .two-columns > .panel {
   min-width: 0;
 }
+.csv-import fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.csv-phone-notice {
+  display: none;
+}
+@media (max-width: 720px) {
+  .csv-phone-notice {
+    display: flex;
+  }
+  .csv-desktop-controls {
+    display: none;
+  }
+}
 .segment-condition {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

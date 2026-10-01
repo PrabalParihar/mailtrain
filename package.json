@@ -13,7 +13,8 @@
     "db:migrate": "node --import tsx scripts/migrate.ts",
     "worker": "node --import tsx src/server/worker.ts",
     "release:check": "node --import tsx scripts/release-check.ts",
-    "smoke:api": "node --import tsx scripts/smoke-api.ts"
+    "smoke:api": "node --import tsx scripts/smoke-api.ts",
+    "smoke:import": "node --import tsx scripts/smoke-import.ts"
   },
   "dependencies": {
     "next": "16.3.8",

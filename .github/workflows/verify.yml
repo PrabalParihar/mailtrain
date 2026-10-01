@@ -46,6 +46,7 @@ jobs:
             sleep 1
           done
           npm run smoke:api
+          npm run smoke:import
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

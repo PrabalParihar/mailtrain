@@ -1,10 +1,10 @@
 import { z } from 'zod';
-import { parse } from 'csv-parse/sync';
 import { withPrincipal } from './auth';
 import { keyed } from './commands';
 import { audit, digest } from './audit';
+import { importCommand, readImportErrors } from './contact-imports';
 import { fail } from './errors';
-import { normalizeEmail, eligibility } from '../domain/audience';
+import { eligibility } from '../domain/audience';
 export async function audienceRoute(
   req: Request,
   path: string[],
@@ -54,128 +54,10 @@ export async function audienceRoute(
           });
         }
       }
-      if (root === 'contact-imports') {
-        if (!id) {
-          const csv = z
-            .string()
-            .max(2 * 1024 * 1024)
-            .parse(body.csv);
-          let parsed: Record<string, string>[];
-          try {
-            parsed = parse(csv, {
-              columns: true,
-              skip_empty_lines: true,
-              bom: true,
-              relax_column_count: false,
-            });
-          } catch {
-            fail(
-              422,
-              'CSV_INVALID',
-              'The CSV could not be parsed. Use a header row and consistent columns.',
-            );
-          }
-          if (parsed.length > 10000)
-            fail(413, 'IMPORT_LIMIT', 'At most 10,000 rows per local import.');
-          const rows = parsed.map((r, i) => {
-            try {
-              const email = normalizeEmail(r.email ?? '');
-              const allowed = /@(example\.(com|org|net)|[^@]+\.(test|invalid|example))$/i.test(
-                email.original,
-              );
-              return {
-                ...email,
-                row: i + 2,
-                first_name: r.first_name ?? '',
-                error: allowed
-                  ? null
-                  : 'Only reserved fixture addresses are admitted until legal/consent launch gates pass.',
-                consent: 'pending_confirmation',
-              };
-            } catch {
-              return {
-                row: i + 2,
-                error: 'Invalid email',
-                original: '',
-                lookup: '',
-                first_name: '',
-                consent: 'pending_confirmation',
-              };
-            }
-          });
-          const seen = new Set<string>();
-          for (const r of rows) {
-            if (r.lookup) {
-              if (seen.has(r.lookup)) r.error = 'Duplicate/case-collision address in this import.';
-              seen.add(r.lookup);
-            }
-          }
-          return keyed(tx, p, 'contacts.import.dryrun', key, body, async () => {
-            const op = (
-              await tx.query(
-                "INSERT INTO operations(workspace_id,type,state,input,result,created_by) VALUES($1,'contacts.import','succeeded',$2,$3,$4) RETURNING id",
-                [
-                  p.workspace,
-                  JSON.stringify({ digest: digest(csv) }),
-                  JSON.stringify({
-                    rows,
-                    total: rows.length,
-                    valid: rows.filter((r) => !r.error).length,
-                    confirmed: false,
-                  }),
-                  p.user,
-                ],
-              )
-            ).rows[0];
-            return {
-              operation_id: op.id,
-              preview: {
-                rows: rows.slice(0, 100),
-                total: rows.length,
-                valid: rows.filter((r) => !r.error).length,
-                held: rows.filter((r) => !r.error).length,
-                eligible: 0,
-              },
-            };
-          });
-        }
-        if (cmd === 'confirm')
-          return keyed(tx, p, 'contacts.import.confirm:' + id, key, body, async () => {
-            const op = (
-              await tx.query(
-                "SELECT * FROM operations WHERE id=$1 AND type='contacts.import' FOR UPDATE",
-                [id],
-              )
-            ).rows[0];
-            if (!op) fail(404, 'RESOURCE_NOT_FOUND', 'Import not found.');
-            if (op.result.confirmed)
-              return { imported: op.result.imported, held: op.result.imported, eligible: 0 };
-            const rows = op.result.rows.filter((r: { error: unknown }) => !r.error);
-            for (const r of rows) {
-              const c = (
-                await tx.query(
-                  'INSERT INTO contacts(workspace_id,email_original,email_lookup,attrs) VALUES($1,$2,$3,$4) ON CONFLICT(workspace_id,email_lookup) DO NOTHING RETURNING id',
-                  [p.workspace, r.original, r.lookup, JSON.stringify({ first_name: r.first_name })],
-                )
-              ).rows[0];
-              if (c)
-                await tx.query(
-                  "INSERT INTO consent_events(workspace_id,contact_id,action,evidence) VALUES($1,$2,'import_held',$3)",
-                  [
-                    p.workspace,
-                    c.id,
-                    JSON.stringify({ source_operation: id, reason: 'No verified opt-in proof' }),
-                  ],
-                );
-            }
-            await tx.query('UPDATE operations SET result=$1 WHERE id=$2', [
-              JSON.stringify({ ...op.result, confirmed: true, imported: rows.length }),
-              id,
-            ]);
-            await audit(tx, p.workspace, p.user, 'contacts.imported', id);
-            return { imported: rows.length, held: rows.length, eligible: 0 };
-          });
-      }
+      if (root === 'contact-imports')
+        return cmd === 'errors'
+          ? readImportErrors(tx, id, new URL(req.url).searchParams.get('cursor'))
+          : importCommand(tx, p, id, cmd, body, key);
       if (root === 'campaigns') {
         if (req.method === 'GET')
           return {

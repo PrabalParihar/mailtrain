@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 async (page) => {
   await page
-    .getByRole('textbox', { name: 'CSV with email and first_name headers' })
+    .getByRole('textbox', { name: 'CSV contents' })
     .fill('email,first_name\nreader@example.com,Reader\nother@example.com,Other');
-  await page.getByRole('button', { name: 'Run dry run', exact: true }).click();
-  await page.getByRole('button', { name: 'Confirm fixture import' }).click();
+  await page.getByRole('button', { name: 'Inspect CSV columns', exact: true }).click();
+  await page.getByRole('button', { name: 'Run mapped dry run', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm mapped fixture import' }).click();
   await page
     .getByRole('combobox', { name: 'Contact to organize' })
     .selectOption({ label: 'reader@example.com' });

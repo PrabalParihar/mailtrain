@@ -1,24 +1,13 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { Users, ShieldCheck, Plus, FileUp, CalendarDays, AlertCircle } from 'lucide-react';
+import { Users, ShieldCheck, Plus, CalendarDays, AlertCircle } from 'lucide-react';
 import { api } from './api';
+import { CsvImport } from './csv-import';
 import { AudienceOrganization, type OrganizedContact } from './audience-organization';
 type Contact = OrganizedContact & { subscription: string; suppressed: boolean };
 export function AudiencePanel({ workspace }: { workspace: string }) {
   const [contacts, setContacts] = useState<Contact[]>([]),
-    [csv, setCsv] = useState('email,first_name\nreader@example.com,Reader'),
-    [preview, setPreview] = useState<{
-      operation_id: string;
-      preview: {
-        total: number;
-        valid: number;
-        held: number;
-        eligible: number;
-        rows: { row: number; original: string; error?: string }[];
-      };
-    } | null>(null),
     [error, setError] = useState(''),
-    [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false);
   const reload = useCallback(
     () =>
@@ -62,95 +51,8 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
           {error}
         </p>
       )}
-      {notice && (
-        <p className="alert success" role="status">
-          {notice}
-        </p>
-      )}
       <div className="two-columns">
-        <section className="panel">
-          <h2>
-            <FileUp size={20} /> CSV dry run
-          </h2>
-          <label>
-            CSV with email and first_name headers
-            <textarea
-              className="raw-code"
-              value={csv}
-              onChange={(e) => {
-                setCsv(e.target.value);
-                setPreview(null);
-              }}
-              rows={8}
-            />
-          </label>
-          <button
-            disabled={busy}
-            onClick={() =>
-              void action(async () =>
-                setPreview(await api(workspace, 'contact-imports', 'POST', { csv })),
-              )
-            }
-          >
-            Run dry run
-          </button>
-          {preview && (
-            <>
-              <div className="metric-row">
-                <span>
-                  Total <strong>{preview.preview.total}</strong>
-                </span>
-                <span>
-                  Held <strong>{preview.preview.held}</strong>
-                </span>
-                <span>
-                  Eligible <strong>{preview.preview.eligible}</strong>
-                </span>
-              </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Row</th>
-                      <th>Email</th>
-                      <th>Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.preview.rows.map((r, i) => (
-                      <tr key={i}>
-                        <td>{r.row}</td>
-                        <td>{r.original}</td>
-                        <td>{r.error ?? 'Held: opt-in unconfirmed'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <button
-                className="primary"
-                disabled={busy || !preview.preview.valid}
-                onClick={() =>
-                  void action(async () => {
-                    const r = await api<{ imported: number }>(
-                      workspace,
-                      'contact-imports/' + preview.operation_id + '/confirm',
-                      'POST',
-                      {},
-                    );
-                    setNotice(
-                      r.imported + ' fixture rows processed; missing consent remains held.',
-                    );
-                    setPreview(null);
-                    await reload();
-                  })
-                }
-              >
-                Confirm fixture import
-              </button>
-            </>
-          )}
-        </section>
+        <CsvImport workspace={workspace} onUpdate={reload} />
         <section className="panel">
           <h2>Contacts & suppression</h2>
           {contacts.length ? (
