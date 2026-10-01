@@ -46,3 +46,30 @@ export async function operation(tx: Tx, p: Principal, type: string, input: unkno
   await audit(tx, p.workspace, p.user, type + '.queued', id);
   return { id, type, state: 'queued', poll_url: '/v1/operations/' + id };
 }
+
+export async function cancelOperation(tx: Tx, p: Principal, id: string) {
+  const row = (await tx.query('SELECT * FROM operations WHERE id=$1 FOR UPDATE', [id])).rows[0];
+  if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');
+  if (row.state === 'cancel_requested') return row;
+  if (!['queued', 'running'].includes(row.state))
+    fail(409, 'STATE_CONFLICT', 'This operation has ended.');
+  const state = row.state === 'queued' ? 'cancelled' : 'cancel_requested';
+  await tx.query(
+    "UPDATE operations SET state=$1,completed_at=CASE WHEN $1='cancelled' THEN now() ELSE NULL END WHERE id=$2",
+    [state, id],
+  );
+  if (state === 'cancelled')
+    await tx.query(
+      "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) SELECT workspace_id,operation_id,metric,'release',units FROM usage_ledger WHERE operation_id=$1 AND kind='reserve' ON CONFLICT DO NOTHING",
+      [id],
+    );
+  await audit(tx, p.workspace, p.user, 'operation.' + state, id);
+  return {
+    ...row,
+    state,
+    notice:
+      state === 'cancel_requested'
+        ? 'Cancellation requested. In-flight usage stays reserved until the provider attempt is accounted for.'
+        : 'Queued operation cancelled before any external attempt.',
+  };
+}

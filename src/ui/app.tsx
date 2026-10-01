@@ -64,7 +64,11 @@ export function MailcraftApp({
     [key, setKey] = useState(''),
     [busy, setBusy] = useState(false),
     [menu, setMenu] = useState(false),
-    [emails, setEmails] = useState<Email[]>([]);
+    [emailState, setEmailState] = useState<{ workspace: string; data: Email[] }>({
+      workspace: '',
+      data: [],
+    });
+  const emails = emailState.workspace === workspace ? emailState.data : [];
   const router = useRouter();
   const section = screen[0] ?? '';
   async function refresh() {
@@ -86,10 +90,18 @@ export function MailcraftApp({
   }, []);
   useEffect(() => {
     if (!workspace) return;
+    let active = true;
     localStorage.setItem('mailcraft.workspace', workspace);
     void api<{ data: Email[] }>(workspace, 'emails')
-      .then((r) => setEmails(r.data))
-      .catch((e) => setError(e.message));
+      .then((r) => {
+        if (active) setEmailState({ workspace, data: r.data });
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
   }, [workspace, section]);
   const current = workspaces.find((w) => w.id === workspace);
   if (loading)
@@ -393,7 +405,7 @@ export function MailcraftApp({
               </div>
             </>
           )}
-          {section === 'brand' && <BrandPanel workspace={workspace} />}
+          {section === 'brand' && <BrandPanel key={workspace} workspace={workspace} />}
           {section === 'emails' && !screen[1] && (
             <>
               <div className="page-heading">
@@ -424,7 +436,9 @@ export function MailcraftApp({
               </div>
             </>
           )}
-          {section === 'emails' && screen[1] === 'new' && <CreatePanel workspace={workspace} />}
+          {section === 'emails' && screen[1] === 'new' && (
+            <CreatePanel key={workspace} workspace={workspace} />
+          )}
           {section === 'emails' && screen[1] && screen[1] !== 'new' && (
             <Editor
               key={workspace + screen[1]}
@@ -433,10 +447,10 @@ export function MailcraftApp({
               role={current?.role ?? 'Viewer'}
             />
           )}
-          {section === 'audience' && <AudiencePanel workspace={workspace} />}
-          {section === 'campaigns' && <CampaignPanel workspace={workspace} />}
+          {section === 'audience' && <AudiencePanel key={workspace} workspace={workspace} />}
+          {section === 'campaigns' && <CampaignPanel key={workspace} workspace={workspace} />}
           {section === 'settings' && (
-            <SettingsPanel workspace={workspace} role={current?.role ?? ''} />
+            <SettingsPanel key={workspace} workspace={workspace} role={current?.role ?? ''} />
           )}
           {section === 'integrations' && (
             <>

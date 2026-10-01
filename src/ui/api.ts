@@ -15,23 +15,49 @@ export async function api<T = Record<string, unknown>>(
   version?: number,
   key?: string,
 ): Promise<T> {
+  const serialized = body === undefined ? undefined : JSON.stringify(body);
+  let pendingSlot: string | undefined,
+    commandKey = key;
+  if (method !== 'GET' && !key) {
+    const identity = JSON.stringify([workspace, path, method, version ?? null, serialized ?? null]);
+    const hash = Array.from(
+      new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity))),
+    )
+      .map((n) => n.toString(16).padStart(2, '0'))
+      .join('');
+    pendingSlot = 'lettercape.command.' + hash;
+    try {
+      commandKey = sessionStorage.getItem(pendingSlot) ?? undefined;
+    } catch {}
+    commandKey ??= crypto.randomUUID();
+    try {
+      sessionStorage.setItem(pendingSlot, commandKey);
+    } catch {}
+  }
   const res = await fetch('/v1/' + path, {
     method,
     headers: {
       'Content-Type': 'application/json',
       'X-Workspace-Id': workspace,
-      ...(method !== 'GET' ? { 'Idempotency-Key': key ?? crypto.randomUUID() } : {}),
+      ...(method !== 'GET' ? { 'Idempotency-Key': commandKey ?? crypto.randomUUID() } : {}),
       ...(version ? { 'If-Match': `"draft-${version}"` } : {}),
     },
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: serialized,
   });
   const json = await res.json();
+  // Keep command identity on lost/malformed/5xx responses. No secret or payload is stored.
+  if (pendingSlot && (res.ok || res.status < 500)) {
+    try {
+      sessionStorage.removeItem(pendingSlot);
+    } catch {}
+  }
   if (!res.ok)
     throw new ApiError(
       json.error?.code ?? 'REQUEST_FAILED',
       json.error?.message ?? 'Request failed',
       res.status,
     );
+
   return json as T;
 }
 export async function poll<T>(workspace: string, id: string, signal?: AbortSignal): Promise<T> {

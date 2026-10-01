@@ -79,6 +79,20 @@ try {
     409,
   );
   checks++;
+  // A complete supplied spec must preserve its older pinned brand and styling.
+  await call('brands', 'POST', {
+    ...brandBody,
+    name: 'Newer Brand',
+    accent: '#AA4400',
+    address: 'Different latest address',
+  });
+  const pinned = {
+    ...create.result.email.spec,
+    theme: { ...create.result.email.spec.theme, accent: '#2244AA' },
+  };
+  const copied = await call('emails', 'POST', { title: 'Pinned copy', spec: pinned });
+  assert.deepEqual(copied.result.email.spec, pinned);
+  checks++;
   const email = create.result.email;
   assert.equal(
     (
@@ -238,6 +252,27 @@ try {
     422,
   );
   assert.equal((await call('campaigns/' + campaign.id + '/send', 'POST', {})).response.status, 409);
+  checks++;
+  const operation = randomUUID();
+  await db.query(
+    "INSERT INTO operations(workspace_id,id,type,state,input,created_by) VALUES($1,$2,'email.generate','running','{}',$3)",
+    [workspace, operation, user],
+  );
+  await db.query(
+    "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) VALUES($1,$2,'generation','reserve',1)",
+    [workspace, operation],
+  );
+  const cancelled = await call('operations/' + operation + '/cancel', 'POST', {});
+  assert.equal(cancelled.result.operation.state, 'cancel_requested');
+  assert.equal(
+    (
+      await db.query(
+        "SELECT * FROM usage_ledger WHERE workspace_id=$1 AND operation_id=$2 AND kind='release'",
+        [workspace, operation],
+      )
+    ).rowCount,
+    0,
+  );
   checks++;
   console.log(`${checks} real HTTP smoke groups passed; no AI or sending providers invoked.`);
 } finally {

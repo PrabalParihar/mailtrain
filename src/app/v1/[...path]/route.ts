@@ -9,7 +9,7 @@ import { AppError, fail } from '@/server/errors';
 import { audit } from '@/server/audit';
 import { keyed } from '@/server/commands';
 import { createEmail, getEmail, saveDraft, checkpoint, restoreRevision } from '@/server/emails';
-import { operation } from '@/server/operations';
+import { operation, cancelOperation } from '@/server/operations';
 import { integrations } from '@/server/adapters';
 import { audienceRoute } from '@/server/audience-routes';
 import { assertRouteMethod, readJson } from '@/server/http';
@@ -177,11 +177,13 @@ async function handle(req: Request, ctx: Context) {
               const spec = body.spec
                 ? EmailSpecSchema.parse(body.spec)
                 : blankSpec(brand.id, brand.data.name);
-              spec.theme.accent = brand.data.accent;
-              spec.theme.background = brand.data.background;
-              spec.theme.font_stack = brand.data.font_stack;
-              const footer = spec.sections.find((b) => b.type === 'legal_footer');
-              if (footer?.type === 'legal_footer') footer.address = brand.data.address;
+              if (!body.spec) {
+                spec.theme.accent = brand.data.accent;
+                spec.theme.background = brand.data.background;
+                spec.theme.font_stack = brand.data.font_stack;
+                const footer = spec.sections.find((b) => b.type === 'legal_footer');
+                if (footer?.type === 'legal_footer') footer.address = brand.data.address;
+              }
               return { email: await createEmail(tx, p, title, spec) };
             });
           }
@@ -315,20 +317,7 @@ async function handle(req: Request, ctx: Context) {
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
           const row = (await tx.query('SELECT * FROM operations WHERE id=$1', [id])).rows[0];
           if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');
-          if (command === 'cancel') {
-            if (!['queued', 'running'].includes(row.state))
-              fail(409, 'STATE_CONFLICT', 'This operation has ended.');
-            await tx.query(
-              "UPDATE operations SET state='cancelled',completed_at=now() WHERE id=$1",
-              [id],
-            );
-            await tx.query(
-              "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) SELECT workspace_id,operation_id,metric,'release',units FROM usage_ledger WHERE operation_id=$1 AND kind='reserve' ON CONFLICT DO NOTHING",
-              [id],
-            );
-            await audit(tx, p.workspace, p.user, 'operation.cancelled', id);
-            return { operation: { ...row, state: 'cancelled' } };
-          }
+          if (command === 'cancel') return { operation: await cancelOperation(tx, p, id) };
           return { operation: row };
         }),
       );

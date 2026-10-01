@@ -14,14 +14,21 @@ async function tick() {
   for (const job of due) {
     if (stopped) return;
     const operation = await tenant(job.workspace_id, job.created_by, async (tx) => {
-      const m = (
-        await tx.query("SELECT role FROM memberships WHERE user_id=$1 AND status='active'", [
-          job.created_by,
+      const queued = (
+        await tx.query("SELECT id FROM operations WHERE id=$1 AND state='queued' FOR UPDATE", [
+          job.id,
         ])
+      ).rows[0];
+      if (!queued) return null;
+      const m = (
+        await tx.query(
+          "SELECT m.role FROM memberships m JOIN workspaces w ON w.id=m.workspace_id WHERE m.user_id=$1 AND m.workspace_id=$2 AND m.status='active' AND w.status='active'",
+          [job.created_by, job.workspace_id],
+        )
       ).rows[0];
       if (!m || !allowed(m.role, 'edit')) {
         await tx.query(
-          "UPDATE operations SET state='failed',error=$1,completed_at=now() WHERE id=$2",
+          "UPDATE operations SET state='failed',error=$1,completed_at=now() WHERE id=$2 AND state='queued'",
           [
             JSON.stringify({
               code: 'PERMISSION_REVOKED',
@@ -44,6 +51,7 @@ async function tick() {
       ).rows[0];
     });
     if (!operation) continue;
+    let externalAttempt = false;
     try {
       let result: unknown;
       if (operation.type === 'brand.extract') {
@@ -97,6 +105,7 @@ async function tick() {
             'RESOURCE_NOT_FOUND',
             'The selected brand version is unavailable.',
           );
+        externalAttempt = !!process.env.OPENAI_API_KEY && !!process.env.OPENAI_MODEL;
         result = await generateProposal(operation.input, brand.data);
       } else
         throw new AppError(
@@ -106,7 +115,7 @@ async function tick() {
         );
       await tenant(job.workspace_id, job.created_by, async (tx) => {
         const changed = await tx.query(
-          "UPDATE operations SET state='succeeded',result=$1,completed_at=now() WHERE id=$2 AND state='running' RETURNING id",
+          "UPDATE operations SET state=CASE WHEN state='cancel_requested' THEN 'cancelled' ELSE 'succeeded' END,result=CASE WHEN state='cancel_requested' THEN NULL ELSE $1::jsonb END,completed_at=now() WHERE id=$2 AND state IN('running','cancel_requested') RETURNING id,state",
           [JSON.stringify(result), job.id],
         );
         if (changed.rowCount) {
@@ -118,7 +127,8 @@ async function tick() {
             'INSERT INTO outbox(workspace_id,type,aggregate_id,data) VALUES($1,$2,$3,$4)',
             [
               job.workspace_id,
-              operation.type + '.completed',
+              operation.type +
+                (changed.rows[0].state === 'cancelled' ? '.cancelled' : '.completed'),
               job.id,
               JSON.stringify({ operation_id: job.id }),
             ],
@@ -128,7 +138,7 @@ async function tick() {
     } catch (e) {
       await tenant(job.workspace_id, job.created_by, async (tx) => {
         await tx.query(
-          "UPDATE operations SET state='failed',error=$1,completed_at=now() WHERE id=$2 AND state='running'",
+          "UPDATE operations SET state=CASE WHEN state='cancel_requested' THEN 'cancelled' ELSE 'failed' END,error=$1,completed_at=now() WHERE id=$2 AND state IN('running','cancel_requested')",
           [
             JSON.stringify({
               code: e instanceof AppError ? e.code : 'DEPENDENCY_UNAVAILABLE',
@@ -140,10 +150,11 @@ async function tick() {
             job.id,
           ],
         );
-        await tx.query(
-          "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) SELECT workspace_id,operation_id,metric,'release',units FROM usage_ledger WHERE operation_id=$1 AND kind='reserve' ON CONFLICT DO NOTHING",
-          [job.id],
-        );
+        if (!externalAttempt)
+          await tx.query(
+            "INSERT INTO usage_ledger(workspace_id,operation_id,metric,kind,units) SELECT workspace_id,operation_id,metric,'release',units FROM usage_ledger WHERE operation_id=$1 AND kind='reserve' ON CONFLICT DO NOTHING",
+            [job.id],
+          );
       });
     }
   }

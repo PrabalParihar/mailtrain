@@ -26,6 +26,8 @@ import { allowed } from '@/domain/permissions';
 import type { EmailSpec, Block, Finding } from '@/domain/email';
 type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec };
 type Revision = { id: string; revision_no: number; artifact_hash: string; subject: string };
+type Anchor = { epoch: number; version: number; spec: string };
+type Frozen = Revision & { anchor: Anchor };
 type Report = { state: string; artifact_hash: string; findings: Finding[] };
 export function Editor({ workspace, id, role }: { workspace: string; id: string; role: Role }) {
   const editRole = allowed(role, 'edit');
@@ -40,7 +42,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     [mobile, setMobile] = useState(false),
     [history, setHistory] = useState<Revision[]>([]),
     [showHistory, setShowHistory] = useState(false),
-    [revision, setRevision] = useState<Revision | null>(null),
+    [revision, setRevision] = useState<Frozen | null>(null),
     [report, setReport] = useState<Report | null>(null),
     [busy, setBusy] = useState(''),
     [conflict, setConflict] = useState<Doc | null>(null),
@@ -49,9 +51,14 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
       spec: EmailSpec;
       review_notes: string[];
       base: number;
+      anchor: Anchor;
     } | null>(null),
     [addType, setAddType] = useState<Block['type']>('text'),
-    [undoCount, setUndoCount] = useState(0);
+    [undoCount, setUndoCount] = useState(0),
+    [renderEpoch, setRenderEpoch] = useState(0);
+  const epoch = useRef(0),
+    busyRef = useRef('');
+  const writable = editRole && !['raw', 'restore', 'reload', 'fork'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
     dirtyAt = useRef(0),
@@ -60,7 +67,24 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     conflictRef = useRef(false),
     undo = useRef<EmailSpec[]>([]),
     storage = 'mailcraft.draft.' + workspace + '.' + id;
+  function anchor(): Anchor {
+    return {
+      epoch: epoch.current,
+      version: live.current!.doc_version,
+      spec: JSON.stringify(live.current!.spec),
+    };
+  }
+  function matches(a: Anchor) {
+    return (
+      !!live.current &&
+      a.epoch === epoch.current &&
+      a.version === live.current.doc_version &&
+      a.spec === JSON.stringify(live.current.spec)
+    );
+  }
   function install(d: Doc) {
+    epoch.current++;
+    setRenderEpoch(epoch.current);
     live.current = d;
     setDoc(d);
     ack.current = JSON.stringify(d.spec);
@@ -224,7 +248,14 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     };
   }, [doc, workspace, id]);
   function update(spec: EmailSpec) {
-    if (!editRole || !live.current) return;
+    if (
+      !editRole ||
+      !live.current ||
+      ['raw', 'restore', 'reload', 'fork'].includes(busyRef.current)
+    )
+      return;
+    epoch.current++;
+    setRenderEpoch(epoch.current);
     undo.current = [...undo.current.slice(-49), structuredClone(live.current.spec)];
     setUndoCount(undo.current.length);
     live.current = { ...live.current, spec };
@@ -252,6 +283,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
       return null;
     }
     const current = live.current!;
+    const origin = anchor();
     const r = await api<{ revision: Revision }>(
       workspace,
       'emails/' + id + '/revisions',
@@ -259,11 +291,19 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
       {},
       current.doc_version,
     );
-    setRevision(r.revision);
-    return r.revision;
+    if (!matches(origin)) {
+      setError(
+        'The draft changed during freezing. The older checkpoint is in history; freeze the current draft again.',
+      );
+      return null;
+    }
+    const frozen = { ...r.revision, anchor: origin };
+    setRevision(frozen);
+    return frozen;
   }
   async function act(name: string, fn: () => Promise<void>) {
-    if (busy) return;
+    if (busyRef.current) return;
+    busyRef.current = name;
     setBusy(name);
     setError('');
     try {
@@ -271,6 +311,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      busyRef.current = '';
       setBusy('');
     }
   }
@@ -278,10 +319,15 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     return (
       <div className="panel">
         <p role="status">{error || 'Opening the acknowledged draft…'}</p>
-        {error && <button onClick={() => void reload()}>Reload draft</button>}
+        {error && <button onClick={() => void act('reload', reload)}>Reload draft</button>}
       </div>
     );
   const block = doc.spec.sections.find((b) => b.id === selected);
+  const proposalMatches =
+    !!proposal &&
+    proposal.anchor.epoch === renderEpoch &&
+    proposal.anchor.version === doc.doc_version &&
+    proposal.anchor.spec === JSON.stringify(doc.spec);
   return (
     <>
       {!editRole && (
@@ -351,7 +397,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                   'POST',
                   {},
                 );
-                setReport(p.report);
+                if (matches(r.anchor)) setReport(p.report);
               })
             }
           >
@@ -379,7 +425,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
             </div>
           </div>
           <button
-            disabled={!editRole}
+            disabled={!writable}
             onClick={() =>
               void act('fork', async () => {
                 const r = await api<{ email: Doc }>(workspace, 'emails', 'POST', {
@@ -393,7 +439,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           >
             <Copy size={17} /> Keep mine as a copy
           </button>
-          <button onClick={() => void reload()}>Reload newer</button>
+          <button onClick={() => void act('reload', reload)}>Reload newer</button>
         </div>
       )}
       {showHistory && (
@@ -428,7 +474,8 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                   disabled={!editRole || !!busy || !!conflict}
                   onClick={() =>
                     void act('restore', async () => {
-                      if (!(await flush())) return;
+                      if (!(await flush()) || dirtyAt.current) return;
+                      const origin = anchor();
                       const restored = await api<{ email: Doc }>(
                         workspace,
                         'emails/' + id + '/restore',
@@ -436,7 +483,12 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                         { revision_id: r.id },
                         live.current!.doc_version,
                       );
+                      if (!matches(origin))
+                        throw new Error(
+                          'The draft changed during restore. Reload the acknowledged server version; your local copy is preserved.',
+                        );
                       install(restored.email);
+                      localStorage.removeItem(storage);
                       setReport(null);
                       setRevision(null);
                     })
@@ -457,7 +509,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
         <label>
           Subject
           <input
-            readOnly={!editRole}
+            readOnly={!writable}
             maxLength={200}
             value={doc.spec.subject}
             onChange={(e) => update({ ...doc.spec, subject: e.target.value })}
@@ -466,7 +518,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
         <label>
           Preheader
           <input
-            readOnly={!editRole}
+            readOnly={!writable}
             maxLength={250}
             value={doc.spec.preheader}
             onChange={(e) => update({ ...doc.spec, preheader: e.target.value })}
@@ -498,7 +550,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                       <button
                         className="icon-button"
                         aria-label={`Move ${b.type} ${i + 1} up`}
-                        disabled={!editRole || i === 0}
+                        disabled={!writable || i === 0}
                         onClick={() => {
                           const a = [...doc.spec.sections];
                           [a[i - 1], a[i]] = [a[i], a[i - 1]];
@@ -510,7 +562,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                       <button
                         className="icon-button"
                         aria-label={`Move ${b.type} ${i + 1} down`}
-                        disabled={!editRole || i === doc.spec.sections.length - 1}
+                        disabled={!writable || i === doc.spec.sections.length - 1}
                         onClick={() => {
                           const a = [...doc.spec.sections];
                           [a[i + 1], a[i]] = [a[i], a[i + 1]];
@@ -521,7 +573,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                       </button>
                       <button
                         className="icon-button"
-                        disabled={!editRole}
+                        disabled={!writable}
                         aria-label={`Delete ${b.type} ${i + 1}`}
                         onClick={() =>
                           update({
@@ -561,7 +613,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                 </select>
               </label>
               <button
-                disabled={!editRole}
+                disabled={!writable}
                 onClick={() => {
                   const b = newBlock(addType);
                   update({ ...doc.spec, sections: [...doc.spec.sections, b] });
@@ -581,7 +633,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           <label>
             Email direction
             <select
-              disabled={!editRole}
+              disabled={!writable}
               value={doc.spec.direction}
               onChange={(e) => update({ ...doc.spec, direction: e.target.value as 'ltr' | 'rtl' })}
             >
@@ -647,7 +699,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                 <label>
                   Raw HTML source
                   <textarea
-                    readOnly={!editRole}
+                    readOnly={!writable}
                     className="raw-code"
                     value={doc.spec.raw_html}
                     onChange={(e) => update({ ...doc.spec, raw_html: e.target.value })}
@@ -665,15 +717,32 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                     disabled={!editRole || !!busy}
                     onClick={() =>
                       void act('raw', async () => {
-                        if (!(await flush())) return;
+                        if (!(await flush()) || dirtyAt.current) return;
+                        const origin = anchor(),
+                          snapshot = structuredClone(live.current!);
+                        const compiled = await api<{ artifact: { html: string } }>(
+                          workspace,
+                          'emails/' + id + '/preview',
+                          'POST',
+                          { spec: snapshot.spec },
+                        );
+                        if (!matches(origin))
+                          throw new Error(
+                            'The draft changed before raw conversion. Try again with the current version.',
+                          );
                         const r = await api<{ email: Doc }>(
                           workspace,
                           'emails/' + id + '/import-html',
                           'POST',
-                          { html },
-                          live.current!.doc_version,
+                          { html: compiled.artifact.html },
+                          snapshot.doc_version,
                         );
+                        if (!matches(origin))
+                          throw new Error(
+                            'The draft changed during raw conversion. Your local copy is preserved.',
+                          );
                         install(r.email);
+                        localStorage.removeItem(storage);
                         setReport(null);
                         setRevision(null);
                       })
@@ -687,7 +756,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           )}
         </section>
         <aside className="inspector panel">
-          <fieldset className="inspector-fields" disabled={!editRole}>
+          <fieldset className="inspector-fields" disabled={!writable}>
             <h2>{block ? block.type.replaceAll('_', ' ') + ' settings' : 'Document settings'}</h2>
             {block && doc.spec.editing_mode === 'structured' && (
               <BlockFields block={block} onChange={changeBlock} />
@@ -710,7 +779,8 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                 disabled={!editRole || !!busy || !aiPrompt || !editRole}
                 onClick={() =>
                   void act('ai', async () => {
-                    if (!(await flush())) return;
+                    if (!(await flush()) || dirtyAt.current) return;
+                    const origin = anchor();
                     const base = live.current!.doc_version;
                     const r = await api<{ operation: { id: string } }>(
                       workspace,
@@ -728,7 +798,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                     const r2 = await poll<{
                       proposals: { spec: EmailSpec; review_notes: string[] }[];
                     }>(workspace, r.operation.id);
-                    setProposal({ ...r2.proposals[0], base });
+                    setProposal({ ...r2.proposals[0], base, anchor: origin });
                   })
                 }
               >
@@ -746,15 +816,21 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                       {n}
                     </p>
                   ))}
-                  {proposal.base !== doc.doc_version && (
+                  {!proposalMatches && (
                     <p className="alert warning small">
                       The draft changed. Compare or create a copy; this proposal cannot replace the
                       newer draft.
                     </p>
                   )}
                   <button
-                    disabled={!editRole || proposal.base !== doc.doc_version}
+                    disabled={!editRole || !proposalMatches}
                     onClick={() => {
+                      if (!matches(proposal.anchor)) {
+                        setError(
+                          'The draft changed. This proposal cannot replace newer local work.',
+                        );
+                        return;
+                      }
                       update(proposal.spec);
                       setProposal(null);
                     }}
@@ -815,7 +891,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
               key={format}
               onClick={() =>
                 void act('download', async () => {
-                  const r = revision ?? (await freeze());
+                  const r = revision && matches(revision.anchor) ? revision : await freeze();
                   if (!r) return;
                   const response = await fetch(
                     '/v1/email-revisions/' + r.id + '/download?format=' + format,
