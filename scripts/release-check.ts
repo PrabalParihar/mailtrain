@@ -1,4 +1,26 @@
-import {readFile} from 'node:fs/promises';
-const release=JSON.parse(await readFile('release-gates.json','utf8')) as {gates:Record<string,string>,evidence:Record<string,{build:string,environment:string,owner:string,time:string,path:string}>};
-const missing=Object.entries(release.gates).filter(([id,state])=>state!=='passed'||!release.evidence[id]?.build||!release.evidence[id]?.owner||!release.evidence[id]?.environment||!release.evidence[id]?.time||!release.evidence[id]?.path);
-if(missing.length){console.error('Public production launch blocked:');for(const [id,state] of missing)console.error(id+': '+state+' (verified evidence and accountable signoff required)');process.exitCode=1;}else console.log('Release evidence register complete. Verify destination, budget, rollback and final authorization before deployment.');
+import { readFile } from 'node:fs/promises';
+const release = JSON.parse(await readFile('release-gates.json', 'utf8')) as {
+  gates: Record<string, string>;
+  evidence: Record<
+    string,
+    { build: string; environment: string; owner: string; time: string; path: string }
+  >;
+};
+const missing = Object.entries(release.gates).filter(
+  ([id, state]) =>
+    state !== 'passed' ||
+    !release.evidence[id]?.build ||
+    !release.evidence[id]?.owner ||
+    !release.evidence[id]?.environment ||
+    !release.evidence[id]?.time ||
+    !release.evidence[id]?.path,
+);
+if (missing.length) {
+  console.error('Public production launch blocked:');
+  for (const [id, state] of missing)
+    console.error(id + ': ' + state + ' (verified evidence and accountable signoff required)');
+  process.exitCode = 1;
+} else
+  console.log(
+    'Release evidence register complete. Verify destination, budget, rollback and final authorization before deployment.',
+  );
