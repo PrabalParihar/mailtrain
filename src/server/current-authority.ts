@@ -39,6 +39,14 @@ export async function assertCurrentAuthority(
     )).rows[0];
     if (!key || !Array.isArray(key.scopes) || !key.scopes.every(value => typeof value === 'string'))
       fail(401, 'AUTH_REQUIRED', 'This API key is invalid, expired or revoked.');
+    // SQL predicates can qualify a row before FOR SHARE waits on its lock.
+    // Expiry advances without a tuple update, so check database time again
+    // after acquiring the lock and before admitting the resource callback.
+    const valid = (await tx.query<{ valid: boolean }>(
+      'SELECT expires_at>clock_timestamp() AS valid FROM api_keys WHERE workspace_id=$1 AND id=$2',
+      [p.workspace, p.api_key.id],
+    )).rows[0]?.valid;
+    if (!valid) fail(401, 'AUTH_REQUIRED', 'This API key is invalid, expired or revoked.');
     if (scope && !key.scopes.includes(scope))
       fail(403, 'INSUFFICIENT_SCOPE', 'This API key does not grant the required resource scope.');
     current = { ...current, api_key: { ...p.api_key, scopes: key.scopes } };

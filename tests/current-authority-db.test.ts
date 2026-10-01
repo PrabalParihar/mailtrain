@@ -104,3 +104,36 @@ test('a current transaction holds authority until commit and later admission obs
     await admin.query("UPDATE memberships SET status='active' WHERE workspace_id=$1",[workspace]);
   }
 });
+test('a key that expires while waiting for its SHARE lock cannot admit the resource callback', async () => {
+  assert.ok(authorityModule?.assertCurrentAuthority,'The current transaction authority helper must exist.');
+  const blocker=await admin.connect();let active=false;
+  let pending:Promise<{principal?:Principal;error?:unknown}>|undefined;
+  try{
+    await admin.query("UPDATE api_keys SET expires_at=clock_timestamp()+interval '2 seconds' WHERE id=$1",[key]);
+    await blocker.query('BEGIN');active=true;
+    await blocker.query('SELECT 1 FROM api_keys WHERE id=$1 FOR UPDATE',[key]);
+    const pid=(await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+    pending=check(delegated,'edit','emails:write').then(principal=>({principal}),error=>({error}));
+    let waiting=false;
+    for(let i=0;i<100;i++){
+      waiting=!!(await admin.query('SELECT 1 FROM pg_stat_activity WHERE $1::int=ANY(pg_blocking_pids(pid))',[pid])).rowCount;
+      if(waiting)break;
+      await new Promise(r=>setTimeout(r,10));
+    }
+    assert.ok(waiting,'Authority must be waiting before it can admit the resource callback.');
+    let expired=false;
+    for(let i=0;i<50;i++){
+      expired=(await admin.query('SELECT expires_at<=clock_timestamp() AS expired FROM api_keys WHERE id=$1',[key])).rows[0].expired;
+      if(expired)break;
+      await new Promise(r=>setTimeout(r,100));
+    }
+    assert.ok(expired,'The key must expire by database time before releasing its unchanged tuple lock.');
+    await blocker.query('COMMIT');active=false;
+    const result=await pending;
+    assert.ok(code('AUTH_REQUIRED')(result.error),'Expired key must deny resource admission after its lock wait.');
+    assert.equal(result.principal,undefined);
+  }finally{
+    if(active)await blocker.query('ROLLBACK');blocker.release();await pending;
+    await admin.query("UPDATE api_keys SET expires_at=clock_timestamp()+interval '1 hour' WHERE id=$1",[key]);
+  }
+});

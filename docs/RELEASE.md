@@ -33,3 +33,5 @@ Management/replay development checkpoint preserves same logical identity, append
 Brand Memory development checkpoint uses source-approved text, exact tenant/kit retrieval, immutable chunk digests and monotonic retrieval tombstones; paginated historical kit removal prevents abandoned-source capacity locks. No embeddings/private model call or physical erasure guarantee is implied. All13release gates remain incomplete; production account/funded model/security/privacy/operations evidence still required.
 
 Owned reference consumer actual post-commit lost-ack/SIGKILL/distinct-process retry/reorder/conflict tests pass; no production or external-n8n recovery claim follows. All13release gates remain open; intended private providers/accounts, policy/economics, independent assessment and operational signoffs are still required.
+
+Current-transaction admission now fences membership/role/workspace/key authority and rereads database-clock expiry after key locking;92tests and owned HTTP/Chromium pass. This does not certify Clerk/MFA/collaboration/team/invites/seats/production revocation SLO or close any of13gates. No resource/spending/provider/deployment changes.
