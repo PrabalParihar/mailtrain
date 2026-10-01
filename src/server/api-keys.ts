@@ -12,7 +12,12 @@ import { requestPath } from './http';
 import { resourcePage } from './pagination';
 // Rechecking current authority within one HTTP request must not charge it again.
 // Request identity remains server-owned; every new incoming request has its own receipt.
-const rateReceipts = new WeakMap<Request, { workspace: string; key: string; receipt: Promise<void> }>();
+type RateReceipt = { workspace: string; key: string; receipt: Promise<void> };
+const receiptRegistry = Symbol.for('lettercape.server.api-rate-request-receipts');
+const processState = globalThis as unknown as Record<symbol, unknown>;
+// Bundled module aliases and hot reload can instantiate this module more than once.
+// They must share the same server-owned receipt for the same incoming Request.
+const rateReceipts = (processState[receiptRegistry] ??= new WeakMap<Request, RateReceipt>()) as WeakMap<Request, RateReceipt>;
 export function requireKeyScope(p: Principal, scope: string) {
   if (p.api_key && !p.api_key.scopes.includes(scope))
     fail(403, 'INSUFFICIENT_SCOPE', 'This API key does not grant the required resource scope.');

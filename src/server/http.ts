@@ -33,6 +33,7 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (id === 'generate' && !command) methods = ['POST'];
     else if (uuid.test(id)) {
       if (!command) methods = ['GET'];
+      else if (command === 'derivatives') methods = ['GET'];
       else if (command === 'draft') methods = ['PATCH'];
       else if (['revisions', 'restore', 'preview', 'import-html'].includes(command))
         methods = ['POST'];
@@ -42,7 +43,7 @@ export function assertRouteMethod(path: string[], method: string) {
     if (!id) methods = ['GET'];
     else if (uuid.test(id)) {
       if (command === 'download') methods = ['GET'];
-      else if (['preflight', 'export'].includes(command)) methods = ['POST'];
+      else if (['preflight', 'export', 'remix', 'localize'].includes(command)) methods = ['POST'];
     }
   }
   if (root === 'operations' && id && uuid.test(id)) {

@@ -160,6 +160,30 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "listEmailDerivatives": {
+    "method": "GET",
+    "path": "/v1/emails/{id}/derivatives",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
+  "remixRevision": {
+    "method": "POST",
+    "path": "/v1/email-revisions/{id}/remix",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "createLocaleDraft": {
+    "method": "POST",
+    "path": "/v1/email-revisions/{id}/localize",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
   "saveDraft": {
     "method": "PATCH",
     "path": "/v1/emails/{id}/draft",

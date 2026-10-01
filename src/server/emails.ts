@@ -3,15 +3,25 @@ import type { Principal } from './auth';
 import type { Tx } from './db';
 import { audit } from './audit';
 import { fail } from './errors';
+import { sourceStatus } from '../domain/derivation';
+export async function emailLineage(tx: Tx, id: string) {
+  const row = (await tx.query('SELECT l.*,r.email_id AS source_email_id,r.revision_no AS source_revision_no,e.title AS source_title,e.doc_version AS current_source_version FROM email_lineage l JOIN revisions r ON r.workspace_id=l.workspace_id AND r.id=l.source_revision_id JOIN emails e ON e.workspace_id=r.workspace_id AND e.id=r.email_id WHERE l.email_id=$1', [id])).rows[0];
+  if (!row) return null;
+  return { ...row, source_status: sourceStatus(row.source_doc_version, row.current_source_version), translation_status: row.kind === 'locale' ? 'manual_review_required' : null } as {
+    kind: 'remix'|'locale'; source_revision_id:string; source_email_id:string; source_revision_no:number; source_title:string;
+    source_doc_version:number|null; current_source_version:number; source_status:'current'|'outdated'|'unknown'; target_locale:string|null; translation_status:string|null;
+  };
+}
 export async function getEmail(tx: Tx, id: string) {
   const row = (await tx.query('SELECT * FROM emails WHERE id=$1', [id])).rows[0];
   if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Email not found.');
-  return row as {
+  return { ...row, lineage: await emailLineage(tx, id) } as {
     id: string;
     title: string;
     doc_version: number;
     spec: EmailSpec;
     updated_at: string;
+    lineage: Awaited<ReturnType<typeof emailLineage>>;
   };
 }
 async function verifyBrand(tx: Tx, spec: EmailSpec) {
@@ -33,6 +43,9 @@ export async function createEmail(tx: Tx, p: Principal, title: string, spec: Ema
 }
 export async function saveDraft(tx: Tx, p: Principal, id: string, version: number, value: unknown) {
   const spec = EmailSpecSchema.parse(value);
+  const lineage = await emailLineage(tx, id);
+  if (lineage?.kind === 'locale' && spec.locale !== lineage.target_locale)
+    fail(409, 'LOCALE_IDENTITY_LOCKED', 'Create a separately linked locale draft to change its language.');
   await verifyBrand(tx, spec);
   if (spec.editing_mode === 'raw_html') spec.raw_html = sanitizeRaw(spec.raw_html!).html;
   const row = (
@@ -50,7 +63,7 @@ export async function saveDraft(tx: Tx, p: Principal, id: string, version: numbe
     );
   }
   await audit(tx, p.workspace, p.user, 'email.saved', id);
-  return row;
+  return { ...row, lineage: await emailLineage(tx, id) };
 }
 export async function checkpoint(tx: Tx, p: Principal, id: string, version: number) {
   await tx.query('SELECT id FROM emails WHERE id=$1 FOR UPDATE', [id]);
@@ -65,7 +78,7 @@ export async function checkpoint(tx: Tx, p: Principal, id: string, version: numb
   ).rows[0].no;
   const row = (
     await tx.query(
-      'INSERT INTO revisions(workspace_id,email_id,revision_no,spec,html,plaintext,artifact_hash,manifest,created_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
+      'INSERT INTO revisions(workspace_id,email_id,revision_no,spec,html,plaintext,artifact_hash,manifest,created_by,source_doc_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
       [
         p.workspace,
         id,
@@ -76,6 +89,7 @@ export async function checkpoint(tx: Tx, p: Principal, id: string, version: numb
         artifact.hash,
         JSON.stringify(artifact.manifest),
         p.user,
+        email.doc_version,
       ],
     )
   ).rows[0];

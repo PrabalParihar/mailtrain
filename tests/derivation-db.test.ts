@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import pg from 'pg';
+import env from '@next/env';
+import { tenant } from '../src/server/db';
+import { blankSpec } from '../src/domain/email';
+import { createEmail, checkpoint, saveDraft, getEmail, restoreRevision } from '../src/server/emails';
+import { deriveEmail } from '../src/server/derivation';
+env.loadEnvConfig(process.cwd());
+test('same-tenant source lineage is immutable and source changes never rewrite locale children', async () => {
+  const db = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL });
+  const w = randomUUID(), other = randomUUID(), user = 'derivation-' + randomUUID(), brand = randomUUID();
+  const p = { workspace: w, user, role: 'Owner' as const };
+  try {
+    await db.query('INSERT INTO workspaces(id,name)VALUES($1,$3),($2,$3)', [w, other, 'Derivation fixture']);
+    await db.query("INSERT INTO memberships(workspace_id,user_id,role)VALUES($1,$3,'Owner'),($2,$3,'Owner')", [w, other, user]);
+    await db.query("INSERT INTO brands(workspace_id,id,version,data)VALUES($1,$2,1,'{}')", [w, brand]);
+    const source = await tenant(w, user, (tx) => createEmail(tx, p, 'Parent fixture', blankSpec(brand, 'Fixture')));
+    const frozen = await tenant(w, user, (tx) => checkpoint(tx, p, source.id, 1));
+    assert.equal(frozen.source_doc_version, 1);
+    const child = await tenant(w, user, (tx) => deriveEmail(tx, p, frozen.id, { kind: 'locale', title: 'Arabic child', locale: 'ar-SA' }));
+    assert.equal(child.email.spec.locale, 'ar-SA'); assert.equal(child.email.spec.direction, 'rtl');
+    assert.equal(child.lineage.source_status, 'current');
+    const childBefore = structuredClone(child.email.spec), htmlBefore = child.revision.html;
+    await tenant(w, user, (tx) => saveDraft(tx, p, source.id, 1, { ...source.spec, subject: 'Changed parent' }));
+    const stale = await tenant(w, user, (tx) => getEmail(tx, child.email.id));
+    assert.equal(stale.lineage?.source_status, 'outdated'); assert.deepEqual(stale.spec, childBefore);
+    await tenant(w, user, (tx) => restoreRevision(tx, p, source.id, 2, frozen.id));
+    assert.equal((await tenant(w, user, (tx) => getEmail(tx, child.email.id))).lineage?.source_status, 'outdated');
+    assert.equal((await db.query('SELECT html FROM revisions WHERE id=$1', [child.revision.id])).rows[0].html, htmlBefore);
+    await assert.rejects(() => tenant(w, user, (tx) => saveDraft(tx, p, child.email.id, 1, { ...childBefore, locale: 'fr-FR' })));
+    await assert.rejects(() => tenant(other, user, (tx) => deriveEmail(tx, { ...p, workspace: other }, frozen.id, { kind: 'remix', title: 'Foreign' })));
+    await assert.rejects(() => tenant(w, user, (tx) => tx.query('UPDATE email_lineage SET kind=$1 WHERE email_id=$2', ['remix', child.email.id])));
+    await assert.rejects(() => tenant(w, user, (tx) => tx.query('DELETE FROM email_lineage WHERE email_id=$1', [child.email.id])));
+    assert.equal((await tenant(other, user, (tx) => tx.query('SELECT * FROM email_lineage WHERE email_id=$1', [child.email.id]))).rowCount, 0);
+    const invalid = await tenant(w, user, (tx) => createEmail(tx, p, 'Invalid locale fixture', childBefore));
+    await assert.rejects(() => tenant(w, user, (tx) => tx.query("INSERT INTO email_lineage(workspace_id,email_id,source_revision_id,source_doc_version,kind,target_locale,created_by)VALUES($1,$2,$3,1,'locale',NULL,$4)", [w, invalid.id, frozen.id, user])), 'a locale origin requires an explicit target language');
+    const legacyId = randomUUID();
+    await db.query('INSERT INTO revisions(workspace_id,id,email_id,revision_no,spec,html,plaintext,artifact_hash,manifest,created_by)VALUES($1,$2,$3,99,$4,$5,$6,$7,$8,$9)', [w, legacyId, source.id, JSON.stringify(frozen.spec), frozen.html, frozen.plaintext, frozen.artifact_hash, JSON.stringify(frozen.manifest), user]);
+    const legacy = await tenant(w, user, (tx) => deriveEmail(tx, p, legacyId, { kind: 'locale', title: 'Legacy locale fixture', locale: 'he-IL' }));
+    assert.equal(legacy.lineage.source_status, 'unknown');
+    const foreignEmail = randomUUID();
+    await db.query("INSERT INTO emails(workspace_id,id,title,spec,created_by)VALUES($1,$2,'Foreign FK fixture','{}',$3)", [other, foreignEmail, user]);
+    await assert.rejects(() => tenant(other, user, (tx) => tx.query("INSERT INTO email_lineage(workspace_id,email_id,source_revision_id,source_doc_version,kind,target_locale,created_by)VALUES($1,$2,$3,1,'remix',NULL,$4)", [other, foreignEmail, frozen.id, user])), 'source revision FK cannot cross tenants');
+  } finally {
+    if ((await db.query("SELECT to_regclass('public.email_lineage') AS t")).rows[0].t) await db.query('DELETE FROM email_lineage WHERE workspace_id=ANY($1::uuid[])', [[w, other]]);
+    for (const table of ['render_downloads', 'audit_events', 'revisions', 'emails', 'brands', 'memberships']) await db.query(`DELETE FROM ${table} WHERE workspace_id=ANY($1::uuid[])`, [[w, other]]);
+    await db.query('DELETE FROM workspaces WHERE id=ANY($1::uuid[])', [[w, other]]);
+    await db.end();
+  }
+});

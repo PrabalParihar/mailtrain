@@ -15,6 +15,7 @@
     "release:check": "node --import tsx scripts/release-check.ts",
     "smoke:preflight": "node --import tsx scripts/smoke-preflight.ts",
     "smoke:render-cache": "node --import tsx scripts/smoke-render-cache.ts && node --import tsx scripts/smoke-render-editor.ts",
+    "smoke:derivation": "node --import tsx scripts/smoke-derivation.ts",
     "smoke:api": "node --import tsx scripts/smoke-api.ts",
     "smoke:import": "node --import tsx scripts/smoke-import.ts",
     "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts",

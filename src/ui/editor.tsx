@@ -25,7 +25,10 @@ import { api, ApiError, poll } from './api';
 import type { Role } from '@/domain/permissions';
 import { allowed } from '@/domain/permissions';
 import type { EmailSpec, Block, Finding } from '@/domain/email';
-type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec };
+import { DerivedEmails } from './derived-emails';
+import { derivationSlot, pendingDerivation, rememberDerivation, acknowledgeDerivation } from './derivation-receipt';
+import type { emailLineage } from '@/server/emails';
+type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec; lineage?: Awaited<ReturnType<typeof emailLineage>> };
 type Revision = { id: string; revision_no: number; artifact_hash: string; subject: string };
 type Anchor = { epoch: number; version: number; spec: string };
 type Frozen = Revision & { anchor: Anchor };
@@ -121,7 +124,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           try {
             const local = JSON.parse(backup) as Doc;
             if (JSON.stringify(local.spec) !== JSON.stringify(r.email.spec)) {
-              live.current = { ...local, doc_version: r.email.doc_version };
+              live.current = { ...r.email, spec: local.spec };
               setDoc(live.current);
               dirtyAt.current = Date.now();
               lastEdit.current = Date.now();
@@ -166,7 +169,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
         );
         ack.current = JSON.stringify(snapshot.spec);
         if (live.current) {
-          live.current = { ...live.current, doc_version: r.email.doc_version };
+          live.current = { ...live.current, doc_version: r.email.doc_version, lineage: r.email.lineage };
           setDoc({ ...live.current });
           if (JSON.stringify(live.current.spec) === ack.current) {
             dirtyAt.current = 0;
@@ -221,7 +224,11 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           setConflict(r.email);
           conflictRef.current = true;
           setStatus('Conflict · local work preserved');
-        } else void flushRef.current();
+        } else {
+          live.current = { ...live.current, lineage: r.email.lineage };
+          setDoc({ ...live.current });
+          void flushRef.current();
+        }
       } catch {
         setStatus('Offline · local only');
       }
@@ -543,6 +550,21 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           />
         </label>
       </div>
+      <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
+        onCreate={(input) => void act('derive', async () => {
+          if (!(await flush()) || dirtyAt.current || !live.current) return;
+          const origin = anchor();
+          const slot = await derivationSlot(workspace, id, input, origin.version, origin.spec);
+          if (!matches(origin)) return;
+          const pending = pendingDerivation(slot);
+          const r = pending ? { id: pending.source, anchor: origin } : revision && matches(revision.anchor) ? revision : await freeze();
+          if (!r || !matches(r.anchor)) return;
+          const receipt = pending ?? rememberDerivation(slot, r.id);
+          const result = await api<{ email: Doc }>(workspace, 'email-revisions/' + receipt.source + '/' + (input.kind === 'remix' ? 'remix' : 'localize'), 'POST', input.kind === 'remix' ? { title: input.title } : { title: input.title, locale: input.locale }, undefined, receipt.key);
+          acknowledgeDerivation(slot);
+          if (matches(r.anchor)) router.push('/app/emails/' + result.email.id);
+          else if (editorActive.current) setError('The source changed while the new draft was created. Your separate draft is in Emails; current edits are preserved.');
+        })} />
       <div className="editor-grid">
         <aside className="outline panel">
           <div className="section-heading">

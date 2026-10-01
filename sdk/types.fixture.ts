@@ -3,6 +3,13 @@ import type { LettercapeClient } from './client';
 export function typeExamples(client: LettercapeClient) {
   void client.call('listEmails', { query: { limit: 25 } });
   void client.call('createEmail', { body: { title: 'Example' } });
+  void client.call('remixRevision', { path: { id: 'example' }, body: { title: 'Source copy' } });
+  void client.call('createLocaleDraft', { path: { id: 'example' }, body: { title: 'Arabic draft', locale: 'ar-SA' } });
+  void client.pages('listEmailDerivatives', { path: { id: 'example' }, query: { limit: 25 } });
+  // @ts-expect-error locale drafts cannot claim an unsupported language
+  void client.call('createLocaleDraft', { path: { id: 'example' }, body: { title: 'Unsupported', locale: 'xx-ZZ' } });
+  // @ts-expect-error immutable source path is required
+  void client.call('remixRevision', { body: { title: 'No source' } });
   void client.call('createApiKey', { body: { name: 'Reader', scopes: ['emails:read'] } });
   // @ts-expect-error unsupported resource scope cannot be delegated
   void client.call('createApiKey', { body: { name: 'Invalid', scopes: ['billing:delete'] } });

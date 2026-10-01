@@ -19,6 +19,8 @@ import { allowed } from '@/domain/permissions';
 import { assertRouteMethod, readJson } from '@/server/http';
 import { keyRoute, requireKeyScope } from '@/server/api-keys';
 import { operationScope } from '@/domain/api-keys';
+import { RemixInput, LocaleDraftInput } from '@/domain/derivation';
+import { deriveEmail } from '@/server/derivation';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 type Context = { params: Promise<{ path: string[] }> };
@@ -144,15 +146,28 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'emails') {
       if (method === 'GET')
         return json(
-          await withPrincipal(req, 'read', async (tx, p) =>
-            id
+          await withPrincipal(req, 'read', async (tx, p) => {
+            if (id && command === 'derivatives') {
+              await getEmail(tx, id);
+              return resourcePage(req, tx, p, {
+                resource: 'derivatives',
+                from: `(SELECT e.id,e.title,e.doc_version,e.spec,e.updated_at,e.created_at,l.kind,l.target_locale,l.source_revision_id,l.source_doc_version,r.email_id AS source_email_id,
+                  CASE WHEN l.source_doc_version IS NULL THEN 'unknown' WHEN l.source_doc_version=parent.doc_version THEN 'current' ELSE 'outdated' END AS source_status
+                  FROM email_lineage l JOIN emails e ON e.workspace_id=l.workspace_id AND e.id=l.email_id
+                  JOIN revisions r ON r.workspace_id=l.workspace_id AND r.id=l.source_revision_id
+                  JOIN emails parent ON parent.workspace_id=r.workspace_id AND parent.id=r.email_id) AS derived`,
+                fields: 'id,title,doc_version,spec,kind,target_locale,source_revision_id,source_doc_version,source_status,updated_at,created_at',
+                where: 'source_email_id=$1::uuid', values: [id], filters: { source_email_id: id },
+              });
+            }
+            return id
               ? { email: await getEmail(tx, id) }
               : resourcePage(req, tx, p, {
                   resource: 'emails',
                   from: 'emails',
                   fields: 'id,title,doc_version,spec,updated_at,created_at',
-                }),
-          ),
+                });
+          }),
         );
       return json(
         await withPrincipal(req, command === 'preview' ? 'read' : 'edit', async (tx, p) => {
@@ -243,6 +258,10 @@ async function handle(req: Request, ctx: Context) {
       );
     }
     if (root === 'email-revisions') {
+      if (command === 'remix' || command === 'localize') {
+        const input = command === 'remix' ? { ...RemixInput.parse(body), kind: 'remix' as const } : { ...LocaleDraftInput.parse(body), kind: 'locale' as const };
+        return json(await withPrincipal(req, 'edit', (tx, p) => keyed(tx, p, 'email.' + command + ':' + id, key, input, () => deriveEmail(tx, p, id, input))), 201);
+      }
       if (method === 'GET' && !command)
         return json(
           await withPrincipal(req, 'read', async (tx, p) => {

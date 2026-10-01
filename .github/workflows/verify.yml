@@ -54,6 +54,7 @@ jobs:
           npm run smoke:contract
           npm run smoke:preflight
           npm run smoke:render-cache
+          npm run smoke:derivation
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

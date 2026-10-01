@@ -6,6 +6,7 @@ import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
+import { RemixInput, LocaleDraftInput } from '../src/domain/derivation';
 type Schema = Record<string, unknown>;
 const uuid = { type: 'string', format: 'uuid' },
   string = { type: 'string' },
@@ -26,6 +27,8 @@ const schemas: Record<string, Schema> = {
   Brand: fromZod(BrandSchema),
   EmailSpec: fromZod(EmailSpecSchema),
   KeyInput: fromZod(KeyInput),
+  RemixInput: fromZod(RemixInput),
+  LocaleDraftInput: fromZod(LocaleDraftInput),
   Mapping: fromZod(MappingSchema),
   FieldInput: fromZod(FieldSchema),
   LocalSessionInput: object({ secret: string }, undefined, false),
@@ -198,6 +201,7 @@ for (const [name, item] of Object.entries({
   Campaigns: 'Campaign',
   Segments: 'Segment',
   Audit: 'Audit',
+  Derivatives: 'Email',
 }))
   schemas[name + 'Page'] = envelope({
     data: array(ref(item)),
@@ -206,6 +210,7 @@ for (const [name, item] of Object.entries({
     total_count: { type: 'integer', minimum: 0 },
   });
 schemas.EmailResponse = envelope({ email: ref('Email') });
+schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
 schemas.BrandResponse = envelope({ brand: ref('BrandVersion') });
 schemas.CurrentBrandResponse = envelope({ brand: nullable(ref('BrandVersion')) });
 schemas.OperationResponse = envelope({ operation: ref('Operation') });
@@ -298,6 +303,8 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
   Empty: {},
+  RemixInput: { title: 'Remixed example' },
+  LocaleDraftInput: { title: 'Arabic draft example', locale: 'ar-SA' },
   WorkspaceInput: { name: 'Example workspace' },
   LocalSessionInput: { secret: 'example-only-never-a-real-secret' },
   Brand: {
@@ -568,6 +575,9 @@ add({
   description:
     'Queues a durable proposal only. Unconfigured AI/finite allowance produces an honest inspectable error; never sends.',
 });
+add({ id: 'listEmailDerivatives', path: '/v1/emails/{id}/derivatives', method: 'GET', response: 'DerivativesPage', paged: true, scope: 'emails:read' });
+for (const [id, command, body] of [['remixRevision', 'remix', 'RemixInput'], ['createLocaleDraft', 'localize', 'LocaleDraftInput']] as const)
+  add({ id, path: '/v1/email-revisions/{id}/' + command, method: 'POST', response: 'DerivationResponse', body, keyed: true, status: 201, scope: 'emails:write', description: command === 'localize' ? 'Creates a separately versioned manual locale draft linked to the frozen source. Source text is retained, not translated or reviewed; no AI/provider/send success is implied.' : 'Copies a frozen source into a separately versioned same-workspace remix with immutable source provenance. Source remains intact.' });
 for (const [id, command, method, body, response, keyed, etag] of [
   ['saveDraft', 'draft', 'PATCH', 'DraftInput', 'EmailResponse', false, true],
   ['checkpointEmail', 'revisions', 'POST', 'Empty', 'RevisionResponse', true, true],
