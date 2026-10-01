@@ -29,7 +29,7 @@ export async function audienceRoute(
           return {
             data: (
               await tx.query(
-                'SELECT c.*,EXISTS(SELECT 1 FROM suppressions s WHERE s.contact_id=c.id) AS suppressed FROM contacts c ORDER BY created_at DESC LIMIT 100',
+                'SELECT c.*,EXISTS(SELECT 1 FROM suppressions s WHERE s.contact_id=c.id) AS suppressed,ARRAY(SELECT tag_id FROM contact_tags t WHERE t.contact_id=c.id ORDER BY tag_id) AS tag_ids,ARRAY(SELECT list_id FROM contact_lists l WHERE l.contact_id=c.id ORDER BY list_id) AS list_ids FROM contacts c ORDER BY created_at DESC LIMIT 100',
               )
             ).rows,
           };
@@ -219,12 +219,19 @@ export async function audienceRoute(
             .rows[0];
           if (!c) fail(404, 'RESOURCE_NOT_FOUND', 'Campaign not found.');
           if (cmd === 'submit-review') {
-            await tx.query(
-              "UPDATE campaigns SET state='review_pending' WHERE id=$1 AND state='draft'",
-              [id],
-            );
+            if (c.state !== 'draft')
+              fail(409, 'STATE_CONFLICT', 'Only a draft campaign can request review.');
+            const reviewed = (
+              await tx.query(
+                "UPDATE campaigns SET state='review_pending' WHERE id=$1 AND state='draft' RETURNING *",
+                [id],
+              )
+            ).rows[0];
+            if (!reviewed)
+              fail(409, 'STATE_CONFLICT', 'The campaign state changed. Reload and try again.');
+            await audit(tx, p.workspace, p.user, 'campaign.review_requested', id);
             return {
-              campaign: { ...c, state: 'review_pending' },
+              campaign: reviewed,
               notice:
                 'Review requested. Sender, real-client preflight and delivery gates remain incomplete.',
             };

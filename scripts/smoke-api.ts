@@ -201,12 +201,144 @@ try {
   });
   assert.equal(dry.result.preview.valid, 1);
   assert.equal(dry.result.preview.eligible, 0);
+  for (const role of ['Viewer', 'Editor']) {
+    await db.query('UPDATE memberships SET role=$1 WHERE workspace_id=$2 AND user_id=$3', [
+      role,
+      workspace,
+      user,
+    ]);
+    const exposed = await call('operations/' + dry.result.operation_id);
+    assert.equal(exposed.response.status, 403);
+    assert.equal(exposed.result.error.code, 'INSUFFICIENT_SCOPE');
+  }
+  await db.query("UPDATE memberships SET role='Owner' WHERE workspace_id=$1 AND user_id=$2", [
+    workspace,
+    user,
+  ]);
   await call('contact-imports/' + dry.result.operation_id + '/confirm', 'POST', {});
   const contact = (await call('contacts')).result.data[0];
   assert.equal(contact.subscription, 'pending_confirmation');
   await call('contacts/' + contact.id + '/suppress', 'POST', {});
   await call('contact-imports/' + dry.result.operation_id + '/confirm', 'POST', {});
   assert.equal((await call('contacts')).result.data[0].suppressed, true);
+  checks++;
+  const tag = (await call('tags', 'POST', { name: 'VIP' })).result.item;
+  const list = (await call('lists', 'POST', { name: 'Autumn readers' })).result.item;
+  assert.equal(list.double_opt_in, true);
+  assert.equal(
+    (await call('contact-fields', 'POST', { key: 'score', label: 'Reader score', type: 'number' }))
+      .response.status,
+    200,
+  );
+  assert.equal(
+    (
+      await call('contacts/' + contact.id + '/profile', 'PATCH', {
+        expected_version: 1,
+        attrs: { score: '9' },
+      })
+    ).response.status,
+    422,
+  );
+  const profile = await call('contacts/' + contact.id + '/profile', 'PATCH', {
+    expected_version: 1,
+    attrs: { score: 9 },
+    tag_ids: [tag.id],
+    list_ids: [list.id],
+  });
+  assert.equal(profile.response.status, 200);
+  assert.equal(profile.result.contact.profile_version, 2);
+  assert.equal(profile.result.contact.subscription, 'pending_confirmation');
+  assert.equal((await call('contacts')).result.data[0].suppressed, true);
+  assert.equal(
+    (
+      await call('contacts/' + contact.id + '/profile', 'PATCH', {
+        expected_version: 1,
+        attrs: { score: 10 },
+      })
+    ).response.status,
+    409,
+  );
+  const foreignTag = randomUUID();
+  await db.query('INSERT INTO tags(workspace_id,id,name) VALUES($1,$2,$3)', [
+    other,
+    foreignTag,
+    'Foreign fixture',
+  ]);
+  assert.equal(
+    (
+      await call('contacts/' + contact.id + '/profile', 'PATCH', {
+        expected_version: 2,
+        tag_ids: [foreignTag],
+      })
+    ).response.status,
+    404,
+  );
+  const selected = (
+    await call('segments', 'POST', {
+      name: 'VIP score',
+      rule: {
+        kind: 'all',
+        children: [
+          { kind: 'tag', id: tag.id, op: 'in' },
+          { kind: 'attribute', field: 'score', op: 'gte', value: 5 },
+        ],
+      },
+    })
+  ).result.segment;
+  const selection = await call('segments/' + selected.id + '/preview', 'POST', {
+    expected_version: 1,
+  });
+  assert.equal(selection.result.preview.matched_count, 1);
+  assert.equal(selection.result.preview.eligible_count, 0);
+  assert.equal(selection.result.preview.members[0].reason, 'SUPPRESSED');
+  assert.ok(selection.result.preview.evaluated_at);
+  const snapKey = randomUUID();
+  const audienceFrozen = await call(
+    'segments/' + selected.id + '/snapshots',
+    'POST',
+    { expected_version: 1 },
+    { 'Idempotency-Key': snapKey },
+  );
+  assert.equal(audienceFrozen.result.snapshot.segment_version, 1);
+  assert.equal(audienceFrozen.result.snapshot.members[0].consent_version, 2);
+  assert.match(audienceFrozen.result.snapshot.digest, /^[a-f0-9]{64}$/);
+  const edits = await Promise.all(
+    [1, 2].map((value) =>
+      call('segments/' + selected.id + '/versions', 'POST', {
+        expected_version: 1,
+        rule: { kind: 'attribute', field: 'score', op: 'gte', value },
+      }),
+    ),
+  );
+  assert.deepEqual(edits.map((r) => r.response.status).sort(), [200, 409]);
+  assert.equal((await call('segments/' + selected.id)).result.versions.length, 2);
+  const staleFreeze = await call('segments/' + selected.id + '/snapshots', 'POST', {
+    expected_version: 1,
+  });
+  assert.equal(staleFreeze.response.status, 409);
+  assert.equal(staleFreeze.result.error.code, 'VERSION_CONFLICT');
+  const repeatedSnapshot = await call(
+    'segments/' + selected.id + '/snapshots',
+    'POST',
+    { expected_version: 1 },
+    { 'Idempotency-Key': snapKey },
+  );
+  assert.equal(repeatedSnapshot.result.snapshot.id, audienceFrozen.result.snapshot.id);
+  assert.equal(
+    (await call('audience-snapshots/' + audienceFrozen.result.snapshot.id)).result.snapshot
+      .segment_version,
+    1,
+  );
+  assert.equal((await call('segments/' + selected.id + '/preview')).response.status, 405);
+  assert.equal(
+    (
+      await call('segments', 'POST', {
+        name: 'Wrong tenant',
+        rule: { kind: 'tag', id: foreignTag, op: 'in' },
+      })
+    ).response.status,
+    404,
+  );
   checks++;
   const pref = await issuePreferenceToken(workspace, contact.id);
   const link = origin + '/preferences/' + pref;
@@ -253,6 +385,21 @@ try {
   );
   assert.equal((await call('campaigns/' + campaign.id + '/send', 'POST', {})).response.status, 409);
   checks++;
+  const review = await call('campaigns/' + campaign.id + '/submit-review', 'POST', {});
+  assert.equal(review.response.status, 200);
+  assert.equal(review.result.campaign.state, 'review_pending');
+  assert.equal(
+    (await call('campaigns/' + campaign.id + '/cancel', 'POST', {})).result.campaign.state,
+    'cancelled',
+  );
+  const cancelledReview = await call('campaigns/' + campaign.id + '/submit-review', 'POST', {});
+  assert.equal(cancelledReview.response.status, 409);
+  assert.equal(cancelledReview.result.error.code, 'STATE_CONFLICT');
+  assert.equal(
+    (await db.query('SELECT state FROM campaigns WHERE id=$1', [campaign.id])).rows[0].state,
+    'cancelled',
+  );
+  checks++;
   const operation = randomUUID();
   await db.query(
     "INSERT INTO operations(workspace_id,id,type,state,input,created_by) VALUES($1,$2,'email.generate','running','{}',$3)",
@@ -277,6 +424,15 @@ try {
   console.log(`${checks} real HTTP smoke groups passed; no AI or sending providers invoked.`);
 } finally {
   for (const table of [
+    'audience_snapshots',
+    'segment_versions',
+    'segments',
+    'engagement_events',
+    'contact_tags',
+    'contact_lists',
+    'contact_fields',
+    'tags',
+    'lists',
     'preflights',
     'campaigns',
     'consent_events',

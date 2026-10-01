@@ -12,6 +12,8 @@ import { createEmail, getEmail, saveDraft, checkpoint, restoreRevision } from '@
 import { operation, cancelOperation } from '@/server/operations';
 import { integrations } from '@/server/adapters';
 import { audienceRoute } from '@/server/audience-routes';
+import { organizationRoute } from '@/server/organization-routes';
+import { allowed } from '@/domain/permissions';
 import { assertRouteMethod, readJson } from '@/server/http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -317,10 +319,24 @@ async function handle(req: Request, ctx: Context) {
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
           const row = (await tx.query('SELECT * FROM operations WHERE id=$1', [id])).rows[0];
           if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');
+          if (row.type === 'contacts.import' && !allowed(p.role, 'audience'))
+            fail(403, 'INSUFFICIENT_SCOPE', 'Your role cannot access recipient import data.');
           if (command === 'cancel') return { operation: await cancelOperation(tx, p, id) };
           return { operation: row };
         }),
       );
+    if (
+      [
+        'audience-schema',
+        'lists',
+        'tags',
+        'contact-fields',
+        'segments',
+        'audience-snapshots',
+      ].includes(root) ||
+      (root === 'contacts' && command === 'profile')
+    )
+      return json(await organizationRoute(req, path, body, key));
     if (root === 'contacts' || root === 'contact-imports' || root === 'campaigns')
       return json(await audienceRoute(req, path, body, key));
     if (root === 'usage')

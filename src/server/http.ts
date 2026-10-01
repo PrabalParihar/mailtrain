@@ -37,7 +37,18 @@ export function assertRouteMethod(path: string[], method: string) {
   if (root === 'contacts') {
     if (!id) methods = ['GET'];
     else if (uuid.test(id) && command === 'suppress') methods = ['POST'];
+    else if (uuid.test(id) && command === 'profile') methods = ['PATCH'];
   }
+  if (root === 'audience-schema' && !id) methods = ['GET'];
+  if (['lists', 'tags', 'contact-fields'].includes(root) && !id) methods = ['POST'];
+  if (root === 'segments') {
+    if (!id) methods = ['GET', 'POST'];
+    else if (uuid.test(id)) {
+      if (!command) methods = ['GET'];
+      else if (['versions', 'preview', 'snapshots'].includes(command)) methods = ['POST'];
+    }
+  }
+  if (root === 'audience-snapshots' && id && uuid.test(id) && !command) methods = ['GET'];
   if (root === 'contact-imports') {
     if (!id) methods = ['POST'];
     else if (uuid.test(id) && command === 'confirm') methods = ['POST'];

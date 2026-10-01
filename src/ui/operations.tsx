@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Users, ShieldCheck, Plus, FileUp, CalendarDays, AlertCircle } from 'lucide-react';
 import { api } from './api';
-type Contact = { id: string; email_original: string; subscription: string; suppressed: boolean };
+import { AudienceOrganization, type OrganizedContact } from './audience-organization';
+type Contact = OrganizedContact & { subscription: string; suppressed: boolean };
 export function AudiencePanel({ workspace }: { workspace: string }) {
   const [contacts, setContacts] = useState<Contact[]>([]),
     [csv, setCsv] = useState('email,first_name\nreader@example.com,Reader'),
@@ -202,6 +203,7 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
           </p>
         </section>
       </div>
+      <AudienceOrganization workspace={workspace} contacts={contacts} onUpdate={reload} />
     </>
   );
 }

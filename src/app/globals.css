@@ -281,6 +281,31 @@ button svg {
   height: 18px;
   min-height: 0;
 }
+.audience-segments {
+  margin-top: 24px;
+}
+.audience-segments fieldset,
+.two-columns .panel fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.two-columns > .panel {
+  min-width: 0;
+}
+.segment-condition {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.segment-condition button {
+  margin-bottom: 16px;
+}
 .divider {
   height: 1px;
   background: var(--line);
