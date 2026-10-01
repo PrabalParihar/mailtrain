@@ -25,6 +25,7 @@ import { RemixInput, LocaleDraftInput } from '@/domain/derivation';
 import { readDispatchControls, setWorkspaceDispatchPolicy } from '@/server/dispatch-controls';
 import { DispatchPolicyInput } from '@/domain/dispatch-controls';
 import { deriveEmail } from '@/server/derivation';
+import { webhookRoute } from '@/server/webhook-route';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 type Context = { params: Promise<{ path: string[] }> };
@@ -56,6 +57,8 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if (root === 'webhook-endpoints')
+      return json(await webhookRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if (root === 'events')
       return json(await withPrincipal(req,'manage',async(tx,p)=>{
         if(id){

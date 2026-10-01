@@ -1,4 +1,88 @@
 export interface paths {
+    "/v1/webhook-endpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * list webhook endpoints
+         * @description Current Owner/Admin and explicit bearer webhook read scope; query credentials and wrapped signing keys are excluded.
+         */
+        get: operations["listWebhookEndpoints"];
+        put?: never;
+        /**
+         * create webhook endpoint
+         * @description DNS-only public HTTPS target validation, encrypted secret shown once outside replay receipts. Endpoint stays paused; no target availability, external delivery or TLS conformance claim.
+         */
+        post: operations["createWebhookEndpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhook-endpoints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * get webhook endpoint
+         * @description Implemented development behavior; all full-GA release obligations remain open.
+         */
+        get: operations["getWebhookEndpoint"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhook-endpoints/{id}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * rotate webhook endpoint
+         * @description CAS current endpoint version. Proposed development overlap24h; early retirement requires explicit consumer-cutover acknowledgment. Replay never recovers a secret.
+         */
+        post: operations["rotateWebhookEndpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhook-endpoints/{id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * pause webhook endpoint
+         * @description CAS pause; an already-authorized in-flight request may finish. Delivery worker remains disabled.
+         */
+        post: operations["pauseWebhookEndpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/events": {
         parameters: {
             query?: never;
@@ -1207,6 +1291,47 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WebhookEndpoint: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uri */
+            target_origin: string;
+            subscriptions: ("contact.unsubscribed" | "contact.topic_unsubscribed" | "contacts.imported")[];
+            /** @enum {string} */
+            status: "paused" | "enabled" | "disabled";
+            version: number;
+            secret_version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            dns_checked_at: string;
+            created_by: string;
+        };
+        WebhookEndpointInput: {
+            name: string;
+            url: string;
+            subscriptions: ("contact.unsubscribed" | "contact.topic_unsubscribed" | "contacts.imported")[];
+        } & {
+            subscriptions: unknown;
+        };
+        WebhookVersionInput: {
+            expected_version: number;
+        };
+        WebhookRotateInput: {
+            expected_version: number;
+            /** @default false */
+            retire_previous?: boolean;
+            /** @default false */
+            acknowledge_key_cutover?: boolean;
+        } & unknown;
+        WebhookConfiguration: {
+            key_configured: boolean;
+            /** @constant */
+            delivery_enabled: false;
+        };
         EventEnvelope: {
             /** Format: uuid */
             id: string;
@@ -1479,7 +1604,7 @@ export interface components {
         };
         KeyInput: {
             name: string;
-            scopes: ("brands:read" | "brands:write" | "emails:read" | "emails:write" | "emails:export" | "audience:read" | "audience:write" | "campaigns:read" | "campaigns:write" | "campaigns:approve" | "campaigns:send" | "integrations:read" | "events:read")[];
+            scopes: ("brands:read" | "brands:write" | "emails:read" | "emails:write" | "emails:export" | "audience:read" | "audience:write" | "campaigns:read" | "campaigns:write" | "campaigns:approve" | "campaigns:send" | "integrations:read" | "events:read" | "webhooks:read" | "webhooks:write")[];
             /** @default 90 */
             expires_in_days?: number;
         };
@@ -1865,6 +1990,33 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        WebhookEndpointsPage: {
+            request_id: string;
+            data: components["schemas"]["WebhookEndpoint"][];
+            has_more: boolean;
+            next_cursor: string | null;
+            total_count: number;
+            configuration: components["schemas"]["WebhookConfiguration"];
+        } & {
+            [key: string]: unknown;
+        };
+        WebhookEndpointResponse: {
+            request_id: string;
+            endpoint: components["schemas"]["WebhookEndpoint"];
+            configuration: components["schemas"]["WebhookConfiguration"];
+        } & {
+            [key: string]: unknown;
+        };
+        WebhookEndpointCommandResponse: {
+            request_id: string;
+            endpoint: components["schemas"]["WebhookEndpoint"];
+            configuration: components["schemas"]["WebhookConfiguration"];
+            secret?: string;
+            secret_available: boolean;
+            issued_secret_version?: number;
+        } & {
+            [key: string]: unknown;
+        };
         EventResponse: {
             request_id: string;
             event: components["schemas"]["EventEnvelope"];
@@ -1954,6 +2106,1424 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listWebhookEndpoints: {
+        parameters: {
+            query?: {
+                limit?: number;
+                /** @description Opaque signed cursor bound to account, workspace, resource and filters; expires in15minutes. */
+                after?: string;
+                /** @description UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages. */
+                created_after?: string;
+                /** @description UTC instant; inclusive lower/exclusive upper bound. Keep unchanged while following pages. */
+                created_before?: string;
+            };
+            header?: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointsPage"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+                /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "name": "Example paused receiver",
+                 *       "url": "https://example.org/webhook",
+                 *       "subscriptions": [
+                 *         "contact.unsubscribed"
+                 *       ]
+                 *     }
+                 */
+                "application/json": components["schemas"]["WebhookEndpointInput"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged result */
+            201: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointCommandResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rotateWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+                /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "retire_previous": false,
+                 *       "acknowledge_key_cutover": false
+                 *     }
+                 */
+                "application/json": components["schemas"]["WebhookRotateInput"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointCommandResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    pauseWebhookEndpoint: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+                /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                "application/json": components["schemas"]["WebhookVersionInput"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEndpointCommandResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     listEvents: {
         parameters: {
             query?: {

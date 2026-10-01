@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { parseWebhookVault, sealWebhookSecret, openWebhookSecret, selectWebhookSigningKey } from '../src/server/webhook-secrets';
+const context={workspace_id:randomUUID(),endpoint_id:randomUUID(),secret_version:1};
+const secret=randomBytes(32).toString('hex'),a=randomBytes(32).toString('hex'),b=randomBytes(32).toString('hex');
+const vault=parseWebhookVault(JSON.stringify({k1:a,k2:b}),'k2');
+test('webhook secrets are encrypted with endpoint/tenant/version/key identity and private bounded key inventory',()=>{
+ const first=sealWebhookSecret(context,secret,vault),second=sealWebhookSecret(context,secret,vault);
+ assert.notDeepEqual(first,second);assert.equal(first.key_version,'k2');assert.equal(JSON.stringify(first).includes(secret),false);assert.equal(openWebhookSecret(context,first,vault),secret);
+ assert.throws(()=>openWebhookSecret({...context,workspace_id:randomUUID()},first,vault));
+ assert.throws(()=>openWebhookSecret({...context,endpoint_id:randomUUID()},first,vault));
+ assert.throws(()=>openWebhookSecret({...context,secret_version:2},first,vault));
+ assert.throws(()=>openWebhookSecret(context,{...first,key_version:'k1'},parseWebhookVault(JSON.stringify({k1:b,k2:b}),'k2')));
+ assert.throws(()=>openWebhookSecret(context,{...first,ciphertext:'00'.repeat(32)},vault));
+ assert.throws(()=>openWebhookSecret(context,{...first,nonce:'00'.repeat(12)},vault));
+ assert.throws(()=>openWebhookSecret(context,{...first,tag:'00'.repeat(16)},vault));
+ assert.throws(()=>openWebhookSecret(context,first,parseWebhookVault(JSON.stringify({k1:a}),'k1')));
+ assert.throws(()=>sealWebhookSecret(context,'short',vault));
+ for(const raw of [undefined,'{}','not-json',JSON.stringify({k1:'00'}),JSON.stringify({k1:a,k2:b,k3:a,k4:b})])assert.throws(()=>parseWebhookVault(raw,'k1'));
+ assert.throws(()=>parseWebhookVault(JSON.stringify({k1:a}),'missing'));
+});
+test('rotating endpoint keys select exact secret version with bounded previous-key overlap and no silent fallback',()=>{
+ const keys=[{secret_version:2,valid_until:null},{secret_version:1,valid_until:'2026-10-01T00:10:00.000Z'}];
+ assert.equal(selectWebhookSigningKey(keys,'2',Date.parse('2026-10-01T00:10:00Z')).secret_version,2);
+ assert.equal(selectWebhookSigningKey(keys,'1',Date.parse('2026-10-01T00:09:59Z')).secret_version,1);
+ assert.throws(()=>selectWebhookSigningKey(keys,'1',Date.parse('2026-10-01T00:10:00Z')));
+ for(const id of ['01','0','3','-1','1,2'])assert.throws(()=>selectWebhookSigningKey(keys,id,Date.parse('2026-10-01T00:09:59Z')));
+ assert.throws(()=>selectWebhookSigningKey([...keys,keys[0]],'2',0));
+ assert.throws(()=>selectWebhookSigningKey([{secret_version:1,valid_until:'invalid'}],'1',0));
+ assert.throws(()=>selectWebhookSigningKey(keys,'2',NaN));
+});

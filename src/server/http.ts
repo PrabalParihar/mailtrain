@@ -23,6 +23,11 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && ['rotate', 'revoke'].includes(command)) methods = ['POST'];
   }
   if (root === 'events' && (!id || (uuid.test(id) && !command))) methods = ['GET'];
+  if (root === 'webhook-endpoints') {
+    if (!id) methods = ['GET','POST'];
+    else if (uuid.test(id) && !command) methods = ['GET'];
+    else if (uuid.test(id) && ['rotate','pause'].includes(command)) methods = ['POST'];
+  }
   if (root === 'dispatch-controls') {
     if (!id) methods = ['GET'];
     else if (id === 'workspace' && !command) methods = ['POST'];

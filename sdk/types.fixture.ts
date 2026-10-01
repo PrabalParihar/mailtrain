@@ -22,6 +22,11 @@ export function typeExamples(client: LettercapeClient) {
   // @ts-expect-error only documented cursor pages can be iterated
   void client.pages('getEmail', { path: { id: 'example' } });
 
+  void client.pages('listWebhookEndpoints',{});
+  void client.call('createWebhookEndpoint',{body:{name:'Paused',url:'https://example.org/webhook',subscriptions:['contacts.imported']}});
+  void client.call('rotateWebhookEndpoint',{path:{id:'example'},body:{expected_version:1}});
+  // @ts-expect-error reserved future event cannot be subscribed
+  void client.call('createWebhookEndpoint',{body:{name:'Invalid',url:'https://example.org',subscriptions:['campaign.delivered']}});
   void client.pages('listEvents', {query:{type:'contact.unsubscribed'}});
   void client.call('getEvent', {path:{id:'example'}});
   // @ts-expect-error an unimplemented delivery proof is not a supported event filter

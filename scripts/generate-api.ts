@@ -6,6 +6,7 @@ import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
+import { WebhookEndpointInput, WebhookVersionInput, WebhookRotateInput, WebhookEndpoint } from '../src/domain/webhooks';
 import { EventEnvelopeShape, EventType } from '../src/domain/events';
 import { DispatchPolicyInput, DispatchProvider } from '../src/domain/dispatch-controls';
 import { RemixInput, LocaleDraftInput } from '../src/domain/derivation';
@@ -26,6 +27,11 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  WebhookEndpoint: fromZod(WebhookEndpoint),
+  WebhookEndpointInput: {...fromZod(WebhookEndpointInput), allOf:[{properties:{subscriptions:{uniqueItems:true}}}]},
+  WebhookVersionInput: fromZod(WebhookVersionInput),
+  WebhookRotateInput: {...fromZod(WebhookRotateInput), allOf:[{if:{required:['retire_previous'],properties:{retire_previous:{const:true}}},then:{required:['acknowledge_key_cutover'],properties:{acknowledge_key_cutover:{const:true}}}}]},
+  WebhookConfiguration: object({key_configured:{type:'boolean'},delivery_enabled:{const:false}},undefined,false),
   EventEnvelope: fromZod(EventEnvelopeShape),
   DispatchPolicyInput: { ...fromZod(DispatchPolicyInput), allOf: [{ if: { properties: { paused: { const: false } } }, then: { properties: { reason: { const: 'verified_recovery' } } } }] },
   DispatchPolicy: object({ scope: { type: 'string', enum: ['global','provider','workspace'] }, target: string, paused: { type: 'boolean' }, version: { type: 'integer', minimum: 0 }, reason: { type: 'string', enum: ['incident','abuse_review','maintenance','verified_recovery'] }, updated_at: nullable(time) }, undefined, false),
@@ -216,6 +222,9 @@ for (const [name, item] of Object.entries({
     total_count: { type: 'integer', minimum: 0 },
   });
 schemas.DispatchControlsResponse = envelope({ controls: object({ global: nullable(ref('DispatchPolicy')), providers: array(object({ provider: fromZod(DispatchProvider), policy: nullable(ref('DispatchPolicy')) },undefined,false)), workspace: ref('DispatchPolicy'), dispatch_enabled: { const: false }, notice: string },undefined,false) });
+schemas.WebhookEndpointsPage = envelope({data:array(ref('WebhookEndpoint')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},configuration:ref('WebhookConfiguration')});
+schemas.WebhookEndpointResponse = envelope({endpoint:ref('WebhookEndpoint'),configuration:ref('WebhookConfiguration')});
+schemas.WebhookEndpointCommandResponse = envelope({endpoint:ref('WebhookEndpoint'),configuration:ref('WebhookConfiguration'),secret:{type:'string',pattern:'^[0-9a-f]{64}$'},secret_available:{type:'boolean'},issued_secret_version:{type:'integer',minimum:1}},['endpoint','configuration','secret_available']);
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
@@ -310,6 +319,9 @@ type Definition = {
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  WebhookEndpointInput:{name:'Example paused receiver',url:'https://example.org/webhook',subscriptions:['contact.unsubscribed']},
+  WebhookVersionInput:{expected_version:1},
+  WebhookRotateInput:{expected_version:1,retire_previous:false,acknowledge_key_cutover:false},
   Empty: {},
   EventEnvelope: fromZod(EventEnvelopeShape),
   DispatchPolicyInput: { expected_version: 0, paused: true, reason: 'incident' },
@@ -451,6 +463,11 @@ function add(d: Definition) {
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({id:'listWebhookEndpoints',path:'/v1/webhook-endpoints',method:'GET',response:'WebhookEndpointsPage',paged:true,scope:'webhooks:read',description:'Current Owner/Admin and explicit bearer webhook read scope; query credentials and wrapped signing keys are excluded.'});
+add({id:'getWebhookEndpoint',path:'/v1/webhook-endpoints/{id}',method:'GET',response:'WebhookEndpointResponse',scope:'webhooks:read'});
+add({id:'createWebhookEndpoint',path:'/v1/webhook-endpoints',method:'POST',body:'WebhookEndpointInput',response:'WebhookEndpointCommandResponse',status:201,keyed:true,scope:'webhooks:write',description:'DNS-only public HTTPS target validation, encrypted secret shown once outside replay receipts. Endpoint stays paused; no target availability, external delivery or TLS conformance claim.'});
+add({id:'rotateWebhookEndpoint',path:'/v1/webhook-endpoints/{id}/rotate',method:'POST',body:'WebhookRotateInput',response:'WebhookEndpointCommandResponse',keyed:true,scope:'webhooks:write',description:'CAS current endpoint version. Proposed development overlap24h; early retirement requires explicit consumer-cutover acknowledgment. Replay never recovers a secret.'});
+add({id:'pauseWebhookEndpoint',path:'/v1/webhook-endpoints/{id}/pause',method:'POST',body:'WebhookVersionInput',response:'WebhookEndpointCommandResponse',keyed:true,scope:'webhooks:write',description:'CAS pause; an already-authorized in-flight request may finish. Delivery worker remains disabled.'});
 add({ id: 'listEvents', path: '/v1/events', method: 'GET', response: 'EventsPage', paged: true, scope: 'events:read', query: [{name:'type',in:'query',schema:fromZod(EventType)}], description: 'Current Owner/Admin authority plus explicit events:read bearer scope. Only immutable typed versioned receipts; legacy rows excluded, external webhook delivery unconfigured.' });
 add({ id: 'getEvent', path: '/v1/events/{id}', method: 'GET', response: 'EventResponse', scope: 'events:read', description: 'Returns a verified immutable typed event; a receipt is not an external delivery acknowledgment.' });
 add({ id: 'getDispatchControls', path: '/v1/dispatch-controls', method: 'GET', response: 'DispatchControlsResponse', session: true, description: 'Current Owner/Admin session only. Missing policy fails closed; this does not activate sending.' });

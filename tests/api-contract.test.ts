@@ -42,6 +42,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       }
     }
   const roots = [
+    'webhook-endpoints',
     'events',
     'dispatch-controls',
     'health',

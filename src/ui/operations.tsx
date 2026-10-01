@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { WebhookEndpoints } from './webhooks';
 import { EventHistory } from './events';
 import { DispatchControls } from './dispatch-controls';
 import { ApiKeys } from './api-keys';
@@ -375,6 +376,7 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
           Load older audit events
         </button>
       )}
+      <WebhookEndpoints workspace={workspace} role={role} />
       <EventHistory workspace={workspace} role={role} />
       <DispatchControls workspace={workspace} role={role} />
       <ApiKeys workspace={workspace} role={role} />

@@ -13,6 +13,8 @@ export const KEY_SCOPES = [
   'campaigns:send',
   'integrations:read',
   'events:read',
+  'webhooks:read',
+  'webhooks:write',
 ] as const;
 export const KeyInput = z
   .object({
@@ -61,6 +63,7 @@ export function scopeForResource(
           ? 'campaigns:send'
           : 'campaigns:write';
   if (root === 'events') return read ? 'events:read' : 'unsupported';
+  if (root === 'webhook-endpoints') return read ? 'webhooks:read' : 'webhooks:write';
   if (root === 'integrations') return 'integrations:read';
   if (root === 'operations') return undefined; // checked against the fetched operation type
   return 'unsupported';

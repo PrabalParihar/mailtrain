@@ -1,0 +1,40 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { webhookTarget, validateWebhookAnswers, webhookRetryAfter, nextWebhookAttempt } from '../src/server/webhook-transport';
+test('webhook egress accepts only canonical public HTTPS443 and every DNS answer must be public',()=>{
+ assert.equal(webhookTarget('https://example.org/hook?query=opaque').hostname,'example.org');
+ for(const url of ['http://example.org','https://user:password@example.org','https://example.org:80/hook','https://example.org/#fragment','https://127.0.0.1','https://[::1]','https://169.254.169.254/latest','https://localhost','file:///etc/passwd','https://example.org/'+ 'x'.repeat(2048)])assert.throws(()=>webhookTarget(url));
+ assert.deepEqual(validateWebhookAnswers([{address:'93.184.216.34',family:4}]),{address:'93.184.216.34',family:4});
+ for(const address of ['127.0.0.1','10.0.0.1','172.16.0.1','192.168.0.1','169.254.1.1','100.64.0.1','::1','fc00::1','fe80::1','::ffff:127.0.0.1','2001:db8::1'])assert.throws(()=>validateWebhookAnswers([{address:'93.184.216.34',family:4},{address,family:address.includes(':')?6:4}]));
+ assert.throws(()=>validateWebhookAnswers([]));assert.throws(()=>validateWebhookAnswers(Array.from({length:17},()=>({address:'93.184.216.34',family:4}))));
+ assert.throws(()=>validateWebhookAnswers([{address:'93.184.216.34',family:6}]));
+});
+test('webhook retry deadline and failure budget stay bounded; rate deferrals preserve attempts and respect Retry-After',()=>{
+ const now=Date.parse('2026-10-01T00:00:00Z'),deadline=now+86400000;
+ assert.equal(webhookRetryAfter('60',now),60000);assert.equal(webhookRetryAfter('Thu, 01 Oct 2026 00:01:00 GMT',now),60000);
+ for(const header of ['-1','1.5','not-a-date'])assert.equal(webhookRetryAfter(header,now),null);
+ assert.equal(webhookRetryAfter('99999999999',now),86401000);
+ const rate=nextWebhookAttempt({now,deadline,failure_attempts:2,status:429,retry_after:'60',jitter:0.5});
+ assert.deepEqual(rate,{state:'pending',next_at:now+60000,failure_attempts:2,error_class:'rate_deferred'});
+ assert.equal(nextWebhookAttempt({now,deadline,failure_attempts:2,status:503,jitter:0.5}).failure_attempts,3);
+ assert.equal(nextWebhookAttempt({now,deadline,failure_attempts:0,status:204,jitter:0.5}).state,'acknowledged');
+ assert.equal(nextWebhookAttempt({now,deadline,failure_attempts:0,status:410,jitter:0.5}).state,'disabled');
+ assert.equal(nextWebhookAttempt({now,deadline,failure_attempts:0,status:400,jitter:0.5}).state,'terminal');
+ assert.equal(nextWebhookAttempt({now:deadline,deadline,failure_attempts:0,status:429,jitter:0.5}).state,'dead_letter');
+ assert.equal(nextWebhookAttempt({now,deadline,failure_attempts:9,status:null,jitter:0.5}).state,'dead_letter');
+ const late=nextWebhookAttempt({now:deadline-1000,deadline,failure_attempts:0,status:429,retry_after:'60',jitter:0.5});assert.equal(late.state,'dead_letter');
+ assert.throws(()=>nextWebhookAttempt({now,deadline,failure_attempts:0,status:503,jitter:2}));
+});
+import { Resolver } from 'node:dns/promises';
+import { resolveWebhookTarget } from '../src/server/webhook-transport';
+test('webhook DNS verification cancels timed-out/aborted queries and bounds simultaneous admission',async(t)=>{
+ let cancelled=0;t.mock.method(Resolver.prototype,'cancel',()=>{cancelled++;});
+ const a=t.mock.method(Resolver.prototype,'resolve4',async()=>['93.184.216.34']);
+ const b=t.mock.method(Resolver.prototype,'resolve6',async()=>{throw Object.assign(new Error('No AAAA'),{code:'ENODATA'});});
+ assert.equal((await resolveWebhookTarget('https://example.org')).pinned.address,'93.184.216.34');
+ a.mock.mockImplementation(async()=>new Promise<never>(()=>{}));b.mock.mockImplementation(async()=>new Promise<never>(()=>{}));
+ const first=new AbortController(),second=new AbortController();
+ const one=resolveWebhookTarget('https://example.org',first.signal),two=resolveWebhookTarget('https://example.org',second.signal);
+ await assert.rejects(()=>resolveWebhookTarget('https://example.org'),/capacity/i);
+ first.abort();second.abort();await assert.rejects(one,/interrupted/i);await assert.rejects(two,/interrupted/i);
+ await assert.rejects(()=>resolveWebhookTarget('https://example.org',undefined,Date.now()+20),/deadline/i);assert.ok(cancelled>=4);
+});
