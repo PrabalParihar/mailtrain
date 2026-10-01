@@ -7,3 +7,7 @@ node_modules
 output
 docs/Mailcraft-Development-PRD-v2.0.*
 *.tsbuildinfo
+
+# Private shared-workspace account/budget observations.
+docs/RAILWAY-BUDGET-PLAN.md
+**/node_modules

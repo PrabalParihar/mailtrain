@@ -109,8 +109,8 @@ export const EmailSpecSchema = z
     theme: z
       .object({
         content_width_px: z.number().int().min(320).max(800),
-        background: z.string().regex(/^#[\da-f]{6}$/i),
-        accent: z.string().regex(/^#[\da-f]{6}$/i),
+        background: z.string().regex(/^#[\da-fA-F]{6}$/),
+        accent: z.string().regex(/^#[\da-fA-F]{6}$/),
         font_stack: z.enum(['Arial, sans-serif', 'Georgia, serif', 'Verdana, sans-serif']),
       })
       .strict(),

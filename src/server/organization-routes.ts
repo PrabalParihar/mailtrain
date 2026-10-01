@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { resourcePage } from './pagination';
 import { withPrincipal } from './auth';
 import { keyed } from './commands';
 import { audit, digest } from './audit';
@@ -186,9 +187,7 @@ export async function organizationRoute(
     }
     if (root === 'segments') {
       if (req.method === 'GET' && !id)
-        return {
-          data: (await tx.query('SELECT * FROM segments ORDER BY created_at DESC LIMIT 100')).rows,
-        };
+        return resourcePage(req, tx, p, { resource: 'segments', from: 'segments', fields: '*' });
       const fields = await fieldDefinitions(tx);
       if (!id)
         return keyed(tx, p, 'segment.create', key, body, async () => {

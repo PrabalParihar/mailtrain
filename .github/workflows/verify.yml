@@ -32,6 +32,8 @@ jobs:
           node-version: 24.12.0
           cache: npm
       - run: npm ci
+      - run: npm --prefix tooling/openapi ci
+      - run: npm run api:check
       - run: npm run db:migrate
       - run: npm test
       - run: npm run lint
@@ -49,6 +51,7 @@ jobs:
           npm run smoke:import
           npm run smoke:preferences
           npm run smoke:keys
+          npm run smoke:contract
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

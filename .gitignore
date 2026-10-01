@@ -9,3 +9,6 @@ next-env.d.ts
 # Keep the user's authoritative development documents local; repo is public.
 docs/Mailcraft-Development-PRD-v2.0.md
 docs/Mailcraft-Development-PRD-v2.0.docx
+
+# Private shared-workspace account/budget observations.
+docs/RAILWAY-BUDGET-PLAN.md

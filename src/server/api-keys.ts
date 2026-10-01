@@ -3,19 +3,13 @@ import { z } from 'zod';
 import { KeyInput, scopeForResource } from '../domain/api-keys';
 import { sessionQuery, tenant, userQuery } from './db';
 import { audit, digest } from './audit';
-import { AppError, fail } from './errors';
+import { fail } from './errors';
 import { keyed } from './commands';
 import { withPrincipal, type Principal } from './auth';
 import { allowed, type Action } from '../domain/permissions';
 import { consumeApiRate } from './api-rate';
 import { requestPath } from './http';
-import { signPreferenceClaims, verifyPreferenceClaims } from './preference-tokens';
-const KeyCursor = z.object({
-  workspace: z.uuid(),
-  actor: z.string(),
-  created: z.iso.datetime({ offset: true }),
-  id: z.uuid(),
-});
+import { resourcePage } from './pagination';
 export function requireKeyScope(p: Principal, scope: string) {
   if (p.api_key && !p.api_key.scopes.includes(scope))
     fail(403, 'INSUFFICIENT_SCOPE', 'This API key does not grant the required resource scope.');
@@ -76,59 +70,8 @@ export async function keyRoute(
     fail(403, 'SESSION_REQUIRED', 'Manage API keys through an authorized signed-in session.');
   return withPrincipal(req, 'manage', async (tx, p) => {
     const [, id, command] = path;
-    if (req.method === 'GET') {
-      const params = new URL(req.url).searchParams;
-      const limit = z.coerce
-        .number()
-        .int()
-        .min(1)
-        .max(100)
-        .parse(params.get('limit') ?? 25);
-      let cursor: z.infer<typeof KeyCursor> | undefined;
-      const after = params.get('after');
-      if (after) {
-        if (after.length > 4096) fail(400, 'CURSOR_INVALID', 'This key cursor is invalid.');
-        try {
-          cursor = KeyCursor.parse(await verifyPreferenceClaims(after, 'api-key-cursor'));
-          if (cursor.workspace !== p.workspace || cursor.actor !== p.user)
-            fail(400, 'CURSOR_INVALID', 'This key cursor belongs to another account or workspace.');
-        } catch (error) {
-          if (error instanceof AppError && error.status === 503) throw error;
-          fail(400, 'CURSOR_INVALID', 'This key cursor is invalid or expired.');
-        }
-      }
-      const rows = (
-        await tx.query(
-          'SELECT ' +
-            metadata +
-            ', to_char(created_at AT TIME ZONE \'UTC\', \'YYYY-MM-DD"T"HH24:MI:SS.US"Z"\') AS cursor_created FROM api_keys WHERE ($1::timestamptz IS NULL OR (created_at,id)<($1::timestamptz,$2::uuid)) ORDER BY created_at DESC,id DESC LIMIT $3',
-          [cursor?.created ?? null, cursor?.id ?? null, limit + 1],
-        )
-      ).rows;
-      const data = rows.slice(0, limit).map((row) => {
-          const result = { ...row };
-          delete result.cursor_created;
-          return result;
-        }),
-        last = rows[Math.min(rows.length, limit) - 1],
-        has_more = rows.length > limit;
-      return {
-        data,
-        has_more,
-        next_cursor: has_more
-          ? await signPreferenceClaims(
-              {
-                workspace: p.workspace,
-                actor: p.user,
-                created: last.cursor_created,
-                id: last.id,
-              },
-              'api-key-cursor',
-              '15m',
-            )
-          : null,
-      };
-    }
+    if (req.method === 'GET')
+      return resourcePage(req, tx, p, { resource: 'keys', from: 'api_keys', fields: metadata });
     let rawSecret: string | undefined;
     const result = await keyed(
       tx,

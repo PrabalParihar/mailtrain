@@ -4,6 +4,7 @@ import { keyed } from './commands';
 import { audit, digest } from './audit';
 import { importCommand, readImportErrors } from './contact-imports';
 import { fail } from './errors';
+import { resourcePage } from './pagination';
 import { eligibility } from '../domain/audience';
 export async function audienceRoute(
   req: Request,
@@ -26,13 +27,16 @@ export async function audienceRoute(
     async (tx, p) => {
       if (root === 'contacts') {
         if (req.method === 'GET')
-          return {
-            data: (
-              await tx.query(
-                'SELECT c.*,EXISTS(SELECT 1 FROM suppressions s WHERE s.contact_id=c.id) AS suppressed,ARRAY(SELECT tag_id FROM contact_tags t WHERE t.contact_id=c.id ORDER BY tag_id) AS tag_ids,ARRAY(SELECT list_id FROM contact_lists l WHERE l.contact_id=c.id ORDER BY list_id) AS list_ids FROM contacts c ORDER BY created_at DESC LIMIT 100',
-              )
-            ).rows,
-          };
+          return resourcePage(req, tx, p, {
+            resource: 'contacts',
+            from: 'contacts c',
+            fields:
+              'c.*,EXISTS(SELECT 1 FROM suppressions s WHERE s.contact_id=c.id) AS suppressed,ARRAY(SELECT tag_id FROM contact_tags t WHERE t.contact_id=c.id ORDER BY tag_id) AS tag_ids,ARRAY(SELECT list_id FROM contact_lists l WHERE l.contact_id=c.id ORDER BY list_id) AS list_ids',
+            created: 'c.created_at',
+            id: 'c.id',
+            where: 'NOT c.deleted',
+            filters: { deleted: false },
+          });
         if (cmd === 'suppress') {
           return keyed(tx, p, 'contact.suppress:' + id, key, body, async () => {
             const c = (await tx.query('SELECT id FROM contacts WHERE id=$1 FOR UPDATE', [id]))
@@ -60,10 +64,11 @@ export async function audienceRoute(
           : importCommand(tx, p, id, cmd, body, key);
       if (root === 'campaigns') {
         if (req.method === 'GET')
-          return {
-            data: (await tx.query('SELECT * FROM campaigns ORDER BY created_at DESC LIMIT 100'))
-              .rows,
-          };
+          return resourcePage(req, tx, p, {
+            resource: 'campaigns',
+            from: 'campaigns',
+            fields: '*',
+          });
         if (!id)
           return keyed(tx, p, 'campaign.create', key, body, async () => {
             const name = z.string().min(1).max(160).parse(body.name),

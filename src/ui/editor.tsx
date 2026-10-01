@@ -20,6 +20,7 @@ import {
   Copy,
   Save,
 } from 'lucide-react';
+import { useResourcePage } from './paged';
 import { api, ApiError, poll } from './api';
 import type { Role } from '@/domain/permissions';
 import { allowed } from '@/domain/permissions';
@@ -40,7 +41,6 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     [text, setText] = useState(''),
     [view, setView] = useState<'canvas' | 'code' | 'text'>('canvas'),
     [mobile, setMobile] = useState(false),
-    [history, setHistory] = useState<Revision[]>([]),
     [showHistory, setShowHistory] = useState(false),
     [revision, setRevision] = useState<Frozen | null>(null),
     [report, setReport] = useState<Report | null>(null),
@@ -56,6 +56,8 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     [addType, setAddType] = useState<Block['type']>('text'),
     [undoCount, setUndoCount] = useState(0),
     [renderEpoch, setRenderEpoch] = useState(0);
+  const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id);
+  const history = historyPage.data;
   const epoch = useRef(0),
     busyRef = useRef('');
   const writable = editRole && !['raw', 'restore', 'reload', 'fork'].includes(busy);
@@ -373,11 +375,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           <button
             onClick={() =>
               void act('history', async () => {
-                const r = await api<{ data: Revision[] }>(
-                  workspace,
-                  'email-revisions?email_id=' + id,
-                );
-                setHistory(r.data);
+                await historyPage.reload();
                 setShowHistory(!showHistory);
               })
             }
@@ -448,21 +446,30 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
             <h2>Immutable checkpoints</h2>
             <button onClick={() => setShowHistory(false)}>Close history</button>
           </div>
+          {historyPage.error && (
+            <p className="alert danger" role="alert">
+              {historyPage.error}
+            </p>
+          )}
           <button
             disabled={!editRole || !!busy || !!conflict}
             onClick={() =>
               void act('checkpoint', async () => {
                 await freeze();
-                const r = await api<{ data: Revision[] }>(
-                  workspace,
-                  'email-revisions?email_id=' + id,
-                );
-                setHistory(r.data);
+                await historyPage.reload();
               })
             }
           >
             <Plus size={16} /> Create checkpoint
           </button>
+          {historyPage.hasMore && (
+            <button
+              disabled={!!busy || historyPage.busy}
+              onClick={() => void historyPage.loadMore()}
+            >
+              Load older checkpoints
+            </button>
+          )}
           {history.length ? (
             history.map((r) => (
               <div className="history-row" key={r.id}>

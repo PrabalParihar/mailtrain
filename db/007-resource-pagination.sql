@@ -1,0 +1,9 @@
+CREATE INDEX brands_page_idx ON brands(workspace_id,created_at DESC,id DESC);
+CREATE INDEX emails_page_idx ON emails(workspace_id,created_at DESC,id DESC);
+CREATE INDEX revisions_page_idx ON revisions(workspace_id,created_at DESC,id DESC);
+CREATE INDEX revisions_email_page_idx ON revisions(workspace_id,email_id,created_at DESC,id DESC);
+CREATE INDEX contacts_page_idx ON contacts(workspace_id,created_at DESC,id DESC);
+CREATE INDEX campaigns_page_idx ON campaigns(workspace_id,created_at DESC,id DESC);
+CREATE INDEX segments_page_idx ON segments(workspace_id,created_at DESC,id DESC);
+CREATE INDEX audit_page_idx ON audit_events(workspace_id,created_at DESC,id DESC);
+CREATE INDEX api_keys_page_idx ON api_keys(workspace_id,created_at DESC,id DESC);

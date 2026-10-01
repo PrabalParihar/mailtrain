@@ -1,25 +1,18 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { ApiKeys } from './api-keys';
 import { Users, ShieldCheck, Plus, CalendarDays, AlertCircle } from 'lucide-react';
+import { useResourcePage } from './paged';
 import { api } from './api';
 import { CsvImport } from './csv-import';
 import { AudienceOrganization, type OrganizedContact } from './audience-organization';
 type Contact = OrganizedContact & { subscription: string; suppressed: boolean };
 export function AudiencePanel({ workspace }: { workspace: string }) {
-  const [contacts, setContacts] = useState<Contact[]>([]),
-    [error, setError] = useState(''),
+  const contactPage = useResourcePage<Contact>(workspace, 'contacts');
+  const contacts = contactPage.data,
+    reload = contactPage.reload;
+  const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
-  const reload = useCallback(
-    () =>
-      api<{ data: Contact[] }>(workspace, 'contacts')
-        .then((r) => setContacts(r.data))
-        .catch((e) => setError(e.message)),
-    [workspace],
-  );
-  useEffect(() => {
-    void reload();
-  }, [reload]);
   async function action(fn: () => Promise<void>) {
     setBusy(true);
     setError('');
@@ -47,14 +40,14 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
         <ShieldCheck size={18} /> Local fixtures only. Real contact imports are gated by legal,
         retention and consent review. Use reserved example.com/.test addresses.
       </p>
-      {error && (
+      {(error || contactPage.error) && (
         <p className="alert danger" role="alert">
-          {error}
+          {error || contactPage.error}
         </p>
       )}
       <div className="two-columns">
         <CsvImport workspace={workspace} onUpdate={reload} />
-        <section className="panel">
+        <section className="panel" data-contact-pages>
           <h2>Contacts & suppression</h2>
           {contacts.length ? (
             <div className="table-wrap">
@@ -100,6 +93,11 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
               <p>Start with a dry run. A CSV row is not proof of permission.</p>
             </div>
           )}
+          {contactPage.hasMore && (
+            <button disabled={contactPage.busy} onClick={() => void contactPage.loadMore()}>
+              Load older contacts
+            </button>
+          )}
           <p className="small muted">
             Imports never clear suppressions. Complaint and bounce blocks require separate
             authorized remediation.
@@ -118,34 +116,18 @@ type Campaign = {
   digest: string;
 };
 export function CampaignPanel({ workspace }: { workspace: string }) {
-  const [items, setItems] = useState<Campaign[]>([]),
-    [revisions, setRevisions] = useState<{ id: string; revision_no: number; subject: string }[]>(
-      [],
-    ),
-    [name, setName] = useState(''),
+  const campaignPage = useResourcePage<Campaign>(workspace, 'campaigns');
+  const revisionPage = useResourcePage<{ id: string; revision_no: number; subject: string }>(
+    workspace,
+    'email-revisions',
+  );
+  const items = campaignPage.data,
+    reload = campaignPage.reload,
+    revisions = revisionPage.data;
+  const [name, setName] = useState(''),
     [revision, setRevision] = useState(''),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
-  const reload = useCallback(
-    () =>
-      api<{ data: Campaign[] }>(workspace, 'campaigns')
-        .then((r) => setItems(r.data))
-        .catch((e) => setError(e.message)),
-    [workspace],
-  );
-  useEffect(() => {
-    void reload();
-    void api<{ data: { id: string }[] }>(workspace, 'emails')
-      .then(async (r) => {
-        const v = await Promise.all(
-          r.data.map((e) =>
-            api<{ data: typeof revisions }>(workspace, 'email-revisions?email_id=' + e.id),
-          ),
-        );
-        setRevisions(v.flatMap((r) => r.data));
-      })
-      .catch((e) => setError(e.message));
-  }, [workspace, reload]);
   async function action(fn: () => Promise<void>) {
     setBusy(true);
     setError('');
@@ -169,9 +151,9 @@ export function CampaignPanel({ workspace }: { workspace: string }) {
           </p>
         </div>
       </div>
-      {error && (
+      {(error || campaignPage.error || revisionPage.error) && (
         <p className="alert danger" role="alert">
-          {error}
+          {error || campaignPage.error || revisionPage.error}
         </p>
       )}
       <form
@@ -198,6 +180,15 @@ export function CampaignPanel({ workspace }: { workspace: string }) {
               </option>
             ))}
           </select>
+          {revisionPage.hasMore && (
+            <button
+              type="button"
+              disabled={revisionPage.busy}
+              onClick={() => void revisionPage.loadMore()}
+            >
+              Load older checkpoints
+            </button>
+          )}
         </label>
         <button className="primary" disabled={busy || !revision}>
           <Plus size={18} /> Create campaign
@@ -270,6 +261,11 @@ export function CampaignPanel({ workspace }: { workspace: string }) {
           <p>Freeze an email revision in the editor, then create a campaign intent.</p>
         </section>
       )}
+      {campaignPage.hasMore && (
+        <button disabled={campaignPage.busy} onClick={() => void campaignPage.loadMore()}>
+          Load older campaigns
+        </button>
+      )}
     </>
   );
 }
@@ -278,16 +274,16 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
       data: { metric: string; kind: string; units: number }[];
       generation_allowance: number;
     } | null>(null),
-    [error, setError] = useState(''),
-    [audit, setAudit] = useState<{ id: string; action: string; created_at: string }[]>([]);
+    [error, setError] = useState('');
+  const auditPage = useResourcePage<{ id: string; action: string; created_at: string }>(
+    ['Owner', 'Admin'].includes(role) ? workspace : '',
+    'audit',
+  );
+  const audit = auditPage.data;
   useEffect(() => {
     if (['Owner', 'Billing'].includes(role))
       void api<NonNullable<typeof data>>(workspace, 'usage')
         .then(setData)
-        .catch((e) => setError(e.message));
-    if (['Owner', 'Admin'].includes(role))
-      void api<{ data: typeof audit }>(workspace, 'audit')
-        .then((r) => setAudit(r.data))
         .catch((e) => setError(e.message));
   }, [workspace, role]);
   return (
@@ -301,9 +297,9 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
           </p>
         </div>
       </div>
-      {error && (
+      {(error || auditPage.error) && (
         <p className="alert danger" role="alert">
-          {error}
+          {error || auditPage.error}
         </p>
       )}
       <div className="two-columns">
@@ -372,6 +368,11 @@ export function SettingsPanel({ workspace, role }: { workspace: string; role: st
         </p>
         <a href="/docs">Read the current capability and release status</a>
       </section>
+      {auditPage.hasMore && (
+        <button disabled={auditPage.busy} onClick={() => void auditPage.loadMore()}>
+          Load older audit events
+        </button>
+      )}
       <ApiKeys workspace={workspace} role={role} />
     </>
   );

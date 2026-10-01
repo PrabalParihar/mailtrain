@@ -55,8 +55,8 @@ export default function Docs() {
         Google/password/magic-link identity configuration, invitations, SSO/MFA recovery, realtime
         collaboration, media generation and immutable assets, full translation review, 20-profile
         real email-client testing, five ESP adapters, four sending providers, live campaigns, signed
-        events, billing, scoped API keys/SDK, data rights and production operations are required by
-        the full GA baseline. They are not claimed as launched.
+        events, billing, full public SDK acceptance, data rights and production operations are
+        required by the full GA baseline. They are not claimed as launched.
       </p>
       <h2>Provider setup</h2>
       <p>
@@ -74,10 +74,16 @@ export default function Docs() {
       </p>
       <h2>Development API</h2>
       <p>
-        Routes are under /v1. Requests use a verified session and X-Workspace-Id. State-changing
-        browser requests require the configured origin. Draft writes use If-Match; charged and state
-        commands use Idempotency-Key. This implementation is not yet the complete GA OpenAPI/SDK
-        contract.
+        Routes are under /v1. Session requests select X-Workspace-Id; scoped bearer keys are bound
+        to one workspace. State-changing browser requests require the configured origin. Draft
+        writes use If-Match; keyed commands preserve Idempotency-Key during recovery. Resource lists
+        use signed pages. Owner/Admin key controls are available in Settings.
+      </p>
+      <p>
+        <a href="/openapi.json">OpenAPI 3.1 contract</a> documents implemented development routes,
+        including explicit provider blocks. The generated TypeScript SDK source supports request
+        IDs, bounded recovery, interruption and page iteration. It has not been published as an npm
+        package; remaining GA commands, production account setup and acceptance gates stay open.
       </p>
       <Link href="/status">View release status</Link>
     </main>

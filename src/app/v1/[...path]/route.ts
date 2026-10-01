@@ -1,3 +1,4 @@
+import { resourcePage } from '@/server/pagination';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
@@ -25,11 +26,15 @@ async function handle(req: Request, ctx: Context) {
   const { path } = await ctx.params;
   const [root, id, command] = path;
   const method = req.method;
-  const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
-    NextResponse.json(
+  const json = (data: unknown, status = 200, headers: Record<string, string> = {}) => {
+    const op = (data as { operation?: { id?: string } })?.operation;
+    if (status === 202 && op?.id)
+      headers = { Location: '/v1/operations/' + op.id, 'Retry-After': '2', ...headers };
+    return NextResponse.json(
       { request_id, ...(data as object) },
-      { status, headers: { 'Cache-Control': 'no-store', ...headers } },
+      { status, headers: { 'Cache-Control': 'no-store', 'X-Request-Id': request_id, ...headers } },
     );
+  };
   try {
     assertRouteMethod(path, method);
     checkOrigin(req);
@@ -101,8 +106,11 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'brands')
       return json(
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
-          if (method === 'GET')
-            return { data: (await tx.query('SELECT * FROM brands ORDER BY version DESC')).rows };
+          if (method === 'GET') {
+            if (id === 'current')
+              return { brand: (await tx.query('SELECT * FROM brands ORDER BY version DESC LIMIT 1')).rows[0] ?? null };
+            return resourcePage(req, tx, p, { resource: 'brands', from: 'brands', fields: '*' });
+          }
           if (id === 'from-url') {
             const url = z.string().url().max(2048).parse(body.url);
             return {
@@ -131,16 +139,14 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'emails') {
       if (method === 'GET')
         return json(
-          await withPrincipal(req, 'read', async (tx) =>
+          await withPrincipal(req, 'read', async (tx, p) =>
             id
               ? { email: await getEmail(tx, id) }
-              : {
-                  data: (
-                    await tx.query(
-                      'SELECT id,title,doc_version,spec,updated_at FROM emails ORDER BY updated_at DESC LIMIT 100',
-                    )
-                  ).rows,
-                },
+              : resourcePage(req, tx, p, {
+                  resource: 'emails',
+                  from: 'emails',
+                  fields: 'id,title,doc_version,spec,updated_at,created_at',
+                }),
           ),
         );
       return json(
@@ -234,14 +240,19 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'email-revisions') {
       if (method === 'GET' && !command)
         return json(
-          await withPrincipal(req, 'read', async (tx) => ({
-            data: (
-              await tx.query(
-                "SELECT id,email_id,revision_no,subject,artifact_hash,created_at FROM (SELECT *,spec->>'subject' AS subject FROM revisions) r WHERE email_id=$1 ORDER BY revision_no DESC LIMIT 50",
-                [new URL(req.url).searchParams.get('email_id')],
-              )
-            ).rows,
-          })),
+          await withPrincipal(req, 'read', async (tx, p) => {
+            const rawEmail = new URL(req.url).searchParams.get('email_id');
+            const email_id = rawEmail === null ? null : z.uuid().parse(rawEmail);
+            return resourcePage(req, tx, p, {
+              resource: 'revisions',
+              from: 'revisions',
+              fields:
+                "id,email_id,revision_no,spec->>'subject' AS subject,artifact_hash,created_at",
+              where: '($1::uuid IS NULL OR email_id=$1::uuid)',
+              values: [email_id],
+              filters: { email_id },
+            });
+          }),
         );
       if (command === 'download') {
         const row = await withPrincipal(req, 'edit', async (tx, p) => {
@@ -265,6 +276,7 @@ async function handle(req: Request, ctx: Context) {
             'Content-Type': mime,
             'Content-Disposition': `attachment; filename="mailcraft-v${row.revision_no}.${format}"`,
             'X-Artifact-Hash': row.artifact_hash,
+            'X-Request-Id': request_id,
             'Cache-Control': 'no-store',
             'X-Mailcraft-Notice':
               'Frozen revision. Browser exports are simulations. Configure destination unsubscribe and merge slots before sending.',
@@ -359,13 +371,13 @@ async function handle(req: Request, ctx: Context) {
       );
     if (root === 'audit')
       return json(
-        await withPrincipal(req, 'manage', async (tx) => ({
-          data: (
-            await tx.query(
-              'SELECT id,actor,action,resource_id,event_hash,created_at FROM audit_events ORDER BY event_sequence DESC LIMIT 100',
-            )
-          ).rows,
-        })),
+        await withPrincipal(req, 'manage', async (tx, p) =>
+          resourcePage(req, tx, p, {
+            resource: 'audit',
+            from: 'audit_events',
+            fields: 'id,actor,action,resource_id,event_hash,created_at',
+          }),
+        ),
       );
     fail(404, 'RESOURCE_NOT_FOUND', 'Route not found.');
   } catch (e) {
@@ -388,7 +400,7 @@ async function handle(req: Request, ctx: Context) {
             code: e.code,
             message: e.message,
             details: e.details,
-            retryable: e.status === 503,
+            retryable: e.status === 503 || e.status === 429,
           },
         },
         e.status,

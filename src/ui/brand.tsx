@@ -24,11 +24,11 @@ export function BrandPanel({ workspace }: { workspace: string }) {
     [busy, setBusy] = useState(''),
     [url, setUrl] = useState('');
   useEffect(() => {
-    void api<{ data: { version: number; data: Brand }[] }>(workspace, 'brands')
+    void api<{ brand: { version: number; data: Brand } | null }>(workspace, 'brands/current')
       .then((r) => {
-        if (r.data[0]) {
-          setBrand(r.data[0].data);
-          setVersion(r.data[0].version);
+        if (r.brand) {
+          setBrand(r.brand.data);
+          setVersion(r.brand.version);
         }
       })
       .catch((e) => setError(e.message));

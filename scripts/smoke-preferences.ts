@@ -340,7 +340,7 @@ try {
       .click()
       .catch(() => {});
     await offline;
-    await page.getByRole('alert').waitFor();
+    await page.getByRole('alert').filter({ hasText: 'Your choices remain here.' }).waitFor();
     assert.equal(await page.getByLabel('Maximum email frequency').inputValue(), 'daily');
     await context.setOffline(false);
     await page.getByLabel('Maximum email frequency').selectOption('daily');

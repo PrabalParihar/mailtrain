@@ -47,9 +47,9 @@ export function CreatePanel({ workspace }: { workspace: string }) {
     [count, setCount] = useState(2);
   const router = useRouter();
   useEffect(() => {
-    void api<{ data: typeof brands }>(workspace, 'brands')
+    void api<{ brand: (typeof brands)[number] | null }>(workspace, 'brands/current')
       .then((r) => {
-        setBrands(r.data);
+        setBrands(r.brand ? [r.brand] : []);
         const saved = sessionStorage.getItem('mailcraft.brief.' + workspace);
         if (saved) {
           const b = JSON.parse(saved);
@@ -101,6 +101,7 @@ export function CreatePanel({ workspace }: { workspace: string }) {
           </Link>
         </p>
       )}
+      {brands[0] && <p className="muted small">Brand: {brands[0].data.name} · confirmed v{brands[0].version}</p>}
       <div className="create-grid">
         <form
           className="panel brief-form"

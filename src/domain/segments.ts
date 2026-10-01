@@ -24,7 +24,7 @@ type Engagement = {
 };
 export type Rule = Group | Relation | Attribute | Engagement;
 const scalar = z.union([z.string().max(2000), z.number().finite(), z.boolean()]);
-const leafSchema = z.discriminatedUnion('kind', [
+export const RuleLeafSchema = z.discriminatedUnion('kind', [
   z
     .object({ kind: z.enum(['tag', 'list']), id: z.string().uuid(), op: z.enum(['in', 'not_in']) })
     .strict(),
@@ -87,7 +87,7 @@ export function validateRule(input: unknown, fields: Field[]): Rule {
         .parse(value);
       return { kind: group.kind, children: group.children.map((c) => walk(c, depth + 1)) };
     }
-    const leaf = leafSchema.parse(value);
+    const leaf = RuleLeafSchema.parse(value);
     if (leaf.kind === 'attribute') {
       const field = [...builtinFields, ...fields].find((f) => f.key === leaf.field);
       if (!field) throw new Error(`Unknown custom field: ${leaf.field}.`);

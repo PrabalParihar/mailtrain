@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { product } from '@/config/product';
 import { Logo } from './logo';
+import { useResourcePage } from './paged';
 import { api, ApiError } from './api';
 import { BrandPanel } from './brand';
 import { CreatePanel } from './create';
@@ -63,14 +64,11 @@ export function MailcraftApp({
     [authRequired, setAuthRequired] = useState(false),
     [key, setKey] = useState(''),
     [busy, setBusy] = useState(false),
-    [menu, setMenu] = useState(false),
-    [emailState, setEmailState] = useState<{ workspace: string; data: Email[] }>({
-      workspace: '',
-      data: [],
-    });
-  const emails = emailState.workspace === workspace ? emailState.data : [];
+    [menu, setMenu] = useState(false);
   const router = useRouter();
   const section = screen[0] ?? '';
+  const emailPage = useResourcePage<Email>(workspace, 'emails', section);
+  const emails = emailPage.data;
   async function refresh() {
     try {
       const r = await api<{ data: Workspace[] }>('', 'workspaces');
@@ -89,20 +87,8 @@ export function MailcraftApp({
     void Promise.resolve().then(refresh);
   }, []);
   useEffect(() => {
-    if (!workspace) return;
-    let active = true;
-    localStorage.setItem('mailcraft.workspace', workspace);
-    void api<{ data: Email[] }>(workspace, 'emails')
-      .then((r) => {
-        if (active) setEmailState({ workspace, data: r.data });
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [workspace, section]);
+    if (workspace) localStorage.setItem('mailcraft.workspace', workspace);
+  }, [workspace]);
   const current = workspaces.find((w) => w.id === workspace);
   if (loading)
     return (
@@ -388,7 +374,13 @@ export function MailcraftApp({
               <div className="dashboard-stats">
                 <div>
                   <span>Saved drafts</span>
-                  <strong>{emails.length}</strong>
+                  <strong>
+                    {emailPage.loaded
+                      ? emailPage.total
+                      : emailPage.error
+                        ? 'Unavailable'
+                        : 'Loading…'}
+                  </strong>
                 </div>
                 <div>
                   <span>Connected ESPs</span>
@@ -421,6 +413,11 @@ export function MailcraftApp({
                 </Link>
               </div>
               <div className="panel">
+                {emailPage.error && (
+                  <p className="alert danger" role="alert">
+                    {emailPage.error}
+                  </p>
+                )}
                 {emails.length ? (
                   <EmailRows emails={emails} />
                 ) : (
@@ -432,6 +429,11 @@ export function MailcraftApp({
                       Create email
                     </Link>
                   </div>
+                )}
+                {emailPage.hasMore && (
+                  <button disabled={emailPage.busy} onClick={() => void emailPage.loadMore()}>
+                    Load older emails
+                  </button>
                 )}
               </div>
             </>

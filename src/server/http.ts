@@ -26,6 +26,7 @@ export function assertRouteMethod(path: string[], method: string) {
   if (root === 'brands') {
     if (!id) methods = ['GET', 'POST'];
     else if (id === 'from-url' && !command) methods = ['POST'];
+    else if (id === 'current' && !command) methods = ['GET'];
   }
   if (root === 'emails') {
     if (!id) methods = ['GET', 'POST'];
