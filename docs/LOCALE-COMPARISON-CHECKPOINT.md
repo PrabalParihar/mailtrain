@@ -72,3 +72,20 @@ Full source receipt/fragment refusal plus original editor/Monaco/conversion/poin
 | `/tmp/lettercape-locale-linux-startup.log` | `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754` |
 
 Canonical integration and executable commit follow below. Publication remains paused: automatic review rejected the prior ordinary main push as unverified external private-source egress under the original no-push instruction; direct native permission is unanswered. All13 production gates/current-head remote CI remain open.
+
+## Canonical closeout
+
+Executable local commit `4787d9519a3b0a4cb8f9be535fa7dffe094c6417` is integrated into main and actual `Path.home()/Desktop/mail` through local-only fast-forward. All535 tracked SHA256 values match, both tracked trees clean/no collisions. Original private mode0600/size986/inode44097037/mtime_ns1790839723000000000 and authoritative MD/DOCX metadata remain unchanged; no private contents copied/printed/hashed, trusted application configuration loading disclosed. No locale migration was introduced. Original109draft/221revision column hashes still exactly match the pre-source witness after this increment.
+
+Canonical build/lint/type/API115 and actual locale HTTP/Chromium selective-copy/repeated clicks/CAS save/reload/parent drift/local typing/navigation/empty/Hebrew390px/Viewer/inert source/error retry pass, with owned generated app/database cleanup completed. Native431/431 and complete source/fragment/original editor baseline plus current Linux packaging/closed startup qualify the same executable tracked bytes. This remains root author qualification; independent review, provider translation/reviewer/input-revision/source-review-history/RTL-client acceptance, current-head remote CI and all13 GA gates remain open. No process/test/review was stalled when parent requested status; finished sessions and log completion were verified. Existing main/canonical loopback apps and development-only pinned media worker are restored separately after closeout.
+
+| Canonical evidence | SHA256 |
+| --- | --- |
+| `/tmp/lettercape-locale-canonical-sync-proof.json` | `59f10ee1e3aaeef49fc43808fc1ccf805bab935f78c38b4e419cada30e466d71` |
+| `/tmp/lettercape-locale-main-db-preservation.json` | `106f0ee285218d3e08414c309de19de3c3f016379ec4fdbb4f9ecfc4f21ea90e` |
+| `/tmp/lettercape-locale-ci-order.log` | `ce0567715118161ed998df5768120940b30e900abaff6147a0f2b0b793452faf` |
+| `/tmp/lettercape-locale-canonical-build.log` | `05c99af2a1f75f331dc0b1c7d2bcb0b4fb5ed039807d8d0e2834be6410393957` |
+| `/tmp/lettercape-locale-canonical-lint.log` | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-locale-canonical-type.log` | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-locale-canonical-api.log` | `c1df945026ca3e0bbafeac88754e45e319958cc63f173155cb28733cedfc91df` |
+| `/tmp/lettercape-locale-canonical-browser.log` | `781e1b0f5f11b66fb2e56c12630c85b9fee5092c76dd764f5123a5a82cb066e4` |
