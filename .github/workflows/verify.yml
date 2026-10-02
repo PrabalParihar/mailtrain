@@ -76,6 +76,7 @@ jobs:
           npm run smoke:campaign-configuration
           npm run smoke:campaign-lifecycle
           npm run smoke:calendar
+          npm run smoke:utm
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

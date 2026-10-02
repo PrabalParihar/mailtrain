@@ -26,6 +26,9 @@ import type { Role } from '@/domain/permissions';
 import { allowed } from '@/domain/permissions';
 import type { EmailSpec, Block, Finding } from '@/domain/email';
 import { DerivedEmails } from './derived-emails';
+import {EmailUTM}from'./email-utm';
+import{assertEmailUTMTargets,trackingFingerprint}from'@/domain/email-utm';
+import type{UTMParameterData}from'@/domain/utm';
 import { derivationSlot, pendingDerivation, rememberDerivation, acknowledgeDerivation } from './derivation-receipt';
 import type { emailLineage } from '@/server/emails';
 type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec; lineage?: Awaited<ReturnType<typeof emailLineage>> };
@@ -286,6 +289,14 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     setStatus(navigator.onLine ? 'Unsaved changes' : 'Offline · local only');
     setReport(null);
     setRevision(null);
+  }
+  function applyUTM(policy:UTMParameterData|undefined,expected:string):string|null{
+    if(!editorActive.current||!live.current||!editRole||busyRef.current||conflictRef.current)return 'Resolve the current draft action or conflict before applying UTM. Your settings are retained.';
+    if(trackingFingerprint(live.current.spec.tracking)!==expected)return 'The current UTM policy changed. Reload UTM settings before applying your retained values.';
+    const spec={...live.current.spec};if(policy)spec.tracking=structuredClone(policy);else delete spec.tracking;
+    try{assertEmailUTMTargets(spec);}catch(error){return error instanceof Error?error.message:'These links need correction before applying UTM.';}
+    if(trackingFingerprint(policy)!==trackingFingerprint(live.current.spec.tracking))update(spec);
+    return null;
   }
   const changeBlock = (value: Block) => {
     if (doc)
@@ -550,6 +561,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           />
         </label>
       </div>
+      <EmailUTM key={workspace+':'+id} policy={doc.spec.tracking} canEdit={editRole} blocked={!!busy||!!conflict} onApply={applyUTM}/>
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
         onCreate={(input) => void act('derive', async () => {
           if (!(await flush()) || dirtyAt.current || !live.current) return;

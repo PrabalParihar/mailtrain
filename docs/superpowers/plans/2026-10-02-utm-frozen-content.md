@@ -21,8 +21,8 @@ Files email domain/server errors as needed, generated API/SDK and actual HTTP sm
 
 ### Task 3: Editor controls and recovery
 Files src/ui/email-utm.tsx/editor, browser smoke/package/CI.
-- [ ] Actual Chromium missing-controls RED.
-- [ ] Enable/apply/remove, retained invalid form, same/external policy stale reload, current unrelated edits, initial/Viewer/conflict, autosave/offline/checkpoint/reload, repeated clicks/error/workspace navigation/390px and old frozen artifact pin. Expected full checks and affected preview/preflight/derivation/export/campaign browser PASS; commit/task-done.
+- [x] Actual Chromium missing-controls RED.
+- [x] Enable/apply/remove, retained invalid form, same/external policy stale reload, current unrelated edits, initial/Viewer/conflict, autosave/offline/checkpoint/reload, repeated clicks/error/workspace navigation/390px and old frozen artifact pin. Expected full checks and affected preview/preflight/derivation/export/campaign browser PASS; commit/task-done.
 
 ### Task 4: Single review and publication
 - [ ] ONE fresh whole-slice reviewer BASE..HEAD/spec/plan/ledger/all Review Focus; grade real effects; ONE native Important/Critical RED→GREEN pass; defer Minors and rule every declined judgment.
