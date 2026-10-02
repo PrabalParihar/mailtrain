@@ -224,7 +224,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
             <p className="small muted">
               Sender/provider: not configured · Tracking: off · Schedule: none
             </p>
-            <CampaignConfiguration workspace={workspace} id={c.id} role={role} savedState={c.state} savedVersion={c.version} onUpdate={reload}/>
+            <CampaignConfiguration key={workspace+':'+c.id+':'+role} workspace={workspace} id={c.id} role={role} savedState={c.state} savedVersion={c.version} onUpdate={reload}/>
             <div className="toolbar">
               <button
                 disabled={busy || c.state !== 'draft'}

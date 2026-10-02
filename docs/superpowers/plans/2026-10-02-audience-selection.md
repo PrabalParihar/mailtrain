@@ -50,8 +50,8 @@
 ### Task 5: Campaign audience selection and history
 **Files:** Modify ui/campaign-configuration.tsx and operations.tsx; extend owned audience-selection browser and existing campaign recovery fixtures.
 **Interfaces:** Owner/Admin signed metadata pages and explicit ID verified by Task3; current pointer/recipient counts readonly for other content roles. Captured command includes source only when explicitly selected; omission preserves original intent.
-- [ ] Write/run missing-selector RED: source outside first page remains visible, strict initial/error/empty/failed paging/repeated page and current source metadata; select/save/no-op/omit/history; segment/contact changes leave pinned membership; review invalidation; lost POST/failed GET/original receipt after cancellation; stale saved config preserves form/base; Viewer/Editor denial; workspace interruption/storage unavailable and mobile.
-- [ ] Implement metadata selection with current acknowledged base and existing original-key/lifecycle fences. Run complete selection/browser and existing campaign/lifecycle/calendar/UTM/preflight/remix/PNG+PDF checks/full/lint/type/API/build; expected PASS. Commit/task-done.
+- [x] Write/run missing-selector RED: source outside first page remains visible, strict initial/error/empty/failed paging/repeated page and current source metadata; select/save/no-op/omit/history; segment/contact changes leave pinned membership; review invalidation; lost POST/failed GET/original receipt after cancellation; stale saved config preserves form/base; Viewer/Editor denial; workspace interruption/storage unavailable and mobile.
+- [x] Implement metadata selection with current acknowledged base and existing original-key/lifecycle fences. Run complete selection/browser and existing campaign/lifecycle/calendar/UTM/preflight/remix/PNG+PDF checks/full/lint/type/API/build; expected PASS. Commit/task-done.
 
 ### Task 6: ONE review and publication
 **Files:** Current-plan ledger/spec/plan, public AUDIENCE-SELECTION-CHECKPOINT/CAPABILITIES/VERIFICATION/COVERAGE/RELEASE evidence; reviewed source/canonical sync only.

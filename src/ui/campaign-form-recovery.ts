@@ -1,0 +1,12 @@
+import {z} from 'zod';
+import {CampaignConfigurationInput,CampaignConfigurationView} from '../domain/campaign-configuration';
+const schema=z.object({base:CampaignConfigurationView,name:z.string().max(160),revision:z.string().max(100),planned:z.boolean(),local:z.string().max(100),zone:z.string().max(100),offset:z.string().max(100),audience_id:z.string().max(36),pending:z.object({key:z.string().uuid(),body:z.string().max(10000)}).strict().optional()}).strict();
+export type CampaignForm=z.infer<typeof schema>;
+export type CampaignView=z.infer<typeof CampaignConfigurationView>;
+export function formForCampaign(base:CampaignView):CampaignForm{const timing=base.intent.planned_timing;return {base,name:base.name,revision:base.revision_id,planned:!!timing,local:timing?.local_time??'',zone:timing?.time_zone??'UTC',offset:timing?.utc_offset??'+00:00',audience_id:''};}
+export function campaignFormDirty(form:CampaignForm){const a={...form},b=formForCampaign(form.base);delete a.pending;return JSON.stringify(a)!==JSON.stringify(b);}
+export function parseCampaignForm(raw:string):CampaignForm|null{try{if(raw.length>30000)return null;const form=schema.parse(JSON.parse(raw));if(form.pending&&CampaignConfigurationInput.parse(JSON.parse(form.pending.body)).expected_version!==form.base.version)return null;return form;}catch{return null;}}
+const memory=new Map<string,CampaignForm>(),unpersisted=new Set<string>();let guarded=false;
+const slot=(workspace:string,id:string)=>`lettercape.campaign-form.${workspace}.${id}`;
+export function readCampaignForm(workspace:string,id:string){const key=slot(workspace,id),cached=memory.get(key);if(cached)return{form:structuredClone(cached),persisted:!unpersisted.has(key)};try{const raw=localStorage.getItem(key);return{form:raw?parseCampaignForm(raw):null,persisted:true};}catch{return{form:null,persisted:false};}}
+export function rememberCampaignForm(workspace:string,id:string,form:CampaignForm){const key=slot(workspace,id);memory.set(key,structuredClone(form));let persisted=true;try{localStorage.setItem(key,JSON.stringify(form));unpersisted.delete(key);}catch{persisted=false;if(campaignFormDirty(form)||form.pending)unpersisted.add(key);else unpersisted.delete(key);}if(!guarded&&typeof window!=='undefined'){window.addEventListener('beforeunload',event=>{if(unpersisted.size){event.preventDefault();event.returnValue='';}});guarded=true;}return persisted;}
