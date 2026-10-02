@@ -22,8 +22,8 @@ Files src/domain/workspace-calendar.ts, tests/workspace-calendar.test.ts. Export
 
 ### Task 3: Observed index and preference storage
 Files db/027-workspace-calendar.sql, tests/workspace-calendar-db.test.ts. Add timezone_version and derived planned_at/index/trigger; runtime manager/version/context guard and index forgery guard; preserve026 history.
-- [ ] Isolated actual PG RED: missing columns, current-only valid/invalid backfill, tenant/manager/version/no-op/rollback and campaign timing/version/hash/history unchanged.
-- [ ] Implement/apply owned local database only. Expected focused/full/lint/typecheck PASS; commit/task-done.
+- [x] Isolated actual PG RED: missing columns, current-only valid/invalid backfill, tenant/manager/version/no-op/rollback and campaign timing/version/hash/history unchanged.
+- [x] Implement/apply owned local database only. Expected focused/full/lint/typecheck PASS; commit/task-done.
 
 ### Task 4: Scoped calendar/preference API
 Files src/server/workspace-calendar.ts, audience-routes/auth/http/API handler/generator and generated contracts. GET campaigns/calendar?month=YYYY-MM&limit; GET workspace-preferences; POST workspace-preferences/timezone current manager session CAS. Read campaigns:read; session-only preference writes.
