@@ -16,7 +16,7 @@ ONE fresh Astra high whole-slice review35d1515..8a5b029: no Critical, two Import
 
 Final author checks172/172 tests, lint0/typecheck/build/API90, complete affected actual HTTP/Chromium PASS. Existing API14groups/preflight/contract/creation/Voice actual HTTP/browser regressions PASS. Existing rotated-key parallel browser check initially timed out on disabled first historical row; bounded independent rerun passed unchanged and the failure is retained. Logs /tmp/lettercape-campaign-final-{tests,lint,typecheck,api,build,http}.log; review RED/GREEN /tmp/lettercape-campaign-review-{metadata-red,metadata-green,refresh-red,storage-red,recovery-green}.log; prior regression /tmp/lettercape-campaign-task4-regression-*.log and /tmp/lettercape-campaign-task5-{creation,voice,release}.log.
 
-Reviewed/fixed executable e8f96c057588a75ec5de769678037e57c501db54 is published to the intended main branch with exact remote readback,326canonical tracked SHA256 matches and canonical3002 actual HTTP/Chromium PASS including both reviewed recovery cases. [Exact-head CI36959642753](https://github.com/PrabalParihar/mailtrain/actions/runs/36959642753) is in progress: renderer success, application verification running. Success is not yet established. This is source publication; application activation remains disabled. Production release check exits1 with all13 gates still open. Full intent/locale/assets/sender/consent/frequency/legal review, refreshed audience policy, accepted scheduling, recipient ledger/reconciliation, real clients and representative SLOs remain required.
+Reviewed/fixed executable e8f96c057588a75ec5de769678037e57c501db54 is published to the intended main branch with exact remote readback,326canonical tracked SHA256 matches and canonical3002 actual HTTP/Chromium PASS including both reviewed recovery cases. [Exact-head CI36959642753](https://github.com/PrabalParihar/mailtrain/actions/runs/36959642753) completed successfully for exact e8f96c0; both application verification and renderer jobs passed. This is source publication; application activation remains disabled. Production release check exits1 with all13 gates still open. Full intent/locale/assets/sender/consent/frequency/legal review, refreshed audience policy, accepted scheduling, recipient ledger/reconciliation, real clients and representative SLOs remain required.
 
 ## Rulings I made
 
@@ -68,6 +68,12 @@ Final: Ruling: bound post-fix validation to full172/lint/typecheck/API90/build p
 
 Final: Ruling: source-only Git bundle fast-forward after clean expected aa8c464 and315baseline hash/no new-path collisions, then326tracked hash/actual canonical verification — Git preserves ignored local settings/dependencies and rejects unsafe non-fast-forward/untracked overwrite — cost if wrong: stop publication on mismatch and preserve unrelated files.
 
+Final: Ruling: stop after stalled native plan-write and one bounded read-only retry; on explicit connected-again instruction inspect both clean git states and intended calendar files before repeating — no calendar files/workspace exist and no uncommitted changes observed — cost if wrong: preserve any later discovered work and never infer completion from timed-out commands.
+
+Final: Ruling: explicit new user request authorizes the formerly deferred child lifecycle-status/edit-controls fix as new tested follow-up work — original whole-slice review and single native fix pass remain complete — cost if wrong: follow-up must preserve unsaved fields and explicit original-command recovery while refreshing lifecycle authority.
+
 ## Deferred minors
 
 Final: minor (deferred): child configuration lifecycle status/editable controls can remain draft after parent review/cancel; server state guard prevents mutation, but explicit reload is needed for accurate child status.
+
+The lifecycle-display Minor was deferred at the original review. The user explicitly requested a tested follow-up after executor recovery; that follow-up is being implemented separately.

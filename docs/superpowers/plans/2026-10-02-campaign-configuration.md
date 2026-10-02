@@ -32,5 +32,5 @@ Create src/ui/campaign-configuration.tsx and scripts/smoke-campaign-configuratio
 - [x] Verify UTC/NY DST/non-hour visible original+UTC timing, invalid no POST, offline kept settings, same-event one POST, lost ack original retry one snapshot/no-op reload, two pages stale CAS with retained fields, role/tenant/key boundary, empty/history/repeat paging/error/mobile/workspace interruption. Appropriate existing campaign/preflight/key/contract/creation regressions plus full checks expected PASS; commit.
 
 ### Task5 Single review/publication
-- [ ] Fresh reviewer BASE..HEAD/spec/plan/ledger/all Review Focus; regrade actual effect, one native Important/Critical RED→GREEN pass, defer Minors and rule every declined judgment.
-- [ ] Final checks/owned browser; clean expected-head canonical315baseline tracked-only SHA256 sync; authorized ordinary main push/exact-head CI readback. Preserve exhaustive public rulings/Minors before deleting only this workspace. Production stays closed.
+- [x] Fresh reviewer BASE..HEAD/spec/plan/ledger/all Review Focus; regrade actual effect, one native Important/Critical RED→GREEN pass, defer Minors and rule every declined judgment.
+- [x] Final checks/owned browser; clean expected-head canonical315baseline tracked-only SHA256 sync; authorized ordinary main push/exact-head CI readback. Preserve exhaustive public rulings/Minors before deleting only this workspace. Production stays closed.
