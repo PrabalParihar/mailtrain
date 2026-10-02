@@ -1,3 +1,6 @@
+// Register contribution dependencies before standalone services initialize.
+import 'monaco-editor/editor/contrib/codelens/browser/codeLensCache.js';
+import 'monaco-editor/editor/common/services/treeViewsDndService.js';
 import * as monaco from 'monaco-editor/editor/editor.api.js';
 import 'monaco-editor/languages/definitions/html/register.js';
 import 'monaco-editor/editor/contrib/suggest/browser/suggestController.js';
