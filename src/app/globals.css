@@ -1497,9 +1497,6 @@ td {
   .auth-panel {
     padding: 24px;
   }
-  .code-panel {
-    display: none;
-  }
   .canvas-toolbar button:has(svg) {
     min-width: 40px;
   }
