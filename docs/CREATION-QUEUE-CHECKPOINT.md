@@ -1,6 +1,6 @@
 # Durable creation queue development checkpoint — 2026-10-02
 
-Source publication/CI readback pending. Latest published executable source remains8d61ffe with CI36937005736 success. New reviewed source range8d61ffe..0906c41 plus the single native fix pass covers additive023–025 restricted PostgreSQL storage, separate ID-only BullMQ wake queues/worker identities, scoped redacted API87 and interruptible recovery UI. Full GA baseline65requirements/13gates remains binding; no entire requirement has GA acceptance.
+Published executable checkpoint486c451a0053365137a533a48ddbbd48fd5c43a9 is synchronized to canonical Desktop/mail with306tracked SHA256 matches. [Exact-head CI36947751152](https://github.com/PrabalParihar/mailtrain/actions/runs/36947751152) succeeded in both full app and dedicated sandboxed renderer jobs. Canonical actual HTTP/Chromium recovery passed on loopback3002. New reviewed source range8d61ffe..0906c41 plus the single native fix pass covers additive023–025 restricted PostgreSQL storage, separate ID-only BullMQ wake queues/worker identities, scoped redacted API87 and interruptible recovery UI. Full GA baseline65requirements/13gates remains binding; no entire requirement has GA acceptance.
 
 ## Validation and review
 
