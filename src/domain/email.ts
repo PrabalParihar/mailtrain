@@ -1,3 +1,4 @@
+import type{ToneRuleData}from'./voice-guard';
 import { z } from 'zod';
 import { createElement as h } from 'react';
 import { render } from '@react-email/render';
@@ -249,8 +250,9 @@ export function lintEmail(
   spec: EmailSpec,
   forbidden: string[] = [],
   artifact?: { html: string },
+  toneRules?:ToneRuleData,
 ): Finding[] {
-  return staticLint(spec, forbidden, (source) => sanitizeRaw(source).html, artifact);
+  return staticLint(spec, forbidden, (source) => sanitizeRaw(source).html, artifact,toneRules);
 }
 
 function block(b: Block, accent: string): ReturnType<typeof h> {

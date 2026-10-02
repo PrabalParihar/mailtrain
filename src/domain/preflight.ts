@@ -1,8 +1,9 @@
+import{ToneRules,toneFindings,type ToneRuleData}from'./voice-guard';
 import { load } from 'cheerio';
 import { z } from 'zod';
 import type { EmailSpec, Finding } from './email';
 // A safety-rule change creates a new version even when compilation bytes are unchanged.
-export const LINT_RULES_VERSION = 'static-2';
+export const LINT_RULES_VERSION = 'static-3';
 export const HTML_WARNING_BYTES = 100 * 1024;
 function luminance(hex: string) {
   const rgb = hex
@@ -52,11 +53,13 @@ export function staticLint(
   forbidden: string[],
   sanitize: (source: string) => string,
   artifact?: { html: string },
+  toneRules?:ToneRuleData,
 ): Finding[] {
-  const findings: Finding[] = [];
+  const findings: Finding[] = [],configuredTone=ToneRules.parse(toneRules??{});
   const add = (code: string, severity: Finding['severity'], location: string, message: string) =>
     findings.push({ code, severity, location, message });
   const voice = (text: string, location: string) => {
+    findings.push(...toneFindings(text,location,configuredTone));
     const content = text.toLowerCase();
     for (const phrase of forbidden.filter((p) => p.trim()))
       if (content.includes(phrase.toLowerCase()))
