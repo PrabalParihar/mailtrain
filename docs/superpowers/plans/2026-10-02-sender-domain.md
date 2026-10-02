@@ -25,10 +25,10 @@
 ### Task 1: strict sender and observed-DNS contracts
 **Files:** src/domain/sender-domain.ts; tests/sender-domain.test.ts.
 **Interfaces:** SenderDraftInput/VersionInput; normalizeSender(input):CanonicalSender; DNSObservation; summarizeTXT(records,purpose):status/records. No secret/readiness injection.
-- [ ] Write focused tests: IDNA domain/from normalization, invalid controls/URL/IP/single-label, provider/region/account/reply-to bounds; schema rejects connection/readiness/private unknowns; split TXT concatenation and duplicate SPF; all limits/unavailable statuses.
-- [ ] Run node --import tsx --test tests/sender-domain.test.ts and observe missing-module RED.
-- [ ] Implement strict schemas/functions with exact spec bounds and literal disabled connection state.
-- [ ] Run focused/full/lint/typecheck; commit only green Task1.
+- [x] Write focused tests: IDNA domain/from normalization, invalid controls/URL/IP/single-label, provider/region/account/reply-to bounds; schema rejects connection/readiness/private unknowns; split TXT concatenation and duplicate SPF; all limits/unavailable statuses.
+- [x] Run node --import tsx --test tests/sender-domain.test.ts and observe missing-module RED.
+- [x] Implement strict schemas/functions with exact spec bounds and literal disabled connection state.
+- [x] Run focused/full/lint/typecheck; commit only green Task1.
 
 ### Task 2: tenant version/check storage
 **Files:** db/030-sender-domain.sql; tests/sender-domain-db.test.ts.
