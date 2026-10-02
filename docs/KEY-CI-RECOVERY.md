@@ -1,0 +1,17 @@
+# Key browser CI recovery
+
+Reviewed calendar executable c7e4a5166bbb53582dfa4150305344e1c3635985 passed exact CI36971963596 (verify and renderer). Newer evidence-only9c0188b55d3ddeb4bf78acaaa4f822e6d4d790d3 failed exact CI36972763920: smoke-keys.ts timed out on the first QA browser key row's disabled Revoke button. Renderer passed. The newer head is not declared verified from its predecessor's success.
+
+The fixture selected a row by display name and first position, then reused it after rotation creates a new key UUID and retains a revoked same-name historical row. Native unmodified complete key smoke passed; that alone did not resolve the failure. A deterministic owned Chromium fixture reordered the real API metadata so retained revoked history came first, reproducing the same disabled-button timeout before the correction. API/data were left intact; only this disclosed browser fixture's row ordering was changed. The CI log does not independently establish which asynchronous ordering produced the original failure.
+
+The correction targets create and rotation UUIDs from their acknowledged HTTP receipts. Rows expose their existing metadata ID as data-api-key-id. The regression deliberately keeps revoked same-name history first, checks the original row is revoked/disabled and the replacement is active in PostgreSQL, then revokes that exact replacement and verifies its persisted state. Exact IDs also identify both expiry checks. No key secret is printed, persisted in a receipt, or added to the DOM attributes. The existing authorization/rate/one-time-reveal contracts are unchanged.
+
+Complete actual native key/encoded-boundary HTTP+Chromium passes with the regression. All185 tracked source tests, lint/typecheck/API93/build pass; the separate uncommitted UTM development files are preserved and excluded from this recovery publication. Canonical sync and new exact-head CI remain pending. All65baseline requirements/all13GA gates remain required; no provider/paid/deployment/send effect.
+
+Ruling: diagnose the new failed head independently rather than inheriting prior source CI success — bounded normal native pass plus deterministic actual metadata-order RED identifies the name/position selector dependency — cost if wrong: exact recovery-head CI must pass, and further reproducible product state failures must be investigated rather than retried away.
+
+Ruling: choose the command receipt's UUID, verify historical and replacement states separately and preserve revoked history — rotation is new credential identity, not a display-name mutation — cost if wrong: fixture fails on missing/disabled replacement or wrong persisted revocation; API grants and secret lifecycle remain server authoritative.
+
+Ruling: the deterministic row-order fixture is disclosed synthetic browser presentation over real local HTTP metadata, not evidence of a production API sort violation — no claim that the original CI transport timing is fully known — cost if wrong: production collection-order/current-read and complete role/tenant acceptance remain full GA work.
+
+Ruling: this authorized CI recovery is a separate narrow test-identity follow-up after the completed calendar review and single native fix pass — no reopening or second whole-calendar review — cost if wrong: record the original failure and all new regression/evidence, and keep source/public launch acceptance distinct.

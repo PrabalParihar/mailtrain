@@ -77,3 +77,6 @@ Final: minor (deferred): exact local-month AT TIME ZONE predicates cannot use or
 Final: minor (deferred): formatCalendarInstant loses BCE era when0001UTC crosses westward and emits10000 when9999crosses eastward, outside four-digit display contract. Modern dates unaffected; explicit supported-range rejection remains required.
 
 Task 6 exact source CI:36971963596 completed SUCCESS at c7e4a5166bbb53582dfa4150305344e1c3635985; both verify and dedicated sandboxed renderer jobs pass, including all185/API93/full checks/actual HTTP+Chromium and closed production startup. Native gh final readback /tmp/lettercape-calendar-ci-final.json.
+
+Evidence-only9c0188b exact CI36972763920 failed on the key fixture first-name-row Revoke timeout; renderer passed. Do not inherit c7e4a51 success for that newer head. Separate authorized identity-regression recovery is documented in KEY-CI-RECOVERY.md; no source/public launch claim is made until recovery-head CI passes.
+Ruling: subsequent metadata-only CI failure is a separate narrow key fixture recovery, not an invitation to reopen the completed calendar review — parent explicitly requested diagnosis/fix/regression/exact CI before continuation — cost if wrong: retain failure evidence and require new recovery-head verification.

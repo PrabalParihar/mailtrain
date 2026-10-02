@@ -236,7 +236,7 @@ function ScopedKeys({ workspace, role }: { workspace: string; role: string }) {
             </thead>
             <tbody>
               {keys.map((key) => (
-                <tr key={key.id}>
+                <tr key={key.id} data-api-key-id={key.id}>
                   <td>
                     {key.name}
                     <small className="muted">{key.prefix}…</small>

@@ -208,6 +208,9 @@ try {
       1,
     );
     creates = 0;
+    const createdReceipt = page.waitForResponse(
+      response => new URL(response.url()).pathname === '/v1/api-keys' && response.request().method() === 'POST',
+    );
     await page.getByLabel('API key name').fill('QA browser key');
     await page.getByRole('button', { name: 'Create scoped API key' }).evaluate((button) => {
       (button as HTMLButtonElement).click();
@@ -216,33 +219,59 @@ try {
     await page.getByLabel('New API key secret').waitFor();
     assert.equal(creates, 1);
     await page.getByRole('button', { name: 'Dismiss secret' }).click();
-    const row = page
-      .locator('.api-key-panel tbody tr')
-      .filter({ hasText: 'QA browser key' })
-      .first();
+    const createdResponse = await createdReceipt;
+    assert.equal(createdResponse.status(), 201);
+    const originalBrowserKey = (await createdResponse.json()).key.id as string;
+    const row = page.locator('.api-key-panel tr[data-api-key-id="' + originalBrowserKey + '"]');
     const beforeExpiry = (
       await db.query(
-        "SELECT expires_at FROM api_keys WHERE workspace_id=$1 AND name='QA browser key' AND revoked_at IS NULL",
-        [w],
+        "SELECT expires_at FROM api_keys WHERE workspace_id=$1 AND id=$2",
+        [w, originalBrowserKey],
       )
     ).rows[0].expires_at;
     page.on('dialog', (dialog) => void dialog.accept());
+    // Deterministic ordering regression: key identity survives retained same-name history.
+    // Reorder only this owned browser fixture's real GET metadata, leaving API/state intact.
+    await page.route('**/v1/api-keys', async route => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      const response = await route.fetch(), result = await response.json();
+      result.data = [
+        ...result.data.filter((key: { id: string }) => key.id === originalBrowserKey),
+        ...result.data.filter((key: { id: string }) => key.id !== originalBrowserKey),
+      ];
+      await route.fulfill({ response, json: result });
+    });
+    const rotatedReceipt = page.waitForResponse(
+      response => new URL(response.url()).pathname === '/v1/api-keys/' + originalBrowserKey + '/rotate' && response.request().method() === 'POST',
+    );
     await row.getByRole('button', { name: 'Rotate key' }).click();
     await page.getByLabel('New API key secret').waitFor();
     await page.getByRole('button', { name: 'Dismiss secret' }).click();
+    const rotatedResponse = await rotatedReceipt;
+    assert.equal(rotatedResponse.status(), 200);
+    const replacementId = (await rotatedResponse.json()).key.id as string;
     const afterExpiry = (
       await db.query(
-        "SELECT expires_at FROM api_keys WHERE workspace_id=$1 AND name='QA browser key' AND revoked_at IS NULL",
-        [w],
+        "SELECT expires_at FROM api_keys WHERE workspace_id=$1 AND id=$2",
+        [w, replacementId],
       )
     ).rows[0].expires_at;
     assert.equal(new Date(beforeExpiry).getTime(), new Date(afterExpiry).getTime());
-    await row.getByRole('button', { name: 'Revoke key' }).click();
+    assert.notEqual(replacementId,originalBrowserKey);
+    const replacementRow=page.locator('.api-key-panel tr[data-api-key-id="'+replacementId+'"]');
+    await row.getByText('Revoked',{exact:true}).waitFor();
+    assert.equal(await row.getByRole('button',{name:'Revoke key'}).isDisabled(),true);
+    const stored=(await db.query("SELECT id,revoked_at IS NULL AS active FROM api_keys WHERE workspace_id=$1 AND id=ANY($2::uuid[])",[w,[originalBrowserKey,replacementId]])).rows;
+    assert.equal(stored.find(item=>item.id===originalBrowserKey).active,false);
+    assert.equal(stored.find(item=>item.id===replacementId).active,true);
+    await replacementRow.getByRole('button', { name: 'Revoke key' }).click();
     await page
       .locator('.api-key-panel [role="status"]')
       .filter({ hasText: 'Key revoked' })
       .waitFor();
     assert.equal(await page.getByLabel('New API key secret').count(), 0);
+    await replacementRow.getByText('Revoked',{exact:true}).waitFor();
+    assert.equal((await db.query('SELECT revoked_at IS NOT NULL AS revoked FROM api_keys WHERE id=$1',[replacementId])).rows[0].revoked,true);
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -325,7 +354,7 @@ try {
   console.log(
     JSON.stringify({
       checks:
-        'one-time reveal, hashed storage, safe receipts/audit, tenant binding, resource scopes, session-only management, CSRF, issuer permission, expiry, rotation/revocation, two keys share10rpm, Chromium offline/lost response/repeated click/mobile/navigation and signed cross-tenant/tamper-resistant pagination',
+        'one-time reveal, hashed storage, safe receipts/audit, tenant binding, resource scopes, session-only management, CSRF, issuer permission, expiry, rotation/revocation, two keys share10rpm, Chromium offline/lost response/repeated click/mobile/navigation, receipt UUID targeting with revoked same-name history first, and signed cross-tenant/tamper-resistant pagination',
       real_provider_calls: 0,
     }),
   );
