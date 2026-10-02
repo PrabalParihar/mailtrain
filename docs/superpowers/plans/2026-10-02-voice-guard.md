@@ -23,8 +23,8 @@ Modify src/domain/brand.ts optional tone_rules, src/server/ai.ts data-only promp
 
 ### Task3 Brand controls and actual browser/HTTP acceptance
 Modify src/ui/brand.tsx; create scripts/smoke-voice-guard.ts/package/CI. Existing preflight located finding UI consumes same Finding interface.
-- [ ] RED owned Chromium controls missing; implement unset/zero/numeric limits, explicit per-field counting explanation, preserve pending edits on errors and same-event save mutex. No automatic rewrite.
-- [ ] Verify immutable v1/v2 pins and reload, strict/foreign/role/key boundary, offline/repeated clicks/invalid limits/located findings/mobile/workspace interruption. Full tests/lint/typecheck/API/build + appropriate existing brand-memory/preflight/membership/key smokes expected PASS; commit.
+- [x] RED owned Chromium controls missing; implement unset/zero/numeric limits, explicit per-field counting explanation, preserve pending edits on errors and same-event save mutex. No automatic rewrite.
+- [x] Verify immutable v1/v2 pins and reload, strict/foreign/role/key boundary, offline/repeated clicks/invalid limits/located findings/mobile/workspace interruption. Full tests/lint/typecheck/API/build + appropriate existing brand-memory/preflight/membership/key smokes expected PASS; commit.
 
 ### Task4 Whole-slice review/publication
 - [ ] One fresh Astra high reviewer of BASE..HEAD/spec/plan/ledger; regrade by effect, one Critical/Important RED→GREEN pass, defer Minors/rule all declined judgments.

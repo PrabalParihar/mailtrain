@@ -168,14 +168,14 @@ try {
     await page.locator('.preflight-panel').waitFor();
     assert.equal(requests, 1);
     await page.locator('.preflight-panel').getByText('Location: copy', { exact: true }).waitFor();
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-2/);
+    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Review and check', exact: true }).click();
     await page
       .getByRole('alert')
       .filter({ hasText: /acknowledged|fetch|network|Failed/i })
       .waitFor();
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-2/);
+    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
     await context.setOffline(false);
     await page.getByRole('button', { name: 'Review and check', exact: true }).click();
     await page.waitForFunction(
@@ -184,7 +184,7 @@ try {
           b.textContent?.includes('Review and check'),
         )?.disabled,
     );
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-2/);
+    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({
       path: 'output/playwright/lettercape-preflight-mobile.png',

@@ -1595,3 +1595,7 @@ td {
   max-width: 100%;
   overflow-x: auto;
 }
+
+.brand-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: contents; }
+.voice-rule-controls { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 18px 0; }
+.voice-rule-controls legend { font-weight: 600; padding: 0 6px; }

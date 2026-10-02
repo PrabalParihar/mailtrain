@@ -72,6 +72,7 @@ jobs:
           npm run smoke:authority
           npm run smoke:memberships
           npm run smoke:creation
+          npm run smoke:voice-guard
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

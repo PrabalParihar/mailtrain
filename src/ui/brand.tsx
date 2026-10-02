@@ -22,6 +22,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
   const [brand, setBrand] = useState<Brand>(initial),
     [version, setVersion] = useState(0),
     [brandId,setBrandId]=useState(''),
+    [brandReady,setBrandReady]=useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(''),
@@ -36,10 +37,12 @@ export function BrandPanel({ workspace }: { workspace: string }) {
           setBrandId(r.brand.id);
         }
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(()=>setBrandReady(true));
   }, [workspace]);
   const field = <K extends keyof Brand>(name: K, value: Brand[K]) =>
     setBrand((b) => ({ ...b, [name]: value }));
+  function tone(name:'max_sentence_words'|'max_exclamations',value:string){setBrand(before=>{const rules={...before.tone_rules};if(value==='')delete rules[name];else rules[name]=Number(value);return{...before,tone_rules:rules};});}
   return (
     <>
       <div className="page-heading">
@@ -112,7 +115,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
             onChange={(e) => setUrl(e.target.value)}
             required
           />
-          <button disabled={!!busy}>
+          <button disabled={!brandReady||!!busy}>
             {busy === 'extract' ? 'Extracting…' : 'Review website'} <ArrowUpRight size={16} />
           </button>
         </form>
@@ -124,6 +127,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
           className="panel brand-form"
           onSubmit={async (e) => {
             e.preventDefault();
+            if(running.current)return;running.current=true;
             setBusy('confirm');
             setError('');
             try {
@@ -141,10 +145,11 @@ export function BrandPanel({ workspace }: { workspace: string }) {
             } catch (e) {
               setError((e as Error).message);
             } finally {
-              setBusy('');
+              running.current=false;setBusy('');
             }
           }}
         >
+          <fieldset className="brand-fields" disabled={!brandReady}>
           <div className="section-heading">
             <h2>Brand kit</h2>
             <Palette size={20} />
@@ -186,6 +191,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
               placeholder="Warm, practical and direct."
             />
           </label>
+          <fieldset className="voice-rule-controls"><legend>Voice Guard limits</legend><p className="small muted">Optional mechanical warnings for each subject, preheader or copy field. Blank means no limit. Existing emails keep the rules in their pinned brand version. These checks do not infer tone or rewrite copy.</p><div className="field-row"><label>Maximum words per sentence<input type="number" min={1} max={200} step={1} placeholder="No limit" value={brand.tone_rules?.max_sentence_words??''} onChange={e=>tone('max_sentence_words',e.target.value)}/></label><label>Maximum exclamation marks per field<input type="number" min={0} max={100} step={1} placeholder="No limit" value={brand.tone_rules?.max_exclamations??''} onChange={e=>tone('max_exclamations',e.target.value)}/></label></div><p className="small muted">Word groups use letters and numbers, including internal apostrophes/hyphens. Punctuation and newlines end a sentence. ASCII/fullwidth exclamation marks count toward the field limit; zero warns on any.</p></fieldset>
           <div className="field-row">
             <label>
               Action color
@@ -260,6 +266,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
           <button className="primary" disabled={!!busy || !brand.name}>
             {busy === 'confirm' ? 'Saving…' : 'Confirm brand version'} <Check size={18} />
           </button>
+          </fieldset>
         </form>
         <aside>
           <div className="panel brand-sample">
