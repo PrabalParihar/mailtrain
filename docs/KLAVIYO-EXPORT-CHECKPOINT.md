@@ -330,3 +330,47 @@ No broad re-review, source/environment/gate/database changes, provider or other 
 ## Additional integration ruling
 
 Ruling: local fast-forward integration follows the user’s standing continuous-development/Desktop instruction without a routine finishing menu — exact destination/before-head/collision and preservation guards keep it reversible and scoped — costs local branch rework if preference changes; no remote publication inferred.
+
+## Canonical Desktop closeout
+
+Reviewed executablecd824424 and evidence002624b0a0491ce37656a70c7863dd6f44fd417c locally fast-forwarded into the clean workspace mirror and actual `Path.home()/Desktop/mail`.562tracked files matched SHA256 at the reviewed sync; final evidence/research adds one documentation file. No remote Git operation. Guard rejected one controller-mistyped full SHA before mutation; retry used actual git rev-parse HEAD and succeeded. Canonical build/lint/API122/typecheck and allfour actual HTTP/Chromium groups+cleanup pass. Initial default-sandbox typecheck failed only EPERM writing ignored tsconfig.tsbuildinfo; permission-scoped rerun passed without a source change. Canonical/mirror original109emails/221revisions exact old-column hashes and private metadata unchanged; no DB migration in this slice. Workers/unrelated Desktop proof app preserved. Owned apps restored on loopback3002/3003; final runtime proof follows as a local artifact. No provider sends, live exports, resources, spending or deployment.
+
+- `/tmp/lettercape-esp-canonical-build.log` SHA256 `b63a036db8d3b5febae8609ea910b131e9b29494db4c7066895a2375b0d027c9`
+- `/tmp/lettercape-esp-canonical-lint.log` SHA256 `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
+- `/tmp/lettercape-esp-canonical-api.log` SHA256 `ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f`
+- `/tmp/lettercape-esp-canonical-type.log` SHA256 `eac4755bb46767e57b60f90fb2354daa64edaee8900dcd0775d30195e812a9c4`
+- `/tmp/lettercape-esp-canonical-type-qualified.log` SHA256 `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
+- `/tmp/lettercape-esp-canonical-browser.log` SHA256 `84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e`
+
+The remaining-provider official contract research is retained in [ESP-PROVIDER-CONTRACTS-2026-10-02.md](ESP-PROVIDER-CONTRACTS-2026-10-02.md). It is preparation, not implemented adapters: Brevo current OAuth is organisation-private; Mailchimp/HubSpot exact schema/content fidelity need further confirmation; Omnisend OAuth provision/plan entitlement and all four exact management links remain unverified. Independent implementation still remains and none of these prerequisites is silently treated as a fulfilled adapter.
+
+## Complete plan ledger before scratch cleanup
+
+# SDD ledger — plan: docs/superpowers/plans/2026-10-02-klaviyo-export.md
+
+| Tasks | Shared interface/file | Scan |
+|---|---|---|
+|1/2|KlaviyoArtifact|Transport consumes exact compiler artifact; no connection/readiness fiction|
+|1/3|compileKlaviyoArtifact|Read-only service consumes immutable revision; edit/export current scope|
+|3/4|routes/UI/generated docs|qualification targets real mounted endpoints|
+|1|tests/code|native slot mapping with conservative blockers agrees|
+|2|tests/code|marker+knownID durability precede effects/readback|
+|3|tests/code|actor/email lifecycle and GET-only provider-independent behavior|
+|4|tests/docs|local fixture evidence kept distinct from provider conformance|
+
+Ruling: Native implementation if delegated Mac worker cannot persist a report — child triage vanished from agent registry before its promised report appeared; its message is unqualified, controller independently confirmed analytics limitation and official Klaviyo contract — costs reduced parallelism, not a false qualification.
+Ruling: Conservative raw/custom/personalization refusal — no tested native mapping/fidelity exists; preserve source and show precise blocker — costs unsupported local preparations pending later mapping.
+Ruling: User complete-development authorization overrides routine skill approval stops — proceed within already authorized reversible local scope — costs reviewable rework if design preference differs; no material paid/security deployment decision assumed.
+
+Whole review: candidate8f48e2;0Critical/2Important/1Minor, report whole-review.md. ONE fix wave addresses all three before local sync.
+
+Final fix wave:cd824424;I1/I2/M1 corrected together;RED13failure→GREEN27;full498/lint/type/API122/build/actualfourbrowser/Linuxclosedstartup. ONE scoped review pending.
+Ruling: local fast-forward integration follows the user’s standing continuous-development/Desktop instruction without routine finishing menu — destination/before-head/collision and preservation guards make it reversible and scoped — costs local branch rework if preference changes; no remote publication inferred.
+
+ONE scoped review: I1/I2/M1 ADDRESSED, no new findings; report /tmp/lettercape-esp-scoped-review.md.
+Task 1: complete (82027ca..cd824424, whole + bounded scoped review clean)
+Task 2: complete (82027ca..cd824424, whole + bounded scoped review clean)
+Task 3: complete (82027ca..cd824424, whole + bounded scoped review clean)
+Task 4: review/qualification complete; guarded canonical closeout pending.
+
+Task 4: complete (82027ca..002624b, whole/scoped review clean, corrected498/fullnativechecks/Linux/canonical562hashes and browser/private/original preservation).
