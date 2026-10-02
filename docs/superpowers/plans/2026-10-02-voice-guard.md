@@ -28,4 +28,4 @@ Modify src/ui/brand.tsx; create scripts/smoke-voice-guard.ts/package/CI. Existin
 
 ### Task4 Whole-slice review/publication
 - [x] One fresh Astra high reviewer of BASE..HEAD/spec/plan/ledger; regrade by effect, one Critical/Important RED→GREEN pass, defer Minors/rule all declined judgments.
-- [ ] Final full checks/HTTP/browser; expected-head clean canonical tracked-only SHA256 sync, ordinary authorized main push, exact-head CI success readback. Copy exhaustive rulings/deferred Minors to public checkpoint then delete only this plan workspace. No public activation.
+- [x] Final full checks/HTTP/browser; expected-head clean canonical tracked-only SHA256 sync, ordinary authorized main push, exact-head CI success readback. Copy exhaustive rulings/deferred Minors to public checkpoint then delete only this plan workspace. No public activation.
