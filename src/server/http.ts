@@ -65,7 +65,7 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (id === 'generate' && !command) methods = ['POST'];
     else if (uuid.test(id)) {
       if (!command) methods = ['GET'];
-      else if (command === 'derivatives') methods = ['GET'];
+      else if (['derivatives','locale-source'].includes(command)) methods = ['GET'];
       else if (command === 'draft') methods = ['PATCH'];
       else if (['revisions', 'restore', 'preview', 'import-html','source-import','source-fork','conversion-proposal','convert-to-blocks'].includes(command))
         methods = ['POST'];

@@ -1629,3 +1629,9 @@ td {
 .audience-segments .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .audience-segments select, .audience-segments input { max-width: 100%; min-width: 0; }
 .audience-segments { overflow-wrap: anywhere; }
+
+.locale-comparison-row {border-top:1px solid var(--border,#ddd);padding:1rem 0;}
+.locale-comparison-columns {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;}
+.locale-comparison-columns>div {min-width:0;}
+.locale-comparison-columns pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:18rem;overflow:auto;font-size:.85rem;}
+@media(max-width:760px){.locale-comparison-columns {grid-template-columns:1fr;}}

@@ -109,7 +109,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'revoke',
     'remix',
     'localize',
-    'derivatives',
+    'derivatives','locale-source',
   ];
   for (const root of roots)
     for (const id of ids)

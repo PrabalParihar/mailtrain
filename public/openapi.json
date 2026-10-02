@@ -20621,6 +20621,318 @@
         "x-lettercape-idempotent-command": true
       }
     },
+    "/v1/emails/{id}/locale-source": {
+      "get": {
+        "operationId": "compareLocaleSource",
+        "summary": "compare locale source",
+        "description": "Read-only same-workspace original frozen source/current parent/saved locale-child comparison. Returns exact inert specs and versions; does not translate, checkpoint, review, approve or mutate source lineage.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocaleSourceComparisonResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "emails:read"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
     "/v1/emails/{id}/derivatives": {
       "get": {
         "operationId": "listEmailDerivatives",
@@ -46588,6 +46900,146 @@
           "email"
         ],
         "additionalProperties": false
+      },
+      "LocaleSourceComparison": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actor_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "child_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parent": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "doc_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "spec": {
+                "$ref": "#/components/schemas/EmailSourceSpec"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "doc_version",
+              "spec"
+            ],
+            "additionalProperties": false
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "doc_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "spec": {
+                "$ref": "#/components/schemas/EmailSourceSpec"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "doc_version",
+              "spec"
+            ],
+            "additionalProperties": false
+          },
+          "baseline": {
+            "type": "object",
+            "properties": {
+              "revision_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "revision_no": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "source_doc_version": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "spec": {
+                "$ref": "#/components/schemas/EmailSourceSpec"
+              }
+            },
+            "required": [
+              "revision_id",
+              "revision_no",
+              "source_doc_version",
+              "spec"
+            ],
+            "additionalProperties": false
+          },
+          "source_status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "outdated",
+              "unknown"
+            ]
+          }
+        },
+        "required": [
+          "workspace_id",
+          "actor_id",
+          "child_id",
+          "parent",
+          "target",
+          "baseline",
+          "source_status"
+        ],
+        "additionalProperties": false,
+        "description": "Same-workspace original source/current parent/saved target. Server enforces lineage, child/parent identity and actual versions beyond JSON Schema; the three escaped specs share an8MiB admission bound. No translation, review or approval is implied."
+      },
+      "LocaleSourceComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/LocaleSourceComparison"
+          }
+        },
+        "required": [
+          "request_id",
+          "comparison"
+        ],
+        "additionalProperties": true
       },
       "DerivationResponse": {
         "type": "object",

@@ -1,4 +1,5 @@
 'use client';
+import {LocaleSourceComparison} from './locale-source-comparison';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
 import {effectiveProjectionStatus} from '@/domain/projection-status';
@@ -640,6 +641,10 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
             else if(current.email.doc_version!==live.current!.doc_version||JSON.stringify(current.email.spec)!==ack.current){setConflict(current.email);conflictRef.current=true;setError('The refused conversion was not saved. Local edits are preserved; compare the newer saved source before reviewing again.');}
           }finally{busyRef.current='';setBusy('');}
         }}/>
+      {doc.lineage?.kind==='locale'&&<LocaleSourceComparison key={workspace+':'+actor+':'+id} workspace={workspace} email={id} actor={actor} spec={doc.spec} version={doc.doc_version} canEdit={editRole} blocked={!!busy||!!conflict||hasPendingSave} onApply={(next,expected)=>{
+        if(!editorActive.current||!live.current||!editRole||busyRef.current||conflictRef.current||pendingSave.current||scopeRef.current.actor!==actor||live.current.id!==id||canonicalSpecString(live.current.spec)!==expected)return 'The editor changed or a save is unresolved. Your local translations are preserved; compare again after the current action.';
+        update(EmailSourceSpecSchema.parse(next));return null;
+      }}/>}
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
         onCreate={(input) => void act('derive', async () => {
           if (!(await flush()) || dirtyAt.current || !live.current) return;

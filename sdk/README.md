@@ -42,3 +42,5 @@ Every JSON acknowledgment returns its request ID; frozen downloads return Uint8A
 Open obligations: full-GA command families/adapters/conformance, expanded typed response models for GenericResponse operations, package owner/name availability before npm publication, production auth/MFA/anti-abuse, commercial quotas, independent review/signoff and deployment evidence. No public package or service is claimed.
 
 Deferred review issue: when Retry-After exceeds the wait budget, RETRY_DEFERRED currently omits the originating request ID/status. Recover using the existing command key; preserve these diagnostics before GA.
+
+`compareLocaleSource` reads original frozen parent/current parent/saved locale-child source through the same tenant and actor scope. It does not translate, review, approve or advance source lineage. The three escaped specs share an8MiB server comparison budget;413 preserves the saved source/draft. Read responses can be cancelled. Copied manual text still uses explicit original-command draft save and CAS recovery.

@@ -1,3 +1,4 @@
+import {localeSourceComparison} from '@/server/locale-source-comparison';
 import type {Block} from '@/domain/email-schema';
 import {emailConversionRoute}from'@/server/email-conversion';
 import {workspacePreferenceRoute} from '@/server/workspace-calendar';
@@ -199,6 +200,7 @@ async function handle(req: Request, ctx: Context) {
         return json(
           await withPrincipal(req, 'read', async (tx, p) => {
             const expectedActor=req.headers.get('x-actor-id');if(expectedActor!==null){z.string().min(1).parse(expectedActor);if(expectedActor!==p.user)fail(409,'ACTOR_CHANGED','Your signed-in account changed. Reload before recovering email work.');}
+            if(id&&command==='locale-source')return {comparison:await localeSourceComparison(tx,p,id)};
             if (id && command === 'derivatives') {
               await getEmail(tx, id);
               return resourcePage(req, tx, p, {
