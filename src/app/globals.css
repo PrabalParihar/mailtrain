@@ -1622,3 +1622,11 @@ td {
 .calendar-events { list-style: none; padding: 0; }
 .calendar-events li { padding: 16px 0; border-bottom: 1px solid var(--line); }
 .calendar-open { display: block; color: var(--primary); text-align: left; overflow-wrap: anywhere; font-weight: 600; margin-bottom: 8px; }
+
+.segment-rule-builder, .segment-rule-group, .segment-rule-leaf { min-width: 0; }
+.segment-rule-group, .segment-rule-leaf { border: 1px solid var(--border, #d9dfdd); border-radius: 10px; padding: 12px; margin: 12px 0; }
+.segment-rule-group > .segment-rule-group { margin-left: 6px; }
+.segment-rule-builder legend { font-weight: 600; overflow-wrap: anywhere; }
+.audience-segments .button-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.audience-segments select, .audience-segments input { max-width: 100%; min-width: 0; }
+.audience-segments { overflow-wrap: anywhere; }

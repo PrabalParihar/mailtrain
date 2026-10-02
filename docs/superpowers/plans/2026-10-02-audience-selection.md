@@ -44,8 +44,8 @@
 ### Task 4: Nested builder and scoped recovery
 **Files:** Create src/ui/segment-rule-builder.tsx and src/ui/segment-working-recovery.ts; modify audience-organization.tsx/globals.css; add browser portion scripts/audience-selection-browser.ts.
 **Interfaces:** RuleBuilder({value:WorkingRule,fields,lists,tags,disabled,onChange}) uses Task1. Audience form preserves segment ID/base version/saved fingerprint/name/working tree; pending commands preserve exact source/body/key. Task3 supplies versioned saved rule/preview/freeze and current catalog.
-- [ ] Write/run actual missing nested-controls RED and saved-nested load refusal RED. Verify recursive save/reload/preview/freeze, dirty form blocks old-rule actions, invalid typed input/recovery, stale source explicit reload, unknown relation labels, exact body/key loss/retry/repeated clicks, current role/workspace response fences, storage failure/SPA/unload protection and390px/nooverflow.
-- [ ] Implement accessible bounded recursive controls and recovery/fingerprints/receipt reconciliation, retain invalid text and never manufacture engagement. Run complete owned browser/HTTP and full/lint/type/API/build/import checks; expected PASS. Inspect painted pixels. Commit/task-done.
+- [x] Write/run actual missing nested-controls RED and saved-nested load refusal RED. Verify recursive save/reload/preview/freeze, dirty form blocks old-rule actions, invalid typed input/recovery, stale source explicit reload, unknown relation labels, exact body/key loss/retry/repeated clicks, current role/workspace response fences, storage failure/SPA/unload protection and390px/nooverflow.
+- [x] Implement accessible bounded recursive controls and recovery/fingerprints/receipt reconciliation, retain invalid text and never manufacture engagement. Run complete owned browser/HTTP and full/lint/type/API/build/import checks; expected PASS. Inspect painted pixels. Commit/task-done.
 
 ### Task 5: Campaign audience selection and history
 **Files:** Modify ui/campaign-configuration.tsx and operations.tsx; extend owned audience-selection browser and existing campaign recovery fixtures.

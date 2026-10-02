@@ -40,7 +40,7 @@
     "smoke:campaign-lifecycle": "node --import tsx scripts/smoke-campaign-lifecycle.ts",
     "smoke:calendar": "node --import tsx scripts/smoke-workspace-calendar.ts",
     "smoke:utm": "node --import tsx scripts/smoke-utm.ts --browser && node --import tsx scripts/smoke-utm.ts --review-missing --review-raw --review-url && node --import tsx scripts/smoke-utm.ts --review-proposal && node --import tsx scripts/smoke-utm.ts --review-working && node --import tsx scripts/smoke-utm.ts --review-links",
-    "smoke:audience-selection": "node --import tsx scripts/smoke-audience-selection.ts && node --import tsx scripts/smoke-audience-selection.ts --probe-cutoff"
+    "smoke:audience-selection": "node --import tsx scripts/smoke-audience-selection.ts && node --import tsx scripts/smoke-audience-selection.ts --probe-cutoff && node --import tsx scripts/audience-selection-browser.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

@@ -16,7 +16,7 @@ import { AudienceOrganization, type OrganizedContact } from './audience-organiza
 import type { z } from 'zod';
 import type { CampaignConfigurationView } from '../domain/campaign-configuration';
 type Contact = OrganizedContact & { subscription: string; suppressed: boolean };
-export function AudiencePanel({ workspace }: { workspace: string }) {
+export function AudiencePanel({ workspace, role }: { workspace: string; role: string }) {
   const contactPage = useResourcePage<Contact>(workspace, 'contacts');
   const contacts = contactPage.data,
     reload = contactPage.reload;
@@ -113,7 +113,7 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
           </p>
         </section>
       </div>
-      <AudienceOrganization workspace={workspace} contacts={contacts} onUpdate={reload} />
+      <AudienceOrganization key={workspace+':'+role} workspace={workspace} role={role} contacts={contacts} onUpdate={reload} />
     </>
   );
 }
