@@ -23,6 +23,7 @@ import { Logo } from './logo';
 import { useResourcePage } from './paged';
 import { api, ApiError } from './api';
 import { BrandPanel } from './brand';
+import {SenderDomainPanel} from './sender-domain';
 import { CreatePanel } from './create';
 import { Editor } from './editor';
 import { AudiencePanel, CampaignPanel, SettingsPanel } from './operations';
@@ -515,6 +516,7 @@ export function MailcraftApp({
                   View provider requirements <ArrowUpRight size={18} />
                 </Link>
               </div>
+              <SenderDomainPanel workspace={workspace} role={current?.role??'Viewer'}/>
             </>
           )}
           {section === 'reports' && (

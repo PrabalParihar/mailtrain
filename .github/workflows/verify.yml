@@ -58,6 +58,7 @@ jobs:
           done
           npm run smoke:api
           npm run smoke:navigation
+          npm run smoke:editor
           npm run smoke:import
           npm run smoke:preferences
           npm run smoke:keys
@@ -79,6 +80,7 @@ jobs:
           npm run smoke:calendar
           npm run smoke:utm
           npm run smoke:audience-selection
+          npm run smoke:sender-domain
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

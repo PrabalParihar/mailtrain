@@ -1,6 +1,6 @@
 # Sender drafts and DNS evidence Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. Native implementation; ONE fresh whole-slice reviewer and ONE native Important/Critical RED→GREEN fix pass; defer Minors. No implementer delegation.
+> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans. User explicitly authorized parallel implementation, superseding the initial native-only choice. Disjoint ownership and serialized commits; root integrates. ONE fresh whole-slice reviewer and ONE native Important/Critical RED→GREEN fix pass; defer Minors.
 
 **Goal:** Preserve versioned provider-bound sender drafts and truthful bounded DNS observations while account/authentication/send readiness remains disabled.
 **Architecture:** Strict domain contracts feed guarded tenant storage and managed routes. An owned resolver produces immutable evidence; a dedicated delivery panel preserves saved/working/command identity across interruptions.
@@ -33,30 +33,30 @@
 ### Task 2: tenant version/check storage
 **Files:** db/030-sender-domain.sql; tests/sender-domain-db.test.ts.
 **Interfaces:** sender_identities+sender_identity_versions+domain_checks composite workspace keys; strict snapshot and DNS evidence JSON; version guard/direct disabled readiness/history immutability.
-- [ ] Write isolated PG tests for required tables, next-version/no-op, cross-tenant FK/RLS, direct readiness/old-source forgery, immutable history/check edits and rollback.
-- [ ] Run test and observe actual missing table/guard RED.
-- [ ] Implement additive migration with no invented historical proof, guarded manager version capture and runtime historic revoke; preserve trusted synthetic cleanup.
-- [ ] Run PG/focused/full/typecheck; commit green.
+- [x] Write isolated PG tests for required tables, next-version/no-op, cross-tenant FK/RLS, direct readiness/old-source forgery, immutable history/check edits and rollback.
+- [x] Run test and observe actual missing table/guard RED.
+- [x] Implement additive migration with no invented historical proof, guarded manager version capture and runtime historic revoke; preserve trusted synthetic cleanup.
+- [x] Run PG/focused/full/typecheck; commit green.
 
 ### Task 3: bounded isolated DNS observer
 **Files:** src/server/sender-dns.ts; tests/sender-dns.test.ts.
 **Interfaces:** observeSenderDNS(domain,resolver factory?):Promise<DNSObservation>; own Resolver per call; fixed owner queries, timeout/cancel and safe errors.
-- [ ] Inject resolver test port to prove split TXT, NXDOMAIN, timeout cancellation, simultaneous independent calls, oversize refusal, reserved/private no-query and exact-domain-only semantics.
-- [ ] Observe missing observer RED, implement no HTTP/provider/DNS mutations; focused/full/typecheck and commit green.
+- [x] Inject resolver test port to prove split TXT, NXDOMAIN, timeout cancellation, simultaneous independent calls, oversize refusal, reserved/private no-query and exact-domain-only semantics.
+- [x] Observe missing observer RED, implement no HTTP/provider/DNS mutations; focused/full/typecheck and commit green.
 
 ### Task 4: managed HTTP, paging and API contracts
 **Files:** src/server/sender-domain-route.ts; src/app/v1/[...path]/route.ts; src/server/http.ts; src/domain/api-keys.ts; scripts/generate-api.ts; generated public/sdk; scripts/smoke-sender-domain.ts; tests/sender-domain-contract.test.ts.
 **Interfaces:** GET/POST /sender-identities; GET detail/history/checks; POST versions/dns-checks expected_version. Strict projections and signed pages; sender scopes; current authority and exact original receipts;10checks/minute excludes replay.
-- [ ] Write route/schema/method tests and actual owned HTTP missing routes RED, role/key/tenant/CAS/no-op/replay/redaction/current expiry probes.
-- [ ] Implement using existing principal/keyed/pagination/audit and Task1-3 interfaces; actual DNS receipt permanently disabled readiness; fail-safe cancellation/errors retained as observations; honest reserved DNS fixture.
-- [ ] Generate/check strict API/examples; apply030 only owned development DB; actual HTTP/full/lint/typecheck/build green and commit.
+- [x] Write route/schema/method tests and actual owned HTTP missing routes RED, role/key/tenant/CAS/no-op/replay/redaction/current expiry probes.
+- [x] Implement using existing principal/keyed/pagination/audit and Task1-3 interfaces; actual DNS receipt permanently disabled readiness; fail-safe cancellation/errors retained as observations; honest reserved DNS fixture.
+- [x] Generate/check strict API/examples; apply030 only owned development DB; actual HTTP/full/lint/typecheck/build green and commit.
 
 ### Task 5: delivery panel and actual browser recovery
 **Files:** src/ui/sender-domain.tsx; src/ui/sender-form-recovery.ts; src/ui/app.tsx; scripts/sender-domain-browser.ts; tests/sender-form-recovery.test.ts; package.json/CI existing smoke command.
 **Interfaces:** workspace+identity scoped recovery original base/body/key and current observation; roles managed only; paged reads/detail/version/check commands from Task4.
-- [ ] Actual absent controls/empty recovery RED; pure schema roundtrip/full max escaped text, exact pending source/path/version; Chromiuminvalid/reload/lostack/repeated/staleCAS/role403/workspace delay/quotaguard/390px initialerror/historypaging.
-- [ ] Implement dedicated controller/panel, honest unavailable provider and explicit read-only DNS guidance; do not enable existing send route or alter campaign approvals.
-- [ ] Full+actual browser+affected audience/campaign/export checks; inspect pixels, commit green.
+- [x] Actual absent controls/empty recovery RED; pure schema roundtrip/full max escaped text, exact pending source/path/version; Chromiuminvalid/reload/lostack/repeated/staleCAS/role403/workspace delay/quotaguard/390px initialerror/historypaging.
+- [x] Implement dedicated controller/panel, honest unavailable provider and explicit read-only DNS guidance; do not enable existing send route or alter campaign approvals.
+- [x] Full+actual browser+affected audience/campaign/export checks; inspect pixels, commit green.
 
 ### Task 6: ONE review, evidence and local closeout
 **Files:** current-plan private ledger and public checkpoint/registers/plan.
