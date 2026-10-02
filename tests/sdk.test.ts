@@ -2,6 +2,39 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { LettercapeClient, LettercapeError } from '../sdk/client';
 const workspace = '11111111-1111-4111-8111-111111111111';
+test('SDK sends exact binary upload bytes and token; token PUT loss is explicitly recovered', async () => {
+  const bytes = new Uint8Array([0, 255, 137, 80, 78, 71]), token = 'a'.repeat(64);
+  let calls = 0;
+  const client = new LettercapeClient({ baseUrl:'https://example.test', workspace, fetch:async request => {
+    calls++;
+    assert.equal(request.method,'PUT');
+    assert.equal(request.headers.get('Content-Type'),'application/octet-stream');
+    assert.equal(request.headers.get('X-Upload-Token'),token);
+    assert.equal(request.headers.get('Idempotency-Key'),null);
+    assert.equal(request.redirect,'error');
+    assert.deepEqual(new Uint8Array(await request.arrayBuffer()),bytes);
+    throw new TypeError('Lost acknowledgment');
+  }});
+  await assert.rejects(client.call('uploadAssetContent',{path:{uploadId:workspace},body:bytes,uploadToken:token}),/Lost acknowledgment/);
+  assert.equal(calls,1);
+  await assert.rejects(client.call('uploadAssetContent',{path:{uploadId:workspace},body:new Uint8Array(20971521),uploadToken:token}),/20 MiB/);
+  assert.equal(calls,1);
+});
+test('SDK acknowledges upload commands and returns private derivative bytes with request IDs', async () => {
+  const bytes = new Uint8Array([137,80,78,71]);
+  const client=new LettercapeClient({baseUrl:'https://example.test',fetch:async request=>{
+    if(request.method==='PUT') return reply(202,{request_id:'upload-ack',upload:{id:workspace,status:'finalized'},operation:{id:workspace,state:'queued'},asset_id:workspace});
+    assert.equal(request.headers.get('X-Upload-Token'),null);
+    return new Response(bytes,{headers:{'Content-Type':'image/png','X-Request-Id':'image-ack','Cache-Control':'private, no-store'}});
+  }});
+  const transfer=await client.call('uploadAssetContent',{path:{uploadId:workspace},body:bytes,uploadToken:'a'.repeat(64)});
+  assert.equal(transfer.data.asset_id,workspace);
+  assert.equal(transfer.requestId,'upload-ack');
+  const image=await client.call('getAssetVariantContent',{path:{id:workspace,variantId:workspace}});
+  assert.deepEqual(image.data,bytes);
+  assert.equal(image.requestId,'image-ack');
+  assert.equal(image.headers.get('Content-Type'),'image/png');
+});
 function reply(
   status = 200,
   data: unknown = { request_id: 'req-test', data: [], has_more: false, next_cursor: null },

@@ -1,6 +1,17 @@
 import type { LettercapeClient } from './client';
 // Compiled only: catches regressions in generated operation/body/path/query types.
 export function typeExamples(client: LettercapeClient) {
+  void client.call('uploadAssetContent',{path:{uploadId:'example'},body:new Uint8Array([1]),uploadToken:'a'.repeat(64)});
+  void client.call('getAssetVariantContent',{path:{id:'example',variantId:'variant'}});
+  void client.pages('listAssets',{query:{limit:25}});
+  // @ts-expect-error the acknowledged upload token is required for binary transfer
+  void client.call('uploadAssetContent',{path:{uploadId:'example'},body:new Uint8Array([1])});
+  // @ts-expect-error upload body is raw binary, never a JSON object
+  void client.call('uploadAssetContent',{path:{uploadId:'example'},body:{bytes:'base64'},uploadToken:'a'.repeat(64)});
+  // @ts-expect-error derivative bytes cannot be addressed without an immutable variant
+  void client.call('getAssetVariantContent',{path:{id:'example'}});
+  // @ts-expect-error asset pages do not support undocumented date filters
+  void client.pages('listAssets',{query:{created_before:'2026-10-02T00:00:00Z'}});
   void client.call('listEmails', { query: { limit: 25 } });
   void client.call('createEmail', { body: { title: 'Example' } });
   void client.call('remixRevision', { path: { id: 'example' }, body: { title: 'Source copy' } });

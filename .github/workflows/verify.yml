@@ -39,6 +39,7 @@ jobs:
           node-version: 24.12.0
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: npm --prefix tooling/openapi ci
       - run: npm run api:check
       - run: npm run db:migrate
@@ -46,7 +47,6 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
       - name: Real local HTTP boundary checks
         run: |
           npm run smoke:webhook-configured
@@ -113,3 +113,138 @@ jobs:
             echo "Unexpected renderer startup without release evidence"
             exit 1
           fi
+  media:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: mailcraft_migration
+          POSTGRES_PASSWORD: mailcraft_local_migration
+          POSTGRES_DB: mailcraft
+        ports: ["55439:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mailcraft_migration -d mailcraft"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: npm
+      - run: npm ci
+      - name: Build pinned isolated media images
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output/media-ci-evidence
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          for (const path of ['media/Dockerfile','media/scan.Dockerfile']) {
+            const bases=readFileSync(path,'utf8').split('\n').filter(line=>/^FROM /.test(line));
+            assert.ok(bases.length > 0);
+            for (const base of bases) assert.match(base,/^FROM(?: --platform=linux\/amd64)? \S+@sha256:[a-f0-9]{64}(?: AS [\w-]+)?$/);
+          }
+          NODE
+          docker build --platform linux/amd64 --pull -f media/Dockerfile -t lettercape-media:ci . 2>&1 | tee output/media-ci-evidence/decoder-build.log
+          docker build --platform linux/amd64 --pull -f media/scan.Dockerfile -t lettercape-media-scan:ci . 2>&1 | tee output/media-ci-evidence/scanner-build.log
+          media_decoder=$(docker image inspect lettercape-media:ci --format '{{.Id}}')
+          media_scanner=$(docker image inspect lettercape-media-scan:ci --format '{{.Id}}')
+          [[ "$media_decoder" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$media_scanner" =~ ^sha256:[a-f0-9]{64}$ ]]
+          printf 'MEDIA_DECODER_IMAGE=%s\nMEDIA_SCANNER_IMAGE=%s\n' "$media_decoder" "$media_scanner" >> "$GITHUB_ENV"
+          printf 'decoder=%s\nscanner=%s\nplatform=linux/amd64\n' "$media_decoder" "$media_scanner" > output/media-ci-evidence/image-bindings.txt
+      - name: Prepare a fresh official signed scanner snapshot
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          set -euo pipefail
+          media_root=$(mktemp -d /tmp/lettercape-media-ci.XXXXXXXX)
+          chmod 755 "$media_root"
+          mkdir "$media_root/staging"
+          sudo chown 100:101 "$media_root/staging"
+          media_prepare="lettercape-media-prepare-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker rm --force "$media_prepare" >/dev/null 2>&1 || true' EXIT
+          # Setup has only its dedicated database mount and tmpfs. No app environment,
+          # source fixture, workspace mount or Docker socket enters this container.
+          # The wrapper configures official FreshClam mirrors and verifies signatures.
+          timeout --signal=TERM --kill-after=10s 660s docker run --rm \
+            --name "$media_prepare" --platform linux/amd64 --network bridge \
+            --read-only --cap-drop ALL --security-opt no-new-privileges \
+            --user 100:101 --pids-limit 64 --memory 3g --cpus 2 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m \
+            --mount "type=bind,src=$media_root/staging,dst=/database" \
+            "$MEDIA_SCANNER_IMAGE" --prepare 2>&1 | tee output/media-ci-evidence/freshclam-prepare.log
+          # Only a completed snapshot is promoted. Every offline scan independently
+          # rechecks official signatures, hashes and freshness; no cached/tiny DB fallback.
+          mv "$media_root/staging" "$media_root/database"
+          export MEDIA_SCAN_DATABASE_ROOT="$media_root/database"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {createHash} from 'node:crypto';
+          import {createReadStream,readFileSync,appendFileSync,copyFileSync,statSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {SCAN_PROFILE} from './media/protocol.mjs';
+          const root=process.env.MEDIA_SCAN_DATABASE_ROOT;
+          const snapshot=JSON.parse(readFileSync(join(root,'snapshot.json'),'utf8'));
+          assert.equal(snapshot.version,1);
+          assert.equal(snapshot.profile,SCAN_PROFILE);
+          assert.match(snapshot.snapshot_sha256,/^[a-f0-9]{64}$/);
+          assert.equal(snapshot.files.length,3);
+          for (const [index,name] of ['main','daily','bytecode'].entries()) {
+            const file=snapshot.files[index];
+            assert.ok([name+'.cvd',name+'.cld'].includes(file.filename));
+            assert.match(file.sha256,/^[a-f0-9]{64}$/);
+            const path=join(root,file.filename);
+            assert.equal(statSync(path).size,file.bytes);
+            const digest=createHash('sha256');
+            for await (const bytes of createReadStream(path)) digest.update(bytes);
+            assert.equal(digest.digest('hex'),file.sha256);
+          }
+          assert.equal(createHash('sha256').update(JSON.stringify(snapshot.files)).digest('hex'),snapshot.snapshot_sha256);
+          const age=Date.now()-Date.parse(snapshot.daily_built_at);
+          assert.ok(Number.isFinite(age) && age>=0 && age<=48*60*60*1000);
+          appendFileSync(process.env.GITHUB_ENV,`MEDIA_SCAN_DATABASE_ROOT=${root}\nMEDIA_SCAN_SNAPSHOT_SHA256=${snapshot.snapshot_sha256}\n`);
+          copyFileSync(join(root,'snapshot.json'),'output/media-ci-evidence/snapshot.json');
+          NODE
+          sudo chmod -R a-w "$media_root/database"
+      - name: Qualify actual offline decoder and signed scanner
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Full mode includes composited pixels, deterministic repeats, malformed
+          # inputs, original/derivative scans, EICAR and fail-closed scanner probes.
+          # Each child uses network none and the fixed memory/CPU/PID/wall budgets.
+          node scripts/smoke-media.mjs 2>&1 | tee output/media-ci-evidence/runtime-smoke.log
+      - name: Qualify actual isolated database and private asset storage
+        timeout-minutes: 6
+        env:
+          LOCAL_DEVELOPMENT: "true"
+          APP_ORIGIN: http://127.0.0.1:3000
+          DATABASE_URL: postgresql://mailcraft_runtime:mailcraft_local_runtime@127.0.0.1:55439/mailcraft
+          MIGRATION_DATABASE_URL: postgresql://mailcraft_migration:mailcraft_local_migration@127.0.0.1:55439/mailcraft
+          AI_GENERATION_ALLOWANCE: "0"
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The smoke creates/drops its own database, migrates restricted runtime,
+          # scheduler and worker roles, and removes its own temporary private store.
+          # Jobs run synchronously; no app browser or persistent media worker needed.
+          node --import tsx scripts/smoke-assets.ts 2>&1 | tee output/media-ci-evidence/assets-smoke.log
+      - name: Retain public synthetic media qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-qualification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            output/media-ci-evidence/*.log
+            output/media-ci-evidence/image-bindings.txt
+            output/media-ci-evidence/snapshot.json
+            output/media-runtime-evidence/qualification.json
+            output/media-runtime-evidence/qualification-red.json
+          if-no-files-found: warn
+          retention-days: 7

@@ -30,7 +30,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       >,
     )) {
       const segments = path
-        .replace(/\{id\}/g, '11111111-1111-4111-8111-111111111111')
+        .replace(/\{[^}]+\}/g, '11111111-1111-4111-8111-111111111111')
         .split('/')
         .slice(2);
       assertRouteMethod(segments, method.toUpperCase());
@@ -42,6 +42,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       }
     }
   const roots = [
+    'assets',
     'sender-identities',
     'workspace-preferences','memberships','membership-changes',
     'brand-sources',
@@ -71,8 +72,9 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'usage',
     'audit',
   ];
-  const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone'];
+  const ids = ['', '{id}', 'uploads', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone'];
   const commands = [
+    'fallback', 'publish',
     'dns-checks','conversion-proposal','convert-to-blocks',
     'role','transfer-owner',
     '',
@@ -113,7 +115,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
       for (const command of commands) {
         if (command && !id) continue;
         const path = '/v1/' + [root, id, command].filter(Boolean).join('/');
-        for (const method of ['GET', 'POST', 'PATCH', 'DELETE']) {
+        for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
           try {
             assertRouteMethod(
               path.replace('{id}', '11111111-1111-4111-8111-111111111111').split('/').slice(2),
@@ -132,6 +134,35 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   EmailSpecSchema.parse(sample('/v1/emails/{id}/draft', 'patch').spec);
   validateRule(sample('/v1/segments').rule, []);
   assert.equal(covered.size, Object.keys(operationRegistry).length);
+  assert.ok(covered.has('PUT /v1/assets/uploads/{uploadId}/content'));
+  assert.ok(covered.has('GET /v1/assets/{id}/variants/{variantId}/content'));
+});
+test('media contracts bind rights and bounded raw upload bodies without JSON coercion', () => {
+  const schema = spec.components.schemas.AssetUploadInput;
+  assert.ok(schema, 'asset upload intent must be documented');
+  const check = ajv.compile(absolute(schema) as object);
+  const input = { filename: 'example.png', declared_mime: 'image/png', byte_size: 4, sha256: 'a'.repeat(64), rights: { attested: true, terms_version: 'local-upload-attestation-v1' } };
+  assert.equal(check(input), true);
+  for (const invalid of [{...input, byte_size: 20971521}, {...input, rights:{...input.rights,attested:false}}, {...input, declared_mime:'image/svg+xml'}, {...input, public_url:'https://example.test'}]) assert.equal(check(invalid), false);
+  const transfer = spec.paths['/v1/assets/uploads/{uploadId}/content'].put;
+  assert.deepEqual(Object.keys(transfer.requestBody.content), ['application/octet-stream']);
+  assert.equal(transfer.requestBody.content['application/octet-stream'].schema.maxLength, 20971520);
+  assert.ok(transfer.parameters.some((p: {name:string;required?:boolean}) => p.name === 'X-Upload-Token' && p.required));
+  assert.equal(transfer.parameters.some((p: {name:string}) => p.name === 'Idempotency-Key'), false);
+  assert.deepEqual(spec.paths['/v1/assets'].get.parameters.filter((p: {in:string}) => p.in === 'query').map((p: {name:string})=>p.name), ['limit','after']);
+  const fallback=ajv.compile(absolute(spec.components.schemas.AssetFallbackInput) as object);
+  assert.equal(fallback({selected_frame:199}),true);
+  assert.equal(fallback({selected_frame:200}),false);
+  assert.equal(fallback({selected_frame:0,source:'remote'}),false);
+  const id='11111111-1111-4111-8111-111111111111';
+  const asset={id,state:'quarantined',version:1,mime:'image/png',bytes:4,source_sha256:'a'.repeat(64),alt:'Example',decorative:false,failure_code:null,variants:[]};
+  for(const [name,value] of Object.entries({
+    AssetUploadResponse:{request_id:'r',upload:{id,token:'a'.repeat(64),expires_at:'2026-10-02T12:00:00Z'},operation:{id,state:'queued'}},
+    AssetUploadContentResponse:{request_id:'r',upload:{id,status:'finalized'},operation:{id,state:'queued'},asset_id:id},
+    AssetResponse:{request_id:'r',asset},
+    AssetFallbackResponse:{request_id:'r',operation:{id,state:'queued'},asset},
+    AssetsPage:{request_id:'r',data:[asset],has_more:false,next_cursor:null},
+  })) validate(absolute(spec.components.schemas[name]),value);
 });
 test('Contract examples reject executable/unknown email shapes and required error/page omissions', () => {
   const check = ajv.compile(absolute({ $ref: '#/components/schemas/EmailSpec' }) as object);

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 export const KEY_SCOPES = [
+  'assets:read',
+  'assets:write',
   'brands:read',
   'brands:write',
   'emails:read',
@@ -35,6 +37,7 @@ export function scopeForResource(
   command: string | undefined,
 ): string | undefined {
   const read = method === 'GET';
+  if (root === 'assets') return read ? 'assets:read' : 'assets:write';
   if(root==='sender-identities') return read?'sender:read':'sender:write';
   if (root === 'brands'||root==='brand-sources') return read||command==='memory-preview' ? 'brands:read' : 'brands:write';
   if (root === 'emails') return read ? 'emails:read' : 'emails:write';
@@ -72,6 +75,8 @@ export function scopeForResource(
   return 'unsupported';
 }
 export function operationScope(type: string, write = false) {
+  if (['asset.upload', 'asset.process', 'asset.fallback'].includes(type))
+    return 'assets:' + (write ? 'write' : 'read');
   const resource =
     type === 'contacts.import'
       ? 'audience'

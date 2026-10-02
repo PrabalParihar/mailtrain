@@ -6,7 +6,9 @@ type Params<I extends OperationId> = Op<I> extends { parameters: infer P } ? P :
 type Path<I extends OperationId> = Params<I> extends { path: infer P } ? P : never;
 type Query<I extends OperationId> = Params<I> extends { query?: infer Q } ? NonNullable<Q> : never;
 type Body<I extends OperationId> =
-  Op<I> extends { requestBody: { content: { 'application/json': infer B } } } ? B : never;
+  Op<I> extends { requestBody: { content: { 'application/octet-stream': unknown } } }
+    ? Uint8Array | ArrayBuffer | Blob
+    : Op<I> extends { requestBody: { content: { 'application/json': infer B } } } ? B : never;
 type SuccessResponse<I extends OperationId> =
   Op<I> extends { responses: infer R }
     ? R extends { 200: infer S }
@@ -25,7 +27,8 @@ export type CallOptions<I extends OperationId> = {
   idempotencyKey?: string;
   ifMatch?: string;
 } & ([Path<I>] extends [never] ? { path?: never } : { path: Path<I> }) &
-  ([Body<I>] extends [never] ? { body?: never } : { body: Body<I> });
+  ([Body<I>] extends [never] ? { body?: never } : { body: Body<I> }) &
+  ((typeof operationRegistry)[I]['binaryBody'] extends true ? {uploadToken:string} : {uploadToken?:never});
 type RequiredFields<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
 type Args<I extends OperationId> = [RequiredFields<CallOptions<I>>] extends [never]
   ? [input?: CallOptions<I>]
@@ -60,6 +63,7 @@ type TransportOptions = {
   signal?: AbortSignal;
   idempotencyKey?: string;
   ifMatch?: string;
+  uploadToken?: string;
 };
 export type ClientConfig = {
   baseUrl: string;
@@ -145,8 +149,23 @@ export class LettercapeClient {
     const key = contract.keyed ? (input.idempotencyKey ?? crypto.randomUUID()) : undefined;
     if (key) headers.set('Idempotency-Key', key);
     if (input.ifMatch) headers.set('If-Match', input.ifMatch);
-    const body = input.body === undefined ? undefined : JSON.stringify(input.body);
-    if (body !== undefined) headers.set('Content-Type', 'application/json');
+    let body: BodyInit | undefined;
+    if (contract.binaryBody) {
+      if (!input.uploadToken || !/^[a-f0-9]{64}$/.test(input.uploadToken))
+        throw new Error('Supply the acknowledged upload token.');
+      const source = input.body;
+      if (!(source instanceof Uint8Array || source instanceof ArrayBuffer || source instanceof Blob))
+        throw new Error('Upload raw Uint8Array, ArrayBuffer or Blob bytes.');
+      const length = source instanceof Blob ? source.size : source.byteLength;
+      if (length < 1 || length > 20 * 1024 * 1024)
+        throw new Error('Upload bytes must be nonempty and at most 20 MiB.');
+      body = source instanceof Blob ? source : new Uint8Array(source instanceof ArrayBuffer ? new Uint8Array(source) : source);
+      headers.set('Content-Type', 'application/octet-stream');
+      headers.set('X-Upload-Token', input.uploadToken);
+    } else {
+      body = input.body === undefined ? undefined : JSON.stringify(input.body);
+      if (body !== undefined) headers.set('Content-Type', 'application/json');
+    }
     const safe = contract.method === 'GET' || (contract.keyed && !!key);
     try {
       for (let attempt = 0; ; attempt++) {

@@ -13,6 +13,17 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export function assertRouteMethod(path: string[], method: string) {
   const [root, id, command] = path;
   let methods: string[] = [];
+  if (root === 'assets') {
+    if (path.length === 1) methods = ['GET'];
+    else if (path.length === 2 && id === 'uploads') methods = ['POST'];
+    else if (path.length === 2 && uuid.test(id)) methods = ['GET'];
+    else if (path.length === 3 && uuid.test(id) && ['fallback', 'remove', 'publish'].includes(command)) methods = ['POST'];
+    else if (path.length === 4 && id === 'uploads' && uuid.test(command) && path[3] === 'content') methods = ['PUT'];
+    else if (path.length === 5 && uuid.test(id) && command === 'variants' && uuid.test(path[3]) && path[4] === 'content') methods = ['GET'];
+    if (!methods.length) fail(404, 'RESOURCE_NOT_FOUND', 'Route not found.');
+    if (!methods.includes(method)) fail(405, 'METHOD_NOT_ALLOWED', 'This method is not allowed for this route.');
+    return;
+  }
   if (path.length > 3) fail(404, 'RESOURCE_NOT_FOUND', 'Route not found.');
   if (['health', 'integrations', 'usage', 'audit'].includes(root) && path.length === 1)
     methods = ['GET'];

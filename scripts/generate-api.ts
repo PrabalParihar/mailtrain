@@ -12,6 +12,7 @@ import { BrandSchema } from '../src/domain/brand';
 import{BrandSourceInput,BrandSource,BrandMemoryChunk,BrandMemoryContext,MemoryPreviewInput}from'../src/domain/brand-memory';
 import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
+import { MEDIA_LIMITS, UploadIntentInput, AssetMetadataSchema, UploadIntentResponseSchema, UploadContentResponseSchema, FallbackInput, FallbackResponseSchema } from '../src/domain/assets';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
 import{WebhookDelivery,WebhookAttempt,WebhookReplayInput,WebhookDeliveryState}from'../src/domain/webhook-history';
@@ -36,6 +37,14 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  AssetUploadInput: fromZod(UploadIntentInput),
+  AssetFallbackInput: fromZod(FallbackInput),
+  AssetMetadata: fromZod(AssetMetadataSchema),
+  AssetUploadResponse: fromZod(UploadIntentResponseSchema.extend({request_id:z.string()})),
+  AssetUploadContentResponse: fromZod(UploadContentResponseSchema.extend({request_id:z.string()})),
+  AssetFallbackResponse: fromZod(FallbackResponseSchema.extend({request_id:z.string()})),
+  AssetResponse: fromZod(z.object({request_id:z.string(),asset:AssetMetadataSchema}).strict()),
+  AssetsPage: fromZod(z.object({request_id:z.string(),data:z.array(AssetMetadataSchema).max(100),has_more:z.boolean(),next_cursor:z.string().max(4096).nullable()}).strict()),
   SenderDraftInput:fromZod(SenderDraftInput),SenderVersionInput:fromZod(SenderVersionInput),SenderCheckInput:fromZod(SenderCheckInput),SenderView:fromZod(SenderView),SenderVersionView:fromZod(SenderVersionView),DNSObservation:fromZod(DNSObservation),DNSCheckView:fromZod(DNSCheckView),
   WorkspacePreferences:fromZod(WorkspacePreferences),WorkspaceTimezoneInput:fromZod(WorkspaceTimezoneInput),CalendarEntry:fromZod(CalendarEntry),
   CreationMetadata:fromZod(CreationMetadata),CreationAttempt:fromZod(CreationAttempt),CreationSummary:fromZod(CreationSummary),
@@ -344,8 +353,9 @@ type Definition = {
   body?: string;
   status?: number;
   keyed?: boolean;
-  etag?: boolean;
+  etag?: boolean | 'asset';
   paged?: boolean;
+  pageParameters?: unknown[];
   session?: boolean;
   public?: boolean;
   blocked?: boolean;
@@ -353,10 +363,14 @@ type Definition = {
   scope?: string;
   example?: unknown;
   binary?: boolean;
+  binaryBody?: boolean;
+  binaryMediaTypes?: string[];
   description?: string;
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  AssetUploadInput: {filename:'example.png',declared_mime:'image/png',byte_size:1024,sha256:'a'.repeat(64),rights:{attested:true,terms_version:MEDIA_LIMITS.rights},alt:'Example product',decorative:false},
+  AssetFallbackInput: {selected_frame:0},
   SenderDraftInput:{name:'Example sender draft',provider:'ses',account_label:'Example account label',region:'us-east-1',from_name:'Example brand',from_address:'news@example.test',reply_to:null},
   SenderVersionInput:{name:'Updated sender draft',provider:'ses',account_label:'Example account label',region:'us-east-1',from_name:'Example brand',from_address:'news@example.test',reply_to:null,expected_version:1},
   SenderCheckInput:{expected_version:1},
@@ -448,16 +462,17 @@ function add(d: Definition) {
       name: 'If-Match',
       in: 'header',
       required: true,
-      schema: { type: 'string', pattern: '^"draft-[1-9][0-9]*"$' },
-      description: 'Acknowledged draft version; stale412, absent428.',
+      schema: { type: 'string', pattern: d.etag === 'asset' ? '^"asset-[1-9][0-9]*"$' : '^"draft-[1-9][0-9]*"$' },
+      description: d.etag === 'asset' ? 'Acknowledged asset version; stale412, absent428.' : 'Acknowledged draft version; stale412, absent428.',
     });
-  if (d.paged) parameters.push(...pageParameters);
+  if (d.binaryBody) parameters.push({name:'X-Upload-Token',in:'header',required:true,schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Actor/workspace-bound upload token from the acknowledged intent. Preserve this token, upload ID and exact bytes for explicit transfer recovery.'});
+  if (d.paged) parameters.push(...(d.pageParameters ?? pageParameters));
   if (d.query) parameters.push(...d.query);
   const success = d.binary
     ? {
-        description: 'Frozen bytes; browser image/PDF simulations, not real-client evidence.',
-        headers: { 'X-Request-Id': { schema: string }, 'X-Artifact-Hash': { schema: string } },
-        content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+        description: d.binaryMediaTypes ? 'Authorized immutable private derivative bytes. No public hosting or original-byte access.' : 'Frozen bytes; browser image/PDF simulations, not real-client evidence.',
+        headers: { 'X-Request-Id': { schema: string }, ...(d.binaryMediaTypes ? {'Cache-Control':{schema:{const:'private, no-store'}}} : { 'X-Artifact-Hash': { schema: string } }) },
+        content: Object.fromEntries((d.binaryMediaTypes ?? ['application/octet-stream']).map(mime=>[mime,{schema:{type:'string',format:'binary'}}])),
       }
     : {
         description: d.blocked
@@ -482,7 +497,9 @@ function add(d: Definition) {
         : 'Implemented development behavior; all full-GA release obligations remain open.'),
     security: d.public ? [] : d.session ? [{ session: [] }] : [{ apiKey: [] }, { session: [] }],
     parameters,
-    ...(d.body
+    ...(d.binaryBody
+      ? {requestBody:{required:true,description:'Raw uncompressed bytes, exactly matching the admitted digest and size; 20 MiB maximum. No JSON, base64 or multipart encoding. Transfer retry is explicit and uses the same upload ID/token/bytes.',content:{'application/octet-stream':{schema:{type:'string',format:'binary',minLength:1,maxLength:MEDIA_LIMITS.upload}}}}}
+      : d.body
       ? {
           requestBody: {
             required: true,
@@ -495,7 +512,7 @@ function add(d: Definition) {
           },
         }
       : {}),
-    responses: { [d.status ?? 200]: success, ...errors },
+    responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}) },
     'x-lettercape-scopes': d.scope ? [d.scope] : [],
     'x-lettercape-availability': d.blocked ? 'blocked' : 'development',
     'x-lettercape-idempotent-command': !!d.keyed,
@@ -506,10 +523,19 @@ function add(d: Definition) {
     keyed: !!d.keyed,
     paged: !!d.paged,
     binary: !!d.binary,
+    binaryBody: !!d.binaryBody,
     blocked: !!d.blocked,
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({id:'listAssets',path:'/v1/assets',method:'GET',response:'AssetsPage',paged:true,pageParameters:pageParameters.slice(0,2),scope:'assets:read',description:'Bounded private library metadata. Hidden assets are omitted. Signed cursors bind the authenticated actor and workspace; no public image URLs are created.'});
+add({id:'createAssetUpload',path:'/v1/assets/uploads',method:'POST',body:'AssetUploadInput',response:'AssetUploadResponse',status:202,keyed:true,scope:'assets:write',description:'Reserve a bounded private upload with explicit rights attestation. Preserve the acknowledged token privately. Readiness requires actual clean scanning and isolated decoding; no image is ready merely because an intent was admitted.'});
+add({id:'uploadAssetContent',path:'/v1/assets/uploads/{uploadId}/content',method:'PUT',response:'AssetUploadContentResponse',status:202,binaryBody:true,scope:'assets:write',description:'Dedicated streamed binary route with a 20 MiB raw limit, admitted digest/size and actor-bound token. Acknowledgment means durable quarantine/queued processing, not readiness. Explicit recovery uses the same upload ID/token/exact bytes; there is no automatic mutation retry.'});
+add({id:'getAsset',path:'/v1/assets/{id}',method:'GET',response:'AssetResponse',scope:'assets:read'});
+add({id:'getAssetVariantContent',path:'/v1/assets/{id}/variants/{variantId}/content',method:'GET',response:'AssetResponse',binary:true,binaryMediaTypes:['image/png','image/jpeg','image/gif'],scope:'assets:read'});
+add({id:'createAssetFallback',path:'/v1/assets/{id}/fallback',method:'POST',body:'AssetFallbackInput',response:'AssetFallbackResponse',status:202,keyed:true,etag:'asset',scope:'assets:write',description:'Queue a deterministic fully composited GIF frame. Preserve the existing immutable variant until processing succeeds; stale asset versions return412.'});
+add({id:'removeAsset',path:'/v1/assets/{id}/remove',method:'POST',body:'Empty',response:'AssetResponse',keyed:true,scope:'assets:write',description:'Hide an asset from the private library while preserving bytes pinned by existing revisions. This is not physical erasure.'});
+add({id:'publishAsset',path:'/v1/assets/{id}/publish',method:'POST',body:'Empty',response:'AssetResponse',blocked:true,scope:'assets:write',description:'Always unavailable in this local slice:503 ASSET_PUBLICATION_NOT_CONFIGURED. No public CDN, hosted-image lifetime or production publication is claimed.'});
 add({id:'listSenderIdentities',path:'/v1/sender-identities',method:'GET',response:'SenderIdentitiesPage',paged:true,scope:'sender:read',description:'Current Owner/Admin only. Provider-bound drafts have no credentials; connection and sending remain disabled.'});
 add({id:'createSenderIdentity',path:'/v1/sender-identities',method:'POST',body:'SenderDraftInput',response:'SenderResponse',status:201,keyed:true,scope:'sender:write'});
 add({id:'getSenderIdentity',path:'/v1/sender-identities/{id}',method:'GET',response:'SenderResponse',scope:'sender:read'});
