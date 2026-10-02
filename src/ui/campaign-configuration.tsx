@@ -18,7 +18,8 @@ export function CampaignConfiguration({workspace,id,role,savedState,savedVersion
   else if(['draft','review_pending'].includes(record.state))currentState=savedState==='review_pending'||record.state==='review_pending'?'review_pending':'draft';
  }
  const configurationChanged=!!record&&savedVersion>record.version;
- const editable=['Owner','Admin','Editor'].includes(role)&&!!record&&['draft','review_pending'].includes(currentState);
+ const editingRole=['Owner','Admin','Editor'].includes(role);
+ const editable=editingRole&&!!record&&['draft','review_pending'].includes(currentState);
  const hydrate=useCallback((campaign:Campaign)=>{setRecord(campaign);setName(campaign.name);setRevision(campaign.revision_id);const timing=campaign.intent.planned_timing;setPlanned(!!timing);setLocal(timing?.local_time??'');setZone(timing?.time_zone??'UTC');setOffset(timing?.utc_offset??'+00:00');},[]);
  const reload=useCallback(async()=>{
   if(running.current)return;running.current=true;const generation=++epoch.current;setBusy(true);setError('');
@@ -30,7 +31,7 @@ export function CampaignConfiguration({workspace,id,role,savedState,savedVersion
  let candidate='',timingError='';
  if(planned){try{candidate=resolveCampaignTiming({local_time:local,time_zone:zone,utc_offset:offset}).utc;}catch(e){timingError=(e as Error).message;}}
  async function save(retry=false){
-  if(running.current||!editable||(!retry&&configurationChanged)||(pendingCommand.current&&!retry))return;
+  if(running.current||!editingRole||!record||(!retry&&!editable)||(!retry&&configurationChanged)||(pendingCommand.current&&!retry))return;
   let command=retry?pendingCommand.current:null;
   if(!command){try{command=CampaignConfigurationInput.parse({expected_version:record!.version,name,revision_id:revision,planned_timing:planned?{local_time:local,time_zone:zone,utc_offset:offset}:null});if(command.planned_timing)resolveCampaignTiming(command.planned_timing);}catch(e){setError(e instanceof Error?e.message:'Check the configuration.');return;}}
   running.current=true;const generation=++epoch.current;pendingCommand.current=command;pendingKey.current??=crypto.randomUUID();setPending(command);setBusy(true);setError('');setNotice('');let acknowledged=false;
@@ -39,7 +40,7 @@ export function CampaignConfiguration({workspace,id,role,savedState,savedVersion
    if(epoch.current!==generation)return;
    // A replay acknowledges its original version. Read current truth before unlocking edits.
    const current=await api<{campaign:Campaign}>(workspace,path);if(epoch.current!==generation)return;
-   hydrate(current.campaign);pendingCommand.current=null;pendingKey.current=null;setPending(null);setNotice(response.notice+(current.campaign.version!==response.campaign.version?' A newer saved configuration is now displayed.':''));await onUpdate();
+   hydrate(current.campaign);pendingCommand.current=null;pendingKey.current=null;setPending(null);setNotice(response.notice+(current.campaign.version!==response.campaign.version?' A newer saved configuration is now displayed.':'')+(current.campaign.state!==response.campaign.state?' Current campaign state: '+current.campaign.state.replaceAll('_',' ')+'. The original receipt does not change it.':''));await onUpdate();
   }catch(e){if(epoch.current!==generation)return;setError((e as Error).message);if(!acknowledged&&e instanceof ApiError&&e.status<500){pendingCommand.current=null;pendingKey.current=null;setPending(null);}}
   finally{if(epoch.current===generation){running.current=false;setBusy(false);}}
  }
@@ -70,7 +71,7 @@ export function CampaignConfiguration({workspace,id,role,savedState,savedVersion
   </form>
   {pending&&<p className="small">Acknowledgment is unresolved. Retry the original command or reload saved configuration to replace this form.</p>}
   <div className="toolbar">
-   {pending&&<button disabled={busy||!editable} onClick={()=>void save(true)}>Retry original configuration</button>}
+   {pending&&<button disabled={busy||!editingRole} onClick={()=>void save(true)}>Retry original configuration</button>}
    <button disabled={busy} onClick={()=>void reload()}>Reload saved configuration</button>
   </div>
   {!['Owner','Admin','Editor'].includes(role)&&<p className="small muted">Your role can view configuration history.</p>}

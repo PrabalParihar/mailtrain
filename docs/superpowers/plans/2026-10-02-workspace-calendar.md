@@ -36,5 +36,5 @@ Files src/ui/workspace-calendar.tsx, operations/app/css, scripts/smoke-workspace
 - [x] Actual initial/offline/error/repeated/lost acknowledgment/POST→failed GET/storage-unavailable, independent stale CAS/retained input/explicit reload, month/date folds/paging/error/empty/Viewer/mobile/workspace navigation. Expected full checks plus campaign/Voice/preflight/key/contract regressions PASS; commit/task-done.
 
 ### Task 6: Single review/source publication
-- [ ] Fresh whole-slice BASE..HEAD/spec/plan/ledger/all Review Focus. Grade effects; ONE native Important/Critical RED→GREEN pass; defer Minors/rule every declined judgment.
+- [x] Fresh whole-slice BASE..HEAD/spec/plan/ledger/all Review Focus. Grade effects; ONE native Important/Critical RED→GREEN pass; defer Minors/rule every declined judgment.
 - [ ] Final checks/canonical clean expected-head tracked-only sync/actual browser/authorized ordinary main push/exact-head CI. Preserve exhaustive public Rulings/Minors before deleting only this workspace; all65/all13 remain binding.

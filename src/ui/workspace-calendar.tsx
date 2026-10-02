@@ -3,13 +3,17 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {z} from 'zod';
 import {CalendarMonth,CalendarEntry,WorkspacePreferences,WorkspaceTimezoneInput,calendarDayCells,moveCalendarMonth,formatCalendarInstant,validateDisplayTimeZone} from '../domain/workspace-calendar';
 import {api,ApiError} from './api';
+import {CampaignConfiguration} from './campaign-configuration';
 type Preferences=z.infer<typeof WorkspacePreferences>;
 type Entry=z.infer<typeof CalendarEntry>;
 type Command=z.infer<typeof WorkspaceTimezoneInput>;
 type Page={data:Entry[];month:string;time_zone:string;timezone_version:number;total_count:number;has_more:boolean;next_cursor:string|null};
-export function WorkspaceCalendar({workspace,role}:{workspace:string;role:string}){
+export function WorkspaceCalendar({workspace,role,currentCampaigns,onUpdate}:{workspace:string;role:string;currentCampaigns:{id:string;version:number;state:string}[];onUpdate:()=>Promise<void>}){
  const [preferences,setPreferences]=useState<Preferences|null>(null),[zone,setZone]=useState(''),[preferenceBusy,setPreferenceBusy]=useState(false),[preferenceError,setPreferenceError]=useState(''),[notice,setNotice]=useState(''),[pending,setPending]=useState<Command|null>(null);
  const [month,setMonth]=useState(''),[frame,setFrame]=useState<Page|null>(null),[calendarBusy,setCalendarBusy]=useState(false),[calendarError,setCalendarError]=useState(''),[refresh,setRefresh]=useState(0);
+ const [selected,setSelected]=useState<Entry|null>(null);
+ const selectedRegion=useRef<HTMLElement|null>(null),selectedId=selected?.id;
+ useEffect(()=>{if(selectedId){selectedRegion.current?.scrollIntoView({block:'start'});selectedRegion.current?.focus();}},[selectedId]);
  const preferenceEpoch=useRef(0),preferenceRunning=useRef(false),pendingCommand=useRef<Command|null>(null),pendingKey=useRef<string|null>(null),calendarEpoch=useRef(0),calendarRunning=useRef(false),snapshot=useRef<Page|null>(null),monthRef=useRef('');
  const manager=['Owner','Admin'].includes(role),stale=!!preferences&&!!frame&&frame.timezone_version>preferences.version;
  const hydrate=useCallback((current:Preferences)=>{setPreferences(current);setZone(current.time_zone);if(!monthRef.current){const first=formatCalendarInstant(new Date().toISOString(),current.time_zone).local_date.slice(0,7);monthRef.current=first;setMonth(first);}},[]);
@@ -71,9 +75,14 @@ export function WorkspaceCalendar({workspace,role}:{workspace:string;role:string
     <div className="calendar-week" role="row">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=><span role="columnheader" key={day}>{day}</span>)}</div>
     {Array.from({length:calendarDayCells(frame.month).length/7},(_,week)=><div className="calendar-week" role="row" key={week}>{calendarDayCells(frame.month).slice(week*7,week*7+7).map((day,index)=><div role="cell" key={day??'blank'+index} data-calendar-date={day??undefined}>{day&&<><span>{Number(day.slice(8))}</span>{frame.data.some(row=>row.display.local_date===day)&&<span className="calendar-dot" aria-label="Loaded planned campaigns on this date"/>}</>}</div>)}</div>)}
    </div>
-   {!frame.data.length?<p data-calendar-empty>No planned campaigns in this month.</p>:<ol className="calendar-events">{frame.data.map(row=><li key={row.id} data-calendar-entry={row.id}><a href={'#campaign-'+row.id}>{row.name}</a><span className="badge neutral">Planned · {row.state.replaceAll('_',' ')}</span><p className="small">Display: {row.display.local_date} {row.display.local_time} {row.display.time_zone} ({row.display.utc_offset})</p><p className="small break-word">Original plan: {row.planned_timing.local_time} {row.planned_timing.time_zone} ({row.planned_timing.utc_offset}) → {row.planned_timing.utc}</p></li>)}</ol>}
+   {!frame.data.length?<p data-calendar-empty>No planned campaigns in this month.</p>:<ol className="calendar-events">{frame.data.map(row=><li key={row.id} data-calendar-entry={row.id}><button className="calendar-open" aria-label={'Open plan for '+row.name} onClick={()=>{setSelected(row);}}>{row.name}</button><span className="badge neutral">Planned · {row.state.replaceAll('_',' ')}</span><p className="small">Display: {row.display.local_date} {row.display.local_time} {row.display.time_zone} ({row.display.utc_offset})</p><p className="small break-word">Original plan: {row.planned_timing.local_time} {row.planned_timing.time_zone} ({row.planned_timing.utc_offset}) → {row.planned_timing.utc}</p></li>)}</ol>}
    {frame.has_more&&<button disabled={calendarBusy} onClick={()=>void loadMore()}>Load more planned campaigns</button>}
   </>}
+  {selected&&<section aria-label="Selected planned campaign" ref={selectedRegion} tabIndex={-1}>
+   <div className="section-heading"><h3>{selected.name}</h3><button onClick={()=>setSelected(null)}>Close selected plan</button></div>
+   <p className="small">Selected campaign configuration loads independently of the campaign list. Opening another plan, closing this plan or leaving the workspace replaces this view and its unsaved edits.</p>
+   <CampaignConfiguration key={selected.id} workspace={workspace} id={selected.id} role={role} savedState={currentCampaigns.find(row=>row.id===selected.id&&row.version>=selected.version)?.state??selected.state} savedVersion={currentCampaigns.find(row=>row.id===selected.id&&row.version>=selected.version)?.version??selected.version} onUpdate={async()=>{await loadCalendar();await onUpdate();}}/>
+  </section>}
   <p className="small muted">A weekday midmorning slot can be a working-hours starting point. This is an unmeasured planning heuristic, not audience behavior or a delivery recommendation. Choose timing explicitly in campaign configuration.</p>
  </section>;
 }

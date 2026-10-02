@@ -1621,4 +1621,4 @@ td {
 .calendar-dot { display: block; margin: 4px auto 0; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .calendar-events { list-style: none; padding: 0; }
 .calendar-events li { padding: 16px 0; border-bottom: 1px solid var(--line); }
-.calendar-events li > a { display: block; overflow-wrap: anywhere; font-weight: 600; margin-bottom: 8px; }
+.calendar-open { display: block; color: var(--primary); text-align: left; overflow-wrap: anywhere; font-weight: 600; margin-bottom: 8px; }

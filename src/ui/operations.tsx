@@ -164,7 +164,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
           {error || campaignPage.error || revisionPage.error}
         </p>
       )}
-      <WorkspaceCalendar key={workspace} workspace={workspace} role={role}/>
+      <WorkspaceCalendar key={workspace} workspace={workspace} role={role} currentCampaigns={items} onUpdate={reload}/>
       <form
         className="panel campaign-create"
         onSubmit={(e) => {
