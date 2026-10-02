@@ -48,7 +48,7 @@
     "code-editor:assets": "node --import tsx scripts/build-code-editor.ts",
     "predev": "npm run code-editor:assets",
     "prebuild": "npm run code-editor:assets",
-    "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts",
+    "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts && node scripts/smoke-code-editor-cancellation.mjs",
     "worker:media:local": "node --import tsx scripts/media-worker.ts",
     "smoke:media": "node scripts/smoke-media.mjs --scan",
     "smoke:assets": "node --import tsx scripts/smoke-assets.ts"

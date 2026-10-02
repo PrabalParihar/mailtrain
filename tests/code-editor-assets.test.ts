@@ -49,6 +49,7 @@ test('local Monaco assets are executable ESM with bounded URLs, fonts and upstre
   }
   assert.match(await readFile(join(assetDir,'LICENSE'),'utf8'),/MIT License|Permission is hereby granted/);
   assert.ok((await stat(join(assetDir,'ThirdPartyNotices.txt'))).size>100);
+  assert.match(await readFile(join(assetDir,'LettercapeChanges.txt'),'utf8'),/CompletionAdapter checks cancellation and model disposal/);
   const duplicate=await buildCodeEditor(secondDir);
   assert.deepEqual(duplicate,manifest,'asset identity excludes the output directory');
   const firstFiles=(await readdir(firstDir,{recursive:true})).sort();
