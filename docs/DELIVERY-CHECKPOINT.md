@@ -1,5 +1,8 @@
 # Lettercape delivery checkpoint — 2026-10-02
 
+Current sender/domain development checkpoint:271tests/lint0/typecheck/API102/build, actual sender HTTP and complete Chromium/actor recovery plus affected API/key/contract/navigation/editor suites PASS. ONE immutable review/ONE native Important fix atb5b4e2d closes an actor-switch duplicate; Minor field-associated accessible validation is deferred. Versioned drafts and exact-owner TXT observations never establish provider/authentication/sending readiness. REQ-032 is nowPartial; no complete requirement or gate accepted. [SENDER-DOMAIN-CHECKPOINT.md](SENDER-DOMAIN-CHECKPOINT.md) preserves the full ledger and all26 reviewer judgments/costs. Local publication/current-head CI remain blocked pending fresh direct trusted push approval; historical CI is separate. Canonical sync evidence is recorded in that checkpoint once complete. All65requirements/all13gates remain binding.
+
+
 The full 65-requirement PRD remains the baseline. No complete requirement has GA acceptance; all13release gates remain open. These are capability states, not a completion percentage. Source publication is separate from a public application launch.
 
 ## What is implemented and verified
@@ -17,6 +20,7 @@ These concrete development paths have code plus actual local evidence; their lar
 | Current membership/key authority, immutable seat-impact journal and API/SDK | Negative tenant/role/scope tests and browser recovery; invitations, approved capacity, production identity/MFA and package acceptance unfinished |
 | Campaign draft configuration/history, planned workspace calendar and explicit UTM | Reviewed source plus real browser/export/recovery checks; approval, sender/audience/consent manifests and accepted scheduling unfinished |
 | Durable creation/webhook recovery, reserved usage and dispatch stops | Owned process/Redis/HTTP evidence; provider activation, production service identity/operations and real accounting unfinished |
+| Versioned sender drafts and exact-owner TXT observation | Guarded tenant history/API102 and actor-bound browser recovery tested; real account/issued records/DKIM/Return Path/protocol/received authentication unfinished; sending disabled |
 | Public development marketing/docs/status/legal/support routes | Runnable local routes; approved production claims/legal/status/accessibility and design-partner evidence unfinished |
 
 Latest published checkpoint: `d32588bd6b605596c8033112770776ab88c207a1`, synchronized with353Desktop tracked-file SHA256 matches. [Exact evidence-head CI36990825004](https://github.com/PrabalParihar/mailtrain/actions/runs/36990825004) succeeded in both verify and renderer. Reviewed executable source31c45fe also passed exact CI36988823751. The earlier mobile Home-navigation timing cause remains unestablished and its failure/probes remain recorded.
@@ -25,7 +29,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 
 ## Delivery classes for every requirement
 
-39requirements are partially implemented;21full capability paths remain not started/undelivered;5PRD roadmap rows retain their stated later commitments. External blockers overlap these classes and do not remove work from the baseline. An external blocker prevents live acceptance; it does not prevent independent implementation of the corresponding contracts, UI, workers and tests.
+40requirements are partially implemented;20full capability paths remain not started/undelivered;5PRD roadmap rows retain their stated later commitments. External blockers overlap these classes and do not remove work from the baseline. An external blocker prevents live acceptance; it does not prevent independent implementation of the corresponding contracts, UI, workers and tests.
 
 | ID | Required feature | Current code delivery | External acceptance blocker |
 |---|---|---|---|
@@ -60,7 +64,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 | REQ-029 | 5.8 Dynamic segmentation | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-030 | 5.8 Preferences and double opt in | Partial | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-031 | 5.8 Suppression and consent evidence | Partial | No distinct account blocker identified; implementation/acceptance still required |
-| REQ-032 | 5.9 Domain DNS setup | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
+| REQ-032 | 5.9 Domain DNS setup | Partial | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-033 | 5.9 Managed SES and provider keys | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-034 | 5.9 Trial domain and warming | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-035 | 5.9 Immediate schedule approval | Partial | Sender/DNS/provider accounts, signed events and consent policy |
@@ -97,9 +101,9 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 
 ## Next working session and current bounded estimate
 
-Finish Task6 canonical tracked-file sync and owned canonical verification, ordinary authorized main push, exact-current-head CI readback and evidence closeout. The earlier8–16hour range was a low-confidence audience-only planning estimate, not a production deadline. Tasks1–5 and review fixes are complete; no full-product date is inferred.
+Audience and sender source publication/exact-current-head CI remain blocked pending fresh direct trusted approval. Audience canonical verification is complete; sender Tasks1–5, ONE review and ONE Important native fix/final checks are complete. Complete local sender canonical verification independently; preserve private closeout ledgers while publication is blocked. The earlier8–16hour audience-only planning estimate is historical and is not a production deadline.
 
-After publication, sender/domain verification (REQ-032) is the next independent implementation milestone. Provider-specific DNS contracts/UI/evidence can be built without provisioning or sending; actual aligned authentication and received-test acceptance require the intended account/domain/provider configuration. Full approval manifests and dispatch-time consent/suppression remain required.
+Sender drafts/DNS discovery (REQ-032) now have independent local evidence. Actual aligned authentication and received-test acceptance still require intended account/domain/provider configuration. Continue missing team/editor/code-round-trip/media/localization and other independent modules while that setup is pending; no narrowing of GA scope.
 
 After this slice, the next code milestones are: complete team/editor/code-round-trip/media/localization journeys; implement sender/domain/approval/recipient dispatch and analytics with fail-closed adapters; implement five ESP adapters and Stripe/Slack/billing/usage reconciliation; complete rights/deletion/internal admin/production operational surfaces. Each milestone needs working HTTP/browser/provider-like contracts and one appropriate review before acceptance. Provider configuration proceeds in parallel when available.
 
@@ -111,6 +115,6 @@ After this slice, the next code milestones are: complete team/editor/code-round-
 4. Verify the exact Railway destination/resource allocation and all-inUS$30monthly constraint including fees/taxes/shared workloads; deploy private services only after the applicable gates permit it. Do not change unrelated workspace projects to force a cap.
 5. Complete load/restore/incident/security/accessibility/privacy evidence, independent assessment and10actual design-partner workspaces; close all13gates and obtain accountable final launch signoff.
 
-A credible full-production date cannot be bounded from the current evidence:21capability paths are undelivered,39are partial, provider/legal/procurement and external assessment/design-partner timing have no confirmed dates, and zero gates are signed closed. Full readiness is a multi-milestone build and acceptance effort, not an hours-away launch. Re-estimate after the audience publication and again once external prerequisite dates and provider qualification results are known. A narrow source slice estimate must never be extrapolated into a full-product deadline or percentage.
+A credible full-production date cannot be bounded from the current evidence:20capability paths are undelivered,40are partial, provider/legal/procurement and external assessment/design-partner timing have no confirmed dates, and zero gates are signed closed. Full readiness is a multi-milestone build and acceptance effort, not an hours-away launch. Re-estimate after the next independent module and again once external prerequisite dates and provider qualification results are known. A narrow source slice estimate must never be extrapolated into a full-product deadline or percentage.
 
 The exact65-row capability register is CAPABILITIES.md; gate owners/evidence remain in RELEASE.md. All22UTM execution/review rulings and their costs are preserved exhaustively in UTM-FROZEN-CONTENT-CHECKPOINT.md; no Minor was reported for that slice. Earlier deferred Minors remain in their checkpoints. No production provider/model/send/spend/public deployment occurred.

@@ -1,5 +1,8 @@
 # Verified coverage checkpoint — 2026-10-02
 
+Current sender/domain development checkpoint:271tests/lint0/typecheck/API102/build, actual sender HTTP and complete Chromium/actor recovery plus affected API/key/contract/navigation/editor suites PASS. ONE immutable review/ONE native Important fix atb5b4e2d closes an actor-switch duplicate; Minor field-associated accessible validation is deferred. Versioned drafts and exact-owner TXT observations never establish provider/authentication/sending readiness. REQ-032 is nowPartial; no complete requirement or gate accepted. [SENDER-DOMAIN-CHECKPOINT.md](SENDER-DOMAIN-CHECKPOINT.md) preserves the full ledger and all26 reviewer judgments/costs. Local publication/current-head CI remain blocked pending fresh direct trusted push approval; historical CI is separate. Canonical sync evidence is recorded in that checkpoint once complete. All65requirements/all13gates remain binding.
+
+
 Current audience authoring/frozen campaign selection development checkpoint:231tests/lint0/typecheck/API95/build and complete owned HTTP/Chromium recovery suite PASS. ONE whole-slice review/two Important native RED→GREEN fixes; one uppercase-snapshot-UUID usability Minor deferred. Maximum100-node escaped-rule recovery, actual large-rule lost-response original-command replay and long invalid revision retaining unrelated fields now covered. Canonical376tracked SHA256 matches and complete canonical audience/campaign/lifecycle6/calendar PASS; source8e36470 remains local. Automatic approval review rejected the ordinary main push under the trusted No remote push instruction; publication/exact-current-head CI are blocked pending fresh approval. Previous published CI is historical. Exhaustive rulings and limits: [AUDIENCE-SELECTION-CHECKPOINT.md](AUDIENCE-SELECTION-CHECKPOINT.md). All65requirements/all13gates remain binding; no GA acceptance or deployment.
 
 Delivery planning: [DELIVERY-CHECKPOINT.md](DELIVERY-CHECKPOINT.md) records implemented-and-verified development paths, every partial/not-started requirement, overlapping external blockers, next-session scope and the current audience-only estimate. No completion percentage or full-production date is inferred.
@@ -12,13 +15,13 @@ Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is p
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (39)
+## Partial local implementation with acceptance still required (40)
 
-REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (21)
+## Required capability not delivered; implementation and/or configuration missing (20)
 
-REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-032, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 

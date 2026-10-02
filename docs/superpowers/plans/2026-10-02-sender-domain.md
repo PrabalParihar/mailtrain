@@ -60,5 +60,7 @@
 
 ### Task 6: ONE review, evidence and local closeout
 **Files:** current-plan private ledger and public checkpoint/registers/plan.
-- [ ] ONE immutable whole-slice reviewer, grade concrete effects, fix Important/Critical in ONE native RED→GREEN pass, defer Minors and rule every declined judgment.
+- [x] ONE immutable whole-slice reviewer, grade concrete effects, fix Important/Critical in ONE native RED→GREEN pass, defer Minors and rule every declined judgment.
 - [ ] Full/actual final checks, preserve every ruling/task/deferred public; canonical clean/hash/collision FF/actual browser if authorized local scope. No remote retry without trusted approval. If publication remains blocked mark it explicitly, retain current private workspace until complete; all65/13gates remain open.
+
+Local native qualification271tests/API102/full checks and actual HTTP/Chromium complete atb5b4e2d. Canonical sync/checks pending; publication/current-head CI blocked by trustedNo remote push. Keep Task6 final checkbox open until closeout obligations complete.
