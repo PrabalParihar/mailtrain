@@ -1,8 +1,8 @@
-# Verified coverage checkpoint — 2026-10-01
+# Verified coverage checkpoint — 2026-10-02
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 
-Source publication: reviewed executable checkpointaa8c46466d886b4d6728c3a07c7763d757acab61 is synchronized to canonical Desktop/mail with315tracked SHA256 matches. [CI36952958466](https://github.com/PrabalParihar/mailtrain/actions/runs/36952958466) passed exact-head app and dedicated sandboxed renderer jobs,160tests/full checks/owned HTTP-process-Chromium fixtures and closed production startup. Voice Guard completed one fresh review/four Important native RED→GREEN fixes, including the abandoned Strict Mode read variant discovered during canonical validation; corrected canonical actual recovery smoke passes. Typed API87 is published. Production provider/account/economics/security/identity/ops and full65baseline/all13gates remain required.
+Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is published on main and synchronized to canonical Desktop/mail with338tracked SHA256 matches. All185tests/lint/typecheck/build/API93 and actual canonical calendar/campaign/lifecycle6 HTTP+Chromium pass. One fresh whole-slice review and ONE native fix pass resolved two Important defects; three Minors are deferred in WORKSPACE-CALENDAR-CHECKPOINT.md. Exact-head CI36971963596 completed SUCCESS; both verify and sandboxed renderer passed. All65requirements/all13GA gates remain binding; production deployment remains blocked.
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 

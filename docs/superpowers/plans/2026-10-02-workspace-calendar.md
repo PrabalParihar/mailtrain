@@ -37,4 +37,4 @@ Files src/ui/workspace-calendar.tsx, operations/app/css, scripts/smoke-workspace
 
 ### Task 6: Single review/source publication
 - [x] Fresh whole-slice BASE..HEAD/spec/plan/ledger/all Review Focus. Grade effects; ONE native Important/Critical RED→GREEN pass; defer Minors/rule every declined judgment.
-- [ ] Final checks/canonical clean expected-head tracked-only sync/actual browser/authorized ordinary main push/exact-head CI. Preserve exhaustive public Rulings/Minors before deleting only this workspace; all65/all13 remain binding.
+- [x] Final checks/canonical clean expected-head tracked-only sync/actual browser/authorized ordinary main push/exact-head CI. Preserve exhaustive public Rulings/Minors before deleting only this workspace; all65/all13 remain binding.

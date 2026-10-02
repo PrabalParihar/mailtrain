@@ -16,7 +16,7 @@ The calendar labels timing as planned. The weekday-midmorning helper is explicit
 
 ## Review and publication
 
-Single fresh Astra high whole-slice review completed on e329d17..dd06bcd. Two reproduced Important UI defects were fixed in ONE native RED→GREEN pass; three Minors are deferred below. No rereview. Full185/API93/lint/typecheck/build and actual calendar/campaign/lifecycle6 regressions pass. Canonical Desktop currently contains the requested lifecycle follow-up8be63f4; remaining calendar source is local development in the writable mirror. Remote main remains e329d17; reviewed campaign e8f96c0 exact CI36959642753 and docs e329d17 CI36966885215 both completed SUCCESS. Canonical hashes/browser verification and ordinary source publication will be recorded after review.
+Single fresh Astra high whole-slice review completed on e329d17..dd06bcd. Two reproduced Important UI defects were fixed in ONE native RED→GREEN pass; three Minors are deferred below. No rereview. Full185/API93/lint/typecheck/build and actual calendar/campaign/lifecycle6 regressions pass. Canonical Desktop and remote main now contain reviewed/fixed c7e4a51 with338tracked SHA256 matches and actual canonical calendar/campaign/lifecycle6 PASS; exact CI36971963596 completed SUCCESS for both verify and renderer. Earlier source base was e329d17; reviewed campaign e8f96c0 exact CI36959642753 and docs e329d17 CI36966885215 both completed SUCCESS. Canonical clean expected8be63f4/329baseline/no-collision tracked-only fast-forward,338hashes, actual canonical browser and ordinary main push/exact remote readback are verified. No provider/deployment effect.
 
 ## Exhaustive execution rulings
 
@@ -75,3 +75,5 @@ Final: Ruling: local release check continues to block all13gates, original Railw
 Final: minor (deferred): calendar rows omit exact revision_id content pin even though new metadata supplies it; selected independent configuration view displays its existing revision/artifact controls. Row content-pin improvement remains deferred.
 Final: minor (deferred): exact local-month AT TIME ZONE predicates cannot use ordinary planned_at timestamp range pruning; no measured production latency failure. Conservative UTC bounds/load acceptance remain required.
 Final: minor (deferred): formatCalendarInstant loses BCE era when0001UTC crosses westward and emits10000 when9999crosses eastward, outside four-digit display contract. Modern dates unaffected; explicit supported-range rejection remains required.
+
+Task 6 exact source CI:36971963596 completed SUCCESS at c7e4a5166bbb53582dfa4150305344e1c3635985; both verify and dedicated sandboxed renderer jobs pass, including all185/API93/full checks/actual HTTP+Chromium and closed production startup. Native gh final readback /tmp/lettercape-calendar-ci-final.json.
