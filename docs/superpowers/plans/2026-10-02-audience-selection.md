@@ -26,8 +26,8 @@
 ### Task 1: Recursive working-rule model
 **Files:** Create src/domain/segment-working.ts; test tests/segment-working.test.ts.
 **Interfaces:** Consumes Rule/Field/validateRule from domain/segments. Produces WorkingRule/WorkingLeaf, workingFromRule(rule), workingToRule(working,fields):Rule, replaceWorkingNode(root,id,change), workingBounds(root) and workingRuleFingerprint(root,fields).
-- [ ] Write/run focused RED: nested any/all typed/date/boolean/tag/list/observed exact round-trip and unchanged input; leaf-root identity; blank/nonfinite/invalid typed comparisons and days throw while original text persists; explicit add/remove immutable structure;100nodes/depth5/20children bounds; unknown relation value retained.
-- [ ] Implement pure browser-safe model, client-only IDs, strict late conversion/shared validation and bounded edits. Run focused/full/lint/typecheck; expected PASS. Commit and task-done focused command.
+- [x] Write/run focused RED: nested any/all typed/date/boolean/tag/list/observed exact round-trip and unchanged input; leaf-root identity; blank/nonfinite/invalid typed comparisons and days throw while original text persists; explicit add/remove immutable structure;100nodes/depth5/20children bounds; unknown relation value retained.
+- [x] Implement pure browser-safe model, client-only IDs, strict late conversion/shared validation and bounded edits. Run focused/full/lint/typecheck; expected PASS. Commit and task-done focused command.
 
 ### Task 2: Immutable snapshot binding storage and domain
 **Files:** Create src/domain/audience-snapshots.ts, db/028-audience-snapshot-bindings.sql, tests/audience-snapshot.test.ts, tests/audience-snapshot-db.test.ts.
