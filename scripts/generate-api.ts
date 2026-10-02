@@ -1,4 +1,4 @@
-import{CampaignConfigurationInput,CampaignConfigurationSnapshot}from'../src/domain/campaign-configuration';
+import{CampaignConfigurationInput,CampaignConfigurationSnapshot,CampaignConfigurationView}from'../src/domain/campaign-configuration';
 import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
 import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
@@ -130,6 +130,7 @@ const schemas: Record<string, Schema> = {
     false,
   ),
   CampaignConfigurationInput:fromZod(CampaignConfigurationInput),
+  CampaignConfigurationView:fromZod(CampaignConfigurationView),
   CampaignConfigurationSnapshot:fromZod(CampaignConfigurationSnapshot),
   CampaignInput: object(
     { name: { type: 'string', minLength: 1, maxLength: 160 }, revision_id: uuid },
@@ -264,7 +265,8 @@ schemas.KeyResponse = envelope(
 );
 schemas.GenericResponse = envelope({}, []);
 schemas.CampaignResponse = envelope({ campaign: ref('Campaign') });
-schemas.CampaignConfigurationResponse=envelope({campaign:ref('Campaign'),changed:{type:'boolean'},notice:string});
+schemas.CampaignDetailResponse=envelope({campaign:ref('CampaignConfigurationView')});
+schemas.CampaignConfigurationResponse=envelope({campaign:ref('CampaignConfigurationView'),changed:{type:'boolean'},notice:string});
 schemas.Health = envelope({
   status: { const: 'ok' },
   release: { const: 'development' },
@@ -827,7 +829,7 @@ add({
   keyed: true,
   scope: 'campaigns:write',
 });
-add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignResponse',scope:'campaigns:read'});
+add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignDetailResponse',scope:'campaigns:read'});
 add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
 add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS; exact owned revision/hash and explicit planned local minute/IANA zone/offset. Planned timing never accepts scheduling. Material changes clear review/approval and retain captured audience/provider/sender/tracking. Stale commands conflict; unchanged commands do not append history.'});
 for (const [id, command, blocked, scope] of [

@@ -3,17 +3,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CampaignConfigurationInput, resolveCampaignTiming, type CampaignConfigurationData, type CampaignConfigurationSnapshotData, type ResolvedCampaignTiming } from '../domain/campaign-configuration';
 import { api, ApiError } from './api';
 import { useResourcePage } from './paged';
-type Campaign = { id:string; name:string; version:number; revision_id:string; state:string; intent:{artifact_hash?:string; planned_timing?:ResolvedCampaignTiming|null} };
+type Campaign = { id:string; name:string; version:number; revision_id:string; state:string; intent:{artifact_hash?:string|null; planned_timing?:ResolvedCampaignTiming|null} };
 export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:string;id:string;role:string;onUpdate:()=>Promise<void>}) {
  const [record,setRecord]=useState<Campaign|null>(null),[name,setName]=useState(''),[revision,setRevision]=useState(''),[planned,setPlanned]=useState(false),[local,setLocal]=useState(''),[zone,setZone]=useState('UTC'),[offset,setOffset]=useState('+00:00');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[pending,setPending]=useState<CampaignConfigurationData|null>(null);
- const epoch=useRef(0),running=useRef(false),pendingCommand=useRef<CampaignConfigurationData|null>(null);
+ const epoch=useRef(0),running=useRef(false),pendingCommand=useRef<CampaignConfigurationData|null>(null),pendingKey=useRef<string|null>(null);
  const path='campaigns/'+id,history=useResourcePage<CampaignConfigurationSnapshotData>(workspace,path+'/configurations?limit=5',String(record?.version??0));
  const editable=['Owner','Admin','Editor'].includes(role)&&!!record&&['draft','review_pending'].includes(record.state);
  const hydrate=useCallback((campaign:Campaign)=>{setRecord(campaign);setName(campaign.name);setRevision(campaign.revision_id);const timing=campaign.intent.planned_timing;setPlanned(!!timing);setLocal(timing?.local_time??'');setZone(timing?.time_zone??'UTC');setOffset(timing?.utc_offset??'+00:00');},[]);
  const reload=useCallback(async()=>{
   if(running.current)return;running.current=true;const generation=++epoch.current;setBusy(true);setError('');
-  try{const response=await api<{campaign:Campaign}>(workspace,path);if(epoch.current!==generation)return;hydrate(response.campaign);pendingCommand.current=null;setPending(null);setNotice('Saved configuration loaded. Unsaved form edits were replaced.');}
+  try{const response=await api<{campaign:Campaign}>(workspace,path);if(epoch.current!==generation)return;hydrate(response.campaign);pendingCommand.current=null;pendingKey.current=null;setPending(null);setNotice('Saved configuration loaded. Unsaved form edits were replaced.');}
   catch(e){if(epoch.current===generation)setError((e as Error).message);}
   finally{if(epoch.current===generation){running.current=false;setBusy(false);}}
  },[workspace,path,hydrate]);
@@ -21,17 +21,17 @@ export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:st
  let candidate='',timingError='';
  if(planned){try{candidate=resolveCampaignTiming({local_time:local,time_zone:zone,utc_offset:offset}).utc;}catch(e){timingError=(e as Error).message;}}
  async function save(retry=false){
-  if(running.current||!editable)return;
+  if(running.current||!editable||(pendingCommand.current&&!retry))return;
   let command=retry?pendingCommand.current:null;
   if(!command){try{command=CampaignConfigurationInput.parse({expected_version:record!.version,name,revision_id:revision,planned_timing:planned?{local_time:local,time_zone:zone,utc_offset:offset}:null});if(command.planned_timing)resolveCampaignTiming(command.planned_timing);}catch(e){setError(e instanceof Error?e.message:'Check the configuration.');return;}}
-  running.current=true;const generation=++epoch.current;pendingCommand.current=command;setPending(command);setBusy(true);setError('');setNotice('');
+  running.current=true;const generation=++epoch.current;pendingCommand.current=command;pendingKey.current??=crypto.randomUUID();setPending(command);setBusy(true);setError('');setNotice('');let acknowledged=false;
   try{
-   const response=await api<{campaign:Campaign;changed:boolean;notice:string}>(workspace,path+'/configuration','POST',command);
+   const response=await api<{campaign:Campaign;changed:boolean;notice:string}>(workspace,path+'/configuration','POST',command,undefined,pendingKey.current);acknowledged=true;
    if(epoch.current!==generation)return;
    // A replay acknowledges its original version. Read current truth before unlocking edits.
    const current=await api<{campaign:Campaign}>(workspace,path);if(epoch.current!==generation)return;
-   hydrate(current.campaign);pendingCommand.current=null;setPending(null);setNotice(response.notice+(current.campaign.version!==response.campaign.version?' A newer saved configuration is now displayed.':''));await onUpdate();
-  }catch(e){if(epoch.current!==generation)return;setError((e as Error).message);if(e instanceof ApiError&&e.status<500){pendingCommand.current=null;setPending(null);}}
+   hydrate(current.campaign);pendingCommand.current=null;pendingKey.current=null;setPending(null);setNotice(response.notice+(current.campaign.version!==response.campaign.version?' A newer saved configuration is now displayed.':''));await onUpdate();
+  }catch(e){if(epoch.current!==generation)return;setError((e as Error).message);if(!acknowledged&&e instanceof ApiError&&e.status<500){pendingCommand.current=null;pendingKey.current=null;setPending(null);}}
   finally{if(epoch.current===generation){running.current=false;setBusy(false);}}
  }
  return <div className="campaign-configuration" data-campaign-configuration={id}>

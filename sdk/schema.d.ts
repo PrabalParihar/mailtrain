@@ -2337,6 +2337,30 @@ export interface components {
                 utc_offset: string;
             } | null;
         };
+        CampaignConfigurationView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            version: number;
+            state: string;
+            /** Format: uuid */
+            revision_id: string;
+            intent: {
+                artifact_hash: string | null;
+                planned_timing: {
+                    local_time: string;
+                    time_zone: string;
+                    utc_offset: string;
+                    /** Format: date-time */
+                    utc: string;
+                } | null;
+            };
+            audience_count: number;
+            eligible_count: number;
+            digest: string;
+            /** Format: date-time */
+            created_at: string;
+        };
         CampaignConfigurationSnapshot: {
             /** Format: uuid */
             id: string;
@@ -2847,9 +2871,15 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        CampaignDetailResponse: {
+            request_id: string;
+            campaign: components["schemas"]["CampaignConfigurationView"];
+        } & {
+            [key: string]: unknown;
+        };
         CampaignConfigurationResponse: {
             request_id: string;
-            campaign: components["schemas"]["Campaign"];
+            campaign: components["schemas"]["CampaignConfigurationView"];
             changed: boolean;
             notice: string;
         } & {
@@ -24710,7 +24740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CampaignResponse"];
+                    "application/json": components["schemas"]["CampaignDetailResponse"];
                 };
             };
             /** @description Safe error; preserve request ID. Business errors do not automatically retry. */

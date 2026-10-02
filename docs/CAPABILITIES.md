@@ -41,7 +41,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-035 | 5.9 Immediate schedule approval | Partial / development | Frozen campaign intent/review request, approval blocked by missing evidence |
 | REQ-036 | 5.9 Recipient jobs and logs | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-037 | 5.9 Abuse controls | Partial / development | Sending disabled; fail-closed global/provider/workspace policy fences and evidence. Risk checks, domain controls, appeal workflow and full dispatch authorization pending |
-| REQ-038 | 5.10 Campaigns calendar and UTM | Partial / development | Campaign snapshots; scheduling/calendar/UTM pending |
+| REQ-038 | 5.10 Campaigns calendar and UTM | Partial / development | Versioned configuration and planned local/timezone/offset/UTC tested; workspace calendar, UTM, heuristics and accepted scheduling/SLO remain required. |
 | REQ-039 | 5.10 A/B subject testing | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-040 | 5.11 ESP adapters | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-041 | 5.11 Export fidelity and downloads | Partial / development | Frozen HTML/txt plus authenticated isolated Linux PNG/PDF and tenant/profile-bound immutable cache tested locally. Production sandbox/egress/queue/load/storage policy and destination fidelity remain pending. |
