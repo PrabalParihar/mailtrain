@@ -16,7 +16,7 @@ ONE fresh Astra high whole-slice review35d1515..8a5b029: no Critical, two Import
 
 Final author checks172/172 tests, lint0/typecheck/build/API90, complete affected actual HTTP/Chromium PASS. Existing API14groups/preflight/contract/creation/Voice actual HTTP/browser regressions PASS. Existing rotated-key parallel browser check initially timed out on disabled first historical row; bounded independent rerun passed unchanged and the failure is retained. Logs /tmp/lettercape-campaign-final-{tests,lint,typecheck,api,build,http}.log; review RED/GREEN /tmp/lettercape-campaign-review-{metadata-red,metadata-green,refresh-red,storage-red,recovery-green}.log; prior regression /tmp/lettercape-campaign-task4-regression-*.log and /tmp/lettercape-campaign-task5-{creation,voice,release}.log.
 
-Source publication/canonical verification and exact-head CI are pending at this checkpoint. Production release check exits1 with all13 gates still open. Full intent/locale/assets/sender/consent/frequency/legal review, refreshed audience policy, accepted scheduling, recipient ledger/reconciliation, real clients and representative SLOs remain required.
+Reviewed/fixed executable e8f96c057588a75ec5de769678037e57c501db54 is published to the intended main branch with exact remote readback,326canonical tracked SHA256 matches and canonical3002 actual HTTP/Chromium PASS including both reviewed recovery cases. [Exact-head CI36959642753](https://github.com/PrabalParihar/mailtrain/actions/runs/36959642753) is in progress: renderer success, application verification running. Success is not yet established. This is source publication; application activation remains disabled. Production release check exits1 with all13 gates still open. Full intent/locale/assets/sender/consent/frequency/legal review, refreshed audience policy, accepted scheduling, recipient ledger/reconciliation, real clients and representative SLOs remain required.
 
 ## Rulings I made
 
@@ -65,6 +65,8 @@ Final: Ruling: declined repair of pre-existing rotated-key fixture timing — na
 Final: Ruling: declined source publication/remote CI/canonical sync/workspace deletion — reviewer read-only verdict does not certify those executor steps — cost if wrong: clean expected-head hashes, actual canonical browser, ordinary push/exact-head readback, exhaustive public Rulings/Minors preservation before declaring publication.
 
 Final: Ruling: bound post-fix validation to full172/lint/typecheck/API90/build plus entire affected HTTP/Chromium and prior API14/preflight/contract/key/creation/Voice regressions — no production/provider conformance inferred — cost if wrong: exact-head CI and canonical actual browser must pass before source publication, all65/13gates remain open.
+
+Final: Ruling: source-only Git bundle fast-forward after clean expected aa8c464 and315baseline hash/no new-path collisions, then326tracked hash/actual canonical verification — Git preserves ignored local settings/dependencies and rejects unsafe non-fast-forward/untracked overwrite — cost if wrong: stop publication on mismatch and preserve unrelated files.
 
 ## Deferred minors
 

@@ -38,7 +38,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-032 | 5.9 Domain DNS setup | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-033 | 5.9 Managed SES and provider keys | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-034 | 5.9 Trial domain and warming | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-035 | 5.9 Immediate schedule approval | Partial / development | Frozen campaign intent/review request, approval blocked by missing evidence |
+| REQ-035 | 5.9 Immediate schedule approval | Partial / development | Immutable configuration/history and exact content pins, strict metadata boundaries, explicit planned local/timezone/offset/UTC tested. Full intent approval, sender/audience/consent manifests and accepted scheduling remain required. |
 | REQ-036 | 5.9 Recipient jobs and logs | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-037 | 5.9 Abuse controls | Partial / development | Sending disabled; fail-closed global/provider/workspace policy fences and evidence. Risk checks, domain controls, appeal workflow and full dispatch authorization pending |
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial / development | Versioned configuration and planned local/timezone/offset/UTC tested; workspace calendar, UTM, heuristics and accepted scheduling/SLO remain required. |
