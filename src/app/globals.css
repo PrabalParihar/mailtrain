@@ -1287,11 +1287,13 @@ td {
     z-index: 30;
     width: 232px;
     left: -240px;
+    visibility: hidden;
     transition: left 180ms;
     box-shadow: 0 6px 20px #162b301f;
   }
   .sidebar.open {
     left: 0;
+    visibility: visible;
   }
   .mobile-menu {
     display: inline-flex;

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -66,6 +66,13 @@ export function MailcraftApp({
     [busy, setBusy] = useState(false),
     [menu, setMenu] = useState(false);
   const router = useRouter();
+  const navigationPanel=useRef<HTMLElement>(null),navigationToggle=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{
+    if(!menu||!window.matchMedia('(max-width: 1023px)').matches)return;
+    navigationPanel.current?.querySelector<HTMLSelectElement>('select')?.focus();
+    const close=(event:KeyboardEvent)=>{if(event.key==='Escape'){event.preventDefault();setMenu(false);navigationToggle.current?.focus();}};
+    document.addEventListener('keydown',close);return()=>document.removeEventListener('keydown',close);
+  },[menu]);
   const section = screen[0] ?? '';
   const emailPage = useResourcePage<Email>(workspace, 'emails', section);
   const emails = emailPage.data;
@@ -191,7 +198,7 @@ export function MailcraftApp({
     );
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${menu ? 'open' : ''}`}>
+      <aside id="workspace-navigation" ref={navigationPanel} className={`sidebar ${menu ? 'open' : ''}`}>
         <Logo />
         <div className="workspace-picker">
           <label className="sr-only" htmlFor="workspace">
@@ -243,8 +250,11 @@ export function MailcraftApp({
       <div className="work-area">
         <header className="topbar">
           <button
+            ref={navigationToggle}
             className="icon-button mobile-menu"
             aria-label="Open navigation"
+            aria-controls="workspace-navigation"
+            aria-expanded={menu}
             onClick={() => setMenu(!menu)}
           >
             <PanelLeft size={20} />

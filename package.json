@@ -17,6 +17,7 @@
     "smoke:render-cache": "node --import tsx scripts/smoke-render-cache.ts && node --import tsx scripts/smoke-render-editor.ts",
     "smoke:derivation": "node --import tsx scripts/smoke-derivation.ts",
     "smoke:api": "node --import tsx scripts/smoke-api.ts",
+    "smoke:navigation": "node --import tsx scripts/smoke-navigation.ts",
     "smoke:import": "node --import tsx scripts/smoke-import.ts",
     "smoke:preferences": "node --import tsx scripts/smoke-preferences.ts",
     "smoke:keys": "node --import tsx scripts/smoke-keys.ts && node --import tsx scripts/smoke-key-review.ts",
