@@ -1,3 +1,4 @@
+import {sourceFixtureQuery} from './fixtures/email-source-context';
 import assert from 'node:assert/strict';
 import {randomUUID,randomBytes} from 'node:crypto';
 import pg from 'pg';
@@ -14,7 +15,7 @@ const source={...blankSpec(brand,'Owned conversion'),editing_mode:'raw_html' as 
 let browser:Awaited<ReturnType<typeof chromium.launch>>|undefined;
 try {
  await db.query("INSERT INTO workspaces(id,name)VALUES($1,'Owned conversion UI')",[workspace]);await db.query("INSERT INTO memberships(workspace_id,user_id,role)VALUES($1,$2,'Owner'),($1,$3,'Owner')",[workspace,user,otherUser]);await db.query("INSERT INTO auth_sessions(token_hash,user_id,expires_at)VALUES($1,$2,clock_timestamp()+interval '1 hour'),($3,$4,clock_timestamp()+interval '1 hour')",[digest(cookie),user,digest(otherCookie),otherUser]);
- await db.query("INSERT INTO brands(workspace_id,id,version,data)VALUES($1,$2,1,'{}')",[workspace,brand]);await db.query('INSERT INTO emails(workspace_id,id,title,spec,created_by)VALUES($1,$2,$3,$4,$5)',[workspace,email,'Owned conversion UI',JSON.stringify(source),user]);
+ await db.query("INSERT INTO brands(workspace_id,id,version,data)VALUES($1,$2,1,'{}')",[workspace,brand]);await sourceFixtureQuery(db,workspace,user,'INSERT INTO emails(workspace_id,id,title,spec,created_by)VALUES($1,$2,$3,$4,$5)',[workspace,email,'Owned conversion UI',JSON.stringify(source),user]);
  browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1440,height:1000}});await context.addCookies([{name:'mailcraft_local_session',value:cookie,url:origin,sameSite:'Strict'}]);await context.addInitScript(w=>localStorage.setItem('mailcraft.workspace',w),workspace);const page=await context.newPage();page.on('dialog',dialog=>dialog.accept());
  await page.goto(origin+'/app/emails/'+email);await page.getByRole('textbox',{name:'Subject',exact:true}).waitFor();
  const panel=page.getByRole('region',{name:'Block conversion',exact:true}),review=panel.getByRole('button',{name:'Review block conversion',exact:true});
@@ -22,7 +23,7 @@ try {
  assert.equal(await review.isEnabled(),true);
  const accept=panel.getByRole('button',{name:'Accept block conversion',exact:true}),ack=panel.getByRole('checkbox',{name:'I reviewed both previews and acknowledge that block rendering can change layout.',exact:true});
  const commands:{email:string;body:string;key:string}[]=[];page.on('request',request=>{if(request.url().endsWith('/convert-to-blocks'))commands.push({email:new URL(request.url()).pathname.split('/')[3],body:request.postData()??'',key:request.headers()['idempotency-key']});});
- async function seed(raw_html=source.raw_html){const id=randomUUID();await db.query('INSERT INTO emails(workspace_id,id,title,spec,created_by)VALUES($1,$2,$3,$4,$5)',[workspace,id,'Owned conversion case',JSON.stringify({...source,raw_html}),user]);return id;}
+ async function seed(raw_html=source.raw_html){const id=randomUUID();await sourceFixtureQuery(db,workspace,user,'INSERT INTO emails(workspace_id,id,title,spec,created_by)VALUES($1,$2,$3,$4,$5)',[workspace,id,'Owned conversion case',JSON.stringify({...source,raw_html}),user]);return id;}
  async function open(id:string){await page.goto(origin+'/app/emails/'+id);await page.getByRole('textbox',{name:'Subject',exact:true}).waitFor();await review.waitFor();await page.waitForFunction(()=>{const button=Array.from(document.querySelectorAll('button')).find(button=>button.textContent==='Review block conversion');return !!button&&!button.disabled;});}
  async function available(){await review.click();await panel.locator('iframe[title="Proposed block conversion preview"]').waitFor();assert.equal(await accept.isDisabled(),true);await ack.check();assert.equal(await accept.isEnabled(),true);}
  async function truth(id:string){return(await db.query('SELECT doc_version,spec FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,id])).rows[0];}
@@ -44,7 +45,7 @@ try {
   }
   assert.equal(externalRequests,0,'Static review links must never reach the outbound interception sentinel.');assert.equal((await truth(long)).doc_version,1);console.log('Native F2 full pointer/keyboard review and inert sandbox links PASS.');
  }else{
-  await available();await db.query("UPDATE emails SET doc_version=doc_version+1,spec=jsonb_set(spec,'{raw_html}',to_jsonb('<p>Competing saved raw source</p>'::text)) WHERE workspace_id=$1 AND id=$2",[workspace,email]);
+  await available();await sourceFixtureQuery(db,workspace,user,"UPDATE emails SET doc_version=doc_version+1,spec=jsonb_set(spec,'{raw_html}',to_jsonb('<p>Competing saved raw source</p>'::text)) WHERE workspace_id=$1 AND id=$2",[workspace,email]);
   const response=page.waitForResponse(r=>r.url().endsWith('/convert-to-blocks'));await accept.click();assert.equal((await response).status(),412);
   const discard=panel.getByRole('button',{name:'Discard refused conversion command',exact:true});await discard.waitFor();assert.equal(await panel.getByRole('button',{name:'Retry original conversion',exact:true}).count(),0);
   await page.reload();await discard.waitFor();assert.equal(commands.length,1);await discard.click();await review.waitFor();assert.equal(await review.isEnabled(),true);assert.equal((await truth(email)).doc_version,2);assert.equal((await truth(email)).spec.raw_html,'<p>Competing saved raw source</p>');
@@ -52,7 +53,7 @@ try {
   console.log('Native F1 authoritative412 survives reload and explicit discard/current-truth review/new command PASS.');
   // A failed current-truth read retains the refused command; local changes remain
   // recoverable through the existing conflict controls after explicit discard.
-  const dirty=await seed();await open(dirty);await available();await db.query("UPDATE emails SET doc_version=2,spec=jsonb_set(spec,'{raw_html}',to_jsonb('<p>New saved truth for conflict</p>'::text)) WHERE workspace_id=$1 AND id=$2",[workspace,dirty]);
+  const dirty=await seed();await open(dirty);await available();await sourceFixtureQuery(db,workspace,user,"UPDATE emails SET doc_version=2,spec=jsonb_set(spec,'{raw_html}',to_jsonb('<p>New saved truth for conflict</p>'::text)) WHERE workspace_id=$1 AND id=$2",[workspace,dirty]);
   await accept.click();await discard.waitFor();const detailPattern='**/v1/emails/'+dirty;
   await page.route(detailPattern,route=>route.request().method()==='GET'?route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:{code:'CONTROLLED_TRUTH_FAILURE',message:'Controlled refused-command current-read failure'}})}):route.continue());
   await discard.click();await panel.getByRole('alert').filter({hasText:'Controlled refused-command current-read failure'}).waitFor();assert.equal(await discard.isEnabled(),true);assert.equal((await truth(dirty)).doc_version,2);await page.unroute(detailPattern);
@@ -61,5 +62,5 @@ try {
 
  }
 }catch(error){console.error('NATIVE_CONVERSION_REVIEW_FAILURE',error);throw error;}finally{
- await browser?.close();const cleanup=await db.connect();try{await cleanup.query('BEGIN');await cleanup.query('SELECT id FROM emails WHERE workspace_id=$1 FOR UPDATE',[workspace]);for(const table of['render_downloads','preflights','idempotency','audit_events','revisions','emails','brands','memberships'])await cleanup.query('DELETE FROM '+table+' WHERE workspace_id=$1',[workspace]);await cleanup.query('DELETE FROM workspaces WHERE id=$1',[workspace]);await cleanup.query('DELETE FROM auth_sessions WHERE user_id=ANY($1::text[])',[[user,otherUser]]);await cleanup.query('COMMIT');assert.equal((await db.query('SELECT count(*)::int AS n FROM workspaces WHERE id=$1',[workspace])).rows[0].n,0);assert.equal((await db.query('SELECT count(*)::int AS n FROM auth_sessions WHERE user_id=ANY($1::text[])',[[user,otherUser]])).rows[0].n,0);console.log('Owned native exact fixture cleanup PASS.');}catch(error){await cleanup.query('ROLLBACK');throw error;}finally{cleanup.release();await db.end();}
+ await browser?.close();const cleanup=await db.connect();try{await cleanup.query('BEGIN');await cleanup.query('SELECT id FROM emails WHERE workspace_id=$1 FOR UPDATE',[workspace]);for(const table of['email_source_provenance','render_downloads','preflights','idempotency','audit_events','revisions','emails','brands','memberships'])await cleanup.query('DELETE FROM '+table+' WHERE workspace_id=$1',[workspace]);await cleanup.query('DELETE FROM workspaces WHERE id=$1',[workspace]);await cleanup.query('DELETE FROM auth_sessions WHERE user_id=ANY($1::text[])',[[user,otherUser]]);await cleanup.query('COMMIT');assert.equal((await db.query('SELECT count(*)::int AS n FROM workspaces WHERE id=$1',[workspace])).rows[0].n,0);assert.equal((await db.query('SELECT count(*)::int AS n FROM auth_sessions WHERE user_id=ANY($1::text[])',[[user,otherUser]])).rows[0].n,0);console.log('Owned native exact fixture cleanup PASS.');}catch(error){await cleanup.query('ROLLBACK');throw error;}finally{cleanup.release();await db.end();}
 }

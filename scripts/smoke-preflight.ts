@@ -4,7 +4,7 @@ import pg from 'pg';
 import env from '@next/env';
 import { digest } from '../src/server/audit';
 import { blankSpec } from '../src/domain/email';
-import { LINT_RULES_VERSION } from '../src/domain/preflight';
+import { RAW_LINT_RULES_VERSION } from '../src/domain/preflight';
 env.loadEnvConfig(process.cwd());
 const origin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:3000';
 if (
@@ -96,7 +96,7 @@ try {
   ).rows[0];
   const key = randomUUID(),
     report = (await call('email-revisions/' + revision.id + '/preflight', 'POST', {}, key)).report;
-  assert.equal(report.rule_set_version, LINT_RULES_VERSION);
+  assert.equal(report.rule_set_version, RAW_LINT_RULES_VERSION);
   assert.equal(report.state, 'blocked');
   assert.equal(report.artifact_hash, frozen.artifact_hash);
   assert.ok(
@@ -168,14 +168,14 @@ try {
     await page.locator('.preflight-panel').waitFor();
     assert.equal(requests, 1);
     await page.locator('.preflight-panel').getByText('Location: copy', { exact: true }).waitFor();
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
+    assert.match(await page.locator('.preflight-panel').innerText(), new RegExp('Rules '+RAW_LINT_RULES_VERSION));
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Review and check', exact: true }).click();
     await page
       .getByRole('alert')
       .filter({ hasText: /acknowledged|fetch|network|Failed/i })
       .waitFor();
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
+    assert.match(await page.locator('.preflight-panel').innerText(), new RegExp('Rules '+RAW_LINT_RULES_VERSION));
     await context.setOffline(false);
     await page.getByRole('button', { name: 'Review and check', exact: true }).click();
     await page.waitForFunction(
@@ -184,7 +184,7 @@ try {
           b.textContent?.includes('Review and check'),
         )?.disabled,
     );
-    assert.match(await page.locator('.preflight-panel').innerText(), /Rules static-3/);
+    assert.match(await page.locator('.preflight-panel').innerText(), new RegExp('Rules '+RAW_LINT_RULES_VERSION));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.screenshot({
       path: 'output/playwright/lettercape-preflight-mobile.png',
@@ -204,6 +204,7 @@ try {
   );
 } finally {
   for (const table of [
+    'email_source_provenance',
     'render_downloads',
     'preflights',
     'idempotency',

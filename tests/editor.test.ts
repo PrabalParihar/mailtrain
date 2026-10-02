@@ -17,6 +17,7 @@ test('acknowledged CAS saves survive reload, stale changes fail, restore creates
   const w = randomUUID(),
     u = 'fixture';
   await admin.query('INSERT INTO workspaces(id,name) VALUES($1,$2)', [w, 'Save fixture']);
+  await admin.query("INSERT INTO memberships(workspace_id,user_id,role) VALUES($1,$2,'Owner')",[w,u]);
   const brand = randomUUID();
   await admin.query('INSERT INTO brands(workspace_id,id,version,data) VALUES($1,$2,1,$3)', [
     w,
@@ -93,6 +94,7 @@ test('brand pins must belong to this tenant and audit order survives repeated tr
     brand,
     JSON.stringify({ name: 'Private brand' }),
   ]);
+  await admin.query("INSERT INTO memberships(workspace_id,user_id,role) VALUES($1,$2,'Owner')",[w,p.user]);
   await assert.rejects(
     tenant(w, p.user, (tx) => createEmail(tx, p, 'Invalid pin', blankSpec(brand, 'Fixture'))),
     /Brand version not found/,

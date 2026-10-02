@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { LOCALES, type EmailSpec } from '@/domain/email';
+import { LOCALES, type EmailSpec } from '@/domain/email-schema';
 import type { Derivation } from '@/domain/derivation';
 import type { emailLineage } from '@/server/emails';
 import { useResourcePage } from './paged';

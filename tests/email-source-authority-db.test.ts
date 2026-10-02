@@ -1,0 +1,34 @@
+import test from'node:test';import assert from'node:assert/strict';import{randomUUID,createHash}from'node:crypto';
+import{sourceDatabase}from'../scripts/smoke-source-truth';import{blankSpec}from'../src/domain/email';import{createEmail}from'../src/server/emails';
+import{saveSourceDraft,importEmailSource}from'../src/server/email-source';
+test('source admission and replay recheck current session/member/key/workspace authority and make no partial writes',async()=>sourceDatabase(async({db,p,brand,tx})=>{
+ const created=await tx(c=>createEmail(c,p,'authority',blankSpec(brand,'Authority'))),source='<p onclick="inert()">exact</p>',spec={...created.spec,editing_mode:'raw_html',raw_html:source},key=randomUUID();
+ const saved=await tx(c=>saveSourceDraft(c,p,created.id,1,spec,key));assert.equal(saved.email.doc_version,2);
+ await db.query("UPDATE memberships SET role='Viewer' WHERE workspace_id=$1 AND user_id=$2",[p.workspace,p.user]);
+ await assert.rejects(tx(c=>saveSourceDraft(c,p,created.id,1,spec,key)),{code:'INSUFFICIENT_SCOPE'});
+ await db.query("UPDATE memberships SET role='Owner' WHERE workspace_id=$1 AND user_id=$2",[p.workspace,p.user]);
+ await db.query("UPDATE workspaces SET status='locked' WHERE id=$1",[p.workspace]);
+ await assert.rejects(tx(c=>importEmailSource(c,p,created.id,2,source,randomUUID())),{code:'WORKSPACE_LOCKED'});
+ await db.query("UPDATE workspaces SET status='active' WHERE id=$1",[p.workspace]);
+ const token_hash=createHash('sha256').update(randomUUID()).digest('hex');
+ await db.query("INSERT INTO auth_sessions(token_hash,user_id,expires_at)VALUES($1,$2,clock_timestamp()+interval '1 hour')",[token_hash,p.user]);
+ const session={...p,local_session:{token_hash}};
+ await db.query('DELETE FROM auth_sessions WHERE token_hash=$1',[token_hash]);
+ await assert.rejects(tx(c=>importEmailSource(c,session,created.id,2,source,randomUUID())),{code:'AUTH_REQUIRED'});
+ const apiId=randomUUID();await db.query("INSERT INTO api_keys(workspace_id,id,key_hash,name,scopes,created_by,expires_at)VALUES($1,$2,$3,'fixture','[\"emails:write\"]',$4,clock_timestamp()+interval '1 hour')",[p.workspace,apiId,createHash('sha256').update(apiId).digest('hex'),p.user]);
+ const api={...p,user:'api-key:'+apiId,api_key:{id:apiId,delegator:p.user,scopes:['emails:write']}};
+ await db.query('UPDATE api_keys SET revoked_at=clock_timestamp()WHERE id=$1',[apiId]);
+ await assert.rejects(tx(c=>importEmailSource(c,api,created.id,2,source,randomUUID()),api.user),{code:'AUTH_REQUIRED'});
+ assert.equal((await db.query('SELECT doc_version FROM emails WHERE id=$1',[created.id])).rows[0].doc_version,2);
+ assert.equal((await db.query('SELECT count(*)FROM revisions WHERE email_id=$1',[created.id])).rows[0].count,'0');
+ assert.equal((await db.query('SELECT count(*)FROM email_source_provenance WHERE email_id=$1',[created.id])).rows[0].count,'1');
+}));
+test('racing exact source commands have one CAS winner and losing import rolls back its checkpoint/provenance',async()=>sourceDatabase(async({db,p,brand,tx})=>{
+ const created=await tx(c=>createEmail(c,p,'race',blankSpec(brand,'Race')));
+ const results=await Promise.allSettled([tx(c=>importEmailSource(c,p,created.id,1,'<!--one--><p>one</p>',randomUUID())),tx(c=>importEmailSource(c,p,created.id,1,'<!--two--><p>two</p>',randomUUID()))]);
+ assert.equal(results.filter(r=>r.status==='fulfilled').length,1);const failure=results.find(r=>r.status==='rejected');assert.equal(failure?.status==='rejected'&&failure.reason.code,'VERSION_MISMATCH');
+ assert.equal((await db.query('SELECT count(*)FROM revisions WHERE email_id=$1',[created.id])).rows[0].count,'1');assert.equal((await db.query('SELECT count(*)FROM email_source_provenance WHERE email_id=$1',[created.id])).rows[0].count,'1');
+ const other=randomUUID();await db.query("INSERT INTO workspaces(id,name)VALUES($1,'other source workspace')",[other]);
+ assert.equal((await tx(async c=>{await c.query("SELECT set_config('app.workspace_id',$1,true)",[other]);return c.query('SELECT *FROM email_source_provenance');})).rowCount,0);
+ await assert.rejects(tx(async c=>{await c.query("SELECT set_config('app.workspace_id',$1,true)",[other]);return c.query('INSERT INTO emails(workspace_id,title,spec,created_by)VALUES($1,$2,$3,$4)',[p.workspace,'foreign',created.spec,p.user]);}),{code:'42501'});
+}));

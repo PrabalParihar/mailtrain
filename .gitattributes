@@ -1,0 +1,2 @@
+# Exact-source fixtures must retain BOM and mixed CRLF/LF/CR on every checkout.
+tests/fixtures/raw-source/*.html.txt -text whitespace=cr-at-eol

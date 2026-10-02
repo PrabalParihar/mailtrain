@@ -13827,6 +13827,16 @@
               "maxLength": 200
             },
             "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
           }
         ],
         "requestBody": {
@@ -13950,6 +13960,24 @@
               }
             }
           },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
           "409": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
@@ -13987,6 +14015,24 @@
             }
           },
           "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
               "application/json": {
@@ -14103,6 +14149,7 @@
             }
           }
         },
+        "x-lettercape-body-max-bytes": 13697024,
         "x-lettercape-scopes": [
           "emails:write"
         ],
@@ -21566,11 +21613,11 @@
         "x-lettercape-idempotent-command": true
       }
     },
-    "/v1/emails/{id}/draft": {
-      "patch": {
-        "operationId": "saveDraft",
-        "summary": "save draft",
-        "description": "Implemented development behavior; all full-GA release obligations remain open.",
+    "/v1/emails/{id}/source-import": {
+      "post": {
+        "operationId": "importEmailSource",
+        "summary": "import email source",
+        "description": "Preserve exact inert UTF-8 source and checkpoint the previous head atomically. Explicit original key and If-Match bind recovery; SDK never generates a command key or retries this operation automatically. Source fidelity and safe projection are separate.",
         "security": [
           {
             "apiKey": []
@@ -21600,6 +21647,27 @@
             "description": "Required for tenant session requests; bearer keys cannot override their workspace."
           },
           {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          },
+          {
             "name": "If-Match",
             "in": "header",
             "required": true,
@@ -21612,59 +21680,15 @@
         ],
         "requestBody": {
           "required": true,
+          "description": "Exact inert UTF-8 source, at most2097152 actual bytes. Preserve BOM, mixed line endings and Unicode without normalization. Empty source is valid. Reject malformed UTF-8, NUL, lone UTF-16 surrogates and Content-Encoding. This does not authorize rendering or distribution.",
           "content": {
-            "application/json": {
+            "text/plain": {
               "schema": {
-                "$ref": "#/components/schemas/DraftInput"
+                "type": "string",
+                "maxLength": 2097152,
+                "x-max-utf8-bytes": 2097152
               },
-              "example": {
-                "spec": {
-                  "schema_version": "1.0",
-                  "editing_mode": "structured",
-                  "locale": "en-US",
-                  "direction": "ltr",
-                  "subject": "",
-                  "preheader": "",
-                  "brand_kit_version_id": "11111111-1111-4111-8111-111111111111",
-                  "theme": {
-                    "content_width_px": 600,
-                    "background": "#F7F6F2",
-                    "accent": "#0B625D",
-                    "font_stack": "Arial, sans-serif"
-                  },
-                  "sections": [
-                    {
-                      "id": "hero",
-                      "type": "hero",
-                      "heading": "Your next story starts here",
-                      "text": "Add the offer, details and approved facts your readers need."
-                    },
-                    {
-                      "id": "body",
-                      "type": "text",
-                      "text": "Write something worth opening."
-                    },
-                    {
-                      "id": "cta",
-                      "type": "button",
-                      "label": "Explore",
-                      "href": "https://example.com"
-                    },
-                    {
-                      "id": "footer",
-                      "type": "legal_footer",
-                      "identity": "Example brand",
-                      "address": "",
-                      "unsubscribe_slot": true
-                    }
-                  ],
-                  "tracking": {
-                    "utm_source": "newsletter",
-                    "utm_medium": "email",
-                    "utm_campaign": "early-access"
-                  }
-                }
-              }
+              "example": "﻿<!-- authored source -->\r\n<p>Example</p>\r"
             }
           }
         },
@@ -21681,7 +21705,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EmailResponse"
+                  "$ref": "#/components/schemas/SavedEmailResponse"
                 }
               }
             }
@@ -21776,6 +21800,24 @@
               }
             }
           },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
           "409": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
@@ -21813,6 +21855,24 @@
             }
           },
           "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
               "application/json": {
@@ -21929,11 +21989,823 @@
             }
           }
         },
+        "x-lettercape-body-max-bytes": 2097152,
         "x-lettercape-scopes": [
           "emails:write"
         ],
         "x-lettercape-availability": "development",
-        "x-lettercape-idempotent-command": false
+        "x-lettercape-idempotent-command": true
+      }
+    },
+    "/v1/emails/{id}/source-fork": {
+      "post": {
+        "operationId": "forkEmailSource",
+        "summary": "fork email source",
+        "description": "Fork the acknowledged structured artifact to raw source on the server, matching expected_artifact_hash and original If-Match. Never accepts browser preview bytes as canonical source. Explicit same-key recovery; no automatic SDK retry.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"draft-[1-9][0-9]*\"$"
+            },
+            "description": "Acknowledged draft version; stale412, absent428."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceForkInput"
+              },
+              "example": {
+                "expected_artifact_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-body-max-bytes": 13697024,
+        "x-lettercape-scopes": [
+          "emails:write"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": true
+      }
+    },
+    "/v1/emails/{id}/draft": {
+      "patch": {
+        "operationId": "saveDraft",
+        "summary": "save draft",
+        "description": "Implemented development behavior; all full-GA release obligations remain open.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"draft-[1-9][0-9]*\"$"
+            },
+            "description": "Acknowledged draft version; stale412, absent428."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftInput"
+              },
+              "example": {
+                "spec": {
+                  "schema_version": "1.0",
+                  "editing_mode": "structured",
+                  "locale": "en-US",
+                  "direction": "ltr",
+                  "subject": "",
+                  "preheader": "",
+                  "brand_kit_version_id": "11111111-1111-4111-8111-111111111111",
+                  "theme": {
+                    "content_width_px": 600,
+                    "background": "#F7F6F2",
+                    "accent": "#0B625D",
+                    "font_stack": "Arial, sans-serif"
+                  },
+                  "sections": [
+                    {
+                      "id": "hero",
+                      "type": "hero",
+                      "heading": "Your next story starts here",
+                      "text": "Add the offer, details and approved facts your readers need."
+                    },
+                    {
+                      "id": "body",
+                      "type": "text",
+                      "text": "Write something worth opening."
+                    },
+                    {
+                      "id": "cta",
+                      "type": "button",
+                      "label": "Explore",
+                      "href": "https://example.com"
+                    },
+                    {
+                      "id": "footer",
+                      "type": "legal_footer",
+                      "identity": "Example brand",
+                      "address": "",
+                      "unsubscribe_slot": true
+                    }
+                  ],
+                  "tracking": {
+                    "utm_source": "newsletter",
+                    "utm_medium": "email",
+                    "utm_campaign": "early-access"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedEmailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-body-max-bytes": 13697024,
+        "x-lettercape-scopes": [
+          "emails:write"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": true
       }
     },
     "/v1/emails/{id}/revisions": {
@@ -22638,6 +23510,16 @@
               "format": "uuid"
             },
             "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
           }
         ],
         "requestBody": {
@@ -22806,6 +23688,24 @@
               }
             }
           },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
           "409": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
@@ -22843,6 +23743,24 @@
             }
           },
           "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
               "application/json": {
@@ -22959,6 +23877,7 @@
             }
           }
         },
+        "x-lettercape-body-max-bytes": 13697024,
         "x-lettercape-scopes": [
           "emails:write"
         ],
@@ -23000,6 +23919,27 @@
             "description": "Required for tenant session requests; bearer keys cannot override their workspace."
           },
           {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          },
+          {
             "name": "If-Match",
             "in": "header",
             "required": true,
@@ -23036,7 +23976,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EmailResponse"
+                  "$ref": "#/components/schemas/SavedEmailResponse"
                 }
               }
             }
@@ -23131,6 +24071,24 @@
               }
             }
           },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
           "409": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
@@ -23168,6 +24126,24 @@
             }
           },
           "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
             "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
             "content": {
               "application/json": {
@@ -23284,18 +24260,19 @@
             }
           }
         },
+        "x-lettercape-body-max-bytes": 13697024,
         "x-lettercape-scopes": [
           "emails:write"
         ],
         "x-lettercape-availability": "development",
-        "x-lettercape-idempotent-command": false
+        "x-lettercape-idempotent-command": true
       }
     },
     "/v1/email-revisions/{id}/download": {
       "get": {
         "operationId": "downloadRevision",
         "summary": "download revision",
-        "description": "Implemented development behavior; all full-GA release obligations remain open.",
+        "description": "Frozen output bytes. format=source returns exact authored UTF-8 as an inert text/plain attachment with nosniff, no-store, source hash and storage profile; it is not a delivery artifact. Other formats retain projection, media and release checks.",
         "security": [
           {
             "apiKey": []
@@ -23333,7 +24310,9 @@
                 "html",
                 "txt",
                 "png",
-                "pdf"
+                "pdf",
+                "zip",
+                "source"
               ],
               "default": "html"
             }
@@ -23352,10 +24331,45 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "X-Source-SHA256": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "Present for format=source; exact frozen UTF-8 source hash."
+              },
+              "X-Source-Profile": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceProfile"
+                },
+                "description": "Present for format=source; historical storage profile."
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "const": "nosniff"
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "format=source uses attachment; filename=\"email-vN.source.html.txt\"."
+              },
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
               }
             },
             "content": {
               "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
@@ -36038,6 +37052,1015 @@
   },
   "components": {
     "schemas": {
+      "EmailSourceSpec": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "enum": [
+              "1.0",
+              "1.1"
+            ]
+          },
+          "editing_mode": {
+            "type": "string",
+            "enum": [
+              "structured",
+              "raw_html"
+            ]
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en-US",
+              "en-GB",
+              "fr-FR",
+              "de-DE",
+              "es-ES",
+              "it-IT",
+              "pt-BR",
+              "nl-NL",
+              "sv-SE",
+              "da-DK",
+              "no-NO",
+              "fi-FI",
+              "pl-PL",
+              "cs-CZ",
+              "tr-TR",
+              "ja-JP",
+              "ko-KR",
+              "zh-CN",
+              "zh-TW",
+              "hi-IN",
+              "ar-SA",
+              "he-IL"
+            ]
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "ltr",
+              "rtl"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "preheader": {
+            "type": "string",
+            "maxLength": 250
+          },
+          "brand_kit_version_id": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "theme": {
+            "type": "object",
+            "properties": {
+              "content_width_px": {
+                "type": "integer",
+                "minimum": 320,
+                "maximum": 800
+              },
+              "background": {
+                "type": "string",
+                "pattern": "^#[\\da-fA-F]{6}$"
+              },
+              "accent": {
+                "type": "string",
+                "pattern": "^#[\\da-fA-F]{6}$"
+              },
+              "font_stack": {
+                "type": "string",
+                "enum": [
+                  "Arial, sans-serif",
+                  "Georgia, serif",
+                  "Verdana, sans-serif"
+                ]
+              }
+            },
+            "required": [
+              "content_width_px",
+              "background",
+              "accent",
+              "font_stack"
+            ],
+            "additionalProperties": false
+          },
+          "sections": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "hero"
+                        },
+                        "heading": {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
+                        "text": {
+                          "type": "string",
+                          "maxLength": 10000
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "heading",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "text"
+                        },
+                        "text": {
+                          "type": "string",
+                          "maxLength": 10000
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "image"
+                        },
+                        "src": {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        "asset_ref": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "variant_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "asset_id",
+                            "variant_id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "fallback_ref": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "variant_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "asset_id",
+                            "variant_id"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "alt": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "decorative": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "alt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "button"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200
+                        },
+                        "href": {
+                          "type": "string",
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "label",
+                        "href"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "divider"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "social"
+                        },
+                        "links": {
+                          "maxItems": 10,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "href": {
+                                "type": "string",
+                                "maxLength": 2048
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "href"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "links"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "legal_footer"
+                        },
+                        "identity": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "address": {
+                          "type": "string",
+                          "maxLength": 1000
+                        },
+                        "unsubscribe_slot": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "identity",
+                        "address",
+                        "unsubscribe_slot"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "product_card"
+                        },
+                        "title": {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 10000
+                        },
+                        "price": {
+                          "type": "string",
+                          "maxLength": 100
+                        },
+                        "href": {
+                          "type": "string",
+                          "maxLength": 2048
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "title",
+                        "description",
+                        "price",
+                        "href"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "custom_html"
+                        },
+                        "html": {
+                          "type": "string",
+                          "maxLength": 200000
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type",
+                        "html"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "columns"
+                    },
+                    "columns": {
+                      "minItems": 1,
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "maxItems": 20,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "hero"
+                                },
+                                "heading": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "heading",
+                                "text"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "text"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "text"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "image"
+                                },
+                                "src": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                },
+                                "asset_ref": {
+                                  "type": "object",
+                                  "properties": {
+                                    "asset_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    },
+                                    "variant_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    }
+                                  },
+                                  "required": [
+                                    "asset_id",
+                                    "variant_id"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "fallback_ref": {
+                                  "type": "object",
+                                  "properties": {
+                                    "asset_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    },
+                                    "variant_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    }
+                                  },
+                                  "required": [
+                                    "asset_id",
+                                    "variant_id"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "alt": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "decorative": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "alt"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "button"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "href": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "label",
+                                "href"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "divider"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "social"
+                                },
+                                "links": {
+                                  "maxItems": 10,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "label": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                      },
+                                      "href": {
+                                        "type": "string",
+                                        "maxLength": 2048
+                                      }
+                                    },
+                                    "required": [
+                                      "label",
+                                      "href"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "links"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "legal_footer"
+                                },
+                                "identity": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "address": {
+                                  "type": "string",
+                                  "maxLength": 1000
+                                },
+                                "unsubscribe_slot": {
+                                  "type": "boolean",
+                                  "const": true
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "identity",
+                                "address",
+                                "unsubscribe_slot"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "product_card"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "price": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "href": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "title",
+                                "description",
+                                "price",
+                                "href"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "custom_html"
+                                },
+                                "html": {
+                                  "type": "string",
+                                  "maxLength": 200000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "html"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type",
+                    "columns"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "raw_html": {
+            "type": "string",
+            "maxLength": 2097152
+          },
+          "tracking": {
+            "type": "object",
+            "properties": {
+              "utm_source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "utm_medium": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "utm_campaign": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "utm_source",
+              "utm_medium",
+              "utm_campaign"
+            ],
+            "additionalProperties": false
+          },
+          "asset_registry": {
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "asset_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "variant_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "asset_id",
+                "variant_id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "schema_version",
+          "editing_mode",
+          "locale",
+          "direction",
+          "subject",
+          "preheader",
+          "brand_kit_version_id",
+          "theme",
+          "sections"
+        ],
+        "additionalProperties": false
+      },
+      "SourceProfile": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "enum": [
+          "legacy-stored-1",
+          "exact-utf8-1"
+        ]
+      },
+      "SaveReceipt": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "receipt_version": {
+            "type": "number",
+            "const": 1
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "email_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "request_base_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "saved_doc_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "command_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "spec_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "enum": [
+                      "legacy-stored-1",
+                      "exact-utf8-1"
+                    ]
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2097152
+                  }
+                },
+                "required": [
+                  "profile",
+                  "sha256",
+                  "bytes"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "receipt_version",
+          "workspace_id",
+          "email_id",
+          "request_base_version",
+          "saved_doc_version",
+          "command_id",
+          "spec_hash",
+          "source"
+        ],
+        "additionalProperties": false,
+        "description": "Durable CAS receipt; saved_doc_version equals request_base_version+1. Hashes identify the actual committed spec and exact UTF-8 source. A receipt does not grant authority or certify render eligibility."
+      },
+      "SavedEmailResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "doc_version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "spec": {
+                "$ref": "#/components/schemas/EmailSourceSpec"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "lineage": {},
+              "raw_source_profile": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "legacy-stored-1",
+                      "exact-utf8-1"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "doc_version",
+              "spec"
+            ],
+            "additionalProperties": false
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/SaveReceipt"
+          }
+        },
+        "required": [
+          "request_id",
+          "email",
+          "receipt"
+        ],
+        "additionalProperties": false,
+        "description": "Exact committed email and strict durable receipt. Server enforces matching email/version, CAS increment, canonical spec hash and exact source hash; these cross-field/digest checks exceed JSON Schema shape validation."
+      },
+      "SourceForkInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expected_artifact_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "expected_artifact_hash"
+        ],
+        "additionalProperties": false
+      },
       "AssetUploadInput": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -40468,7 +42491,29 @@
               },
               "original_html": {
                 "type": "string",
-                "maxLength": 2000000
+                "maxLength": 2097152
+              },
+              "original_preview_html": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4194304
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source_profile": {
+                "type": "string",
+                "enum": [
+                  "legacy-stored-1",
+                  "exact-utf8-1"
+                ]
+              },
+              "browser_profile": {
+                "type": "string",
+                "const": "raw-browser-1"
               },
               "converted_nodes": {
                 "type": "integer",
@@ -41354,6 +43399,9 @@
               "source_hash",
               "proposal_hash",
               "original_html",
+              "original_preview_html",
+              "source_profile",
+              "browser_profile",
               "converted_nodes",
               "opaque_nodes",
               "notes",
@@ -41381,7 +43429,29 @@
               },
               "original_html": {
                 "type": "string",
-                "maxLength": 2000000
+                "maxLength": 2097152
+              },
+              "original_preview_html": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4194304
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source_profile": {
+                "type": "string",
+                "enum": [
+                  "legacy-stored-1",
+                  "exact-utf8-1"
+                ]
+              },
+              "browser_profile": {
+                "type": "string",
+                "const": "raw-browser-1"
               },
               "converted_nodes": {
                 "type": "integer",
@@ -41436,6 +43506,9 @@
               "source_hash",
               "proposal_hash",
               "original_html",
+              "original_preview_html",
+              "source_profile",
+              "browser_profile",
               "converted_nodes",
               "opaque_nodes",
               "notes",
@@ -41684,7 +43757,7 @@
             "maxLength": 160
           },
           "spec": {
-            "$ref": "#/components/schemas/EmailSpec"
+            "$ref": "#/components/schemas/EmailSourceSpec"
           }
         },
         "required": [
@@ -41763,7 +43836,7 @@
         "type": "object",
         "properties": {
           "spec": {
-            "$ref": "#/components/schemas/EmailSpec"
+            "$ref": "#/components/schemas/EmailSourceSpec"
           }
         },
         "required": [
@@ -41788,7 +43861,7 @@
         "type": "object",
         "properties": {
           "spec": {
-            "$ref": "#/components/schemas/EmailSpec"
+            "$ref": "#/components/schemas/EmailSourceSpec"
           }
         },
         "required": [
@@ -41801,7 +43874,8 @@
         "properties": {
           "html": {
             "type": "string",
-            "maxLength": 2000000
+            "maxLength": 2097152,
+            "x-max-utf8-bytes": 2097152
           }
         },
         "required": [

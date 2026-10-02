@@ -7,6 +7,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createAssetUpload": {
@@ -16,6 +19,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "uploadAssetContent": {
@@ -25,6 +31,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": true,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getAsset": {
@@ -34,6 +43,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getAssetVariantContent": {
@@ -43,6 +55,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": true,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createAssetFallback": {
@@ -52,6 +67,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "removeAsset": {
@@ -61,6 +79,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "publishAsset": {
@@ -70,6 +91,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "listSenderIdentities": {
@@ -79,6 +103,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createSenderIdentity": {
@@ -88,6 +115,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getSenderIdentity": {
@@ -97,6 +127,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listSenderVersions": {
@@ -106,6 +139,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "saveSenderVersion": {
@@ -115,6 +151,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listSenderDNSChecks": {
@@ -124,6 +163,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "checkSenderDNS": {
@@ -133,6 +175,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listMemberships": {
@@ -142,6 +187,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listMembershipChanges": {
@@ -151,6 +199,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getMembershipSummary": {
@@ -160,6 +211,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "changeMembershipRole": {
@@ -169,6 +223,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "removeMembership": {
@@ -178,6 +235,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "transferWorkspaceOwnership": {
@@ -187,6 +247,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listWebhookDeliveries": {
@@ -196,6 +259,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getWebhookDelivery": {
@@ -205,6 +271,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listWebhookAttempts": {
@@ -214,6 +283,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "replayWebhookDelivery": {
@@ -223,6 +295,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listWebhookEndpoints": {
@@ -232,6 +307,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getWebhookEndpoint": {
@@ -241,6 +319,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createWebhookEndpoint": {
@@ -250,6 +331,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "rotateWebhookEndpoint": {
@@ -259,6 +343,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "pauseWebhookEndpoint": {
@@ -268,6 +355,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listEvents": {
@@ -277,6 +367,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getEvent": {
@@ -286,6 +379,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getDispatchControls": {
@@ -295,6 +391,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "setWorkspaceDispatchPolicy": {
@@ -304,6 +403,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "health": {
@@ -313,6 +415,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listWorkspaces": {
@@ -322,6 +427,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createWorkspace": {
@@ -331,6 +439,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "signOutLocalSession": {
@@ -340,6 +451,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "localSession": {
@@ -349,6 +463,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listIntegrations": {
@@ -358,6 +475,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listBrands": {
@@ -367,6 +487,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listEmails": {
@@ -376,6 +499,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listContacts": {
@@ -385,6 +511,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listCampaigns": {
@@ -394,6 +523,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listSegments": {
@@ -403,6 +535,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listApiKeys": {
@@ -412,6 +547,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listAudit": {
@@ -421,6 +559,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listRevisions": {
@@ -430,6 +571,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listBrandSources": {
@@ -439,6 +583,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getBrandSource": {
@@ -448,6 +595,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "addBrandSource": {
@@ -457,6 +607,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "removeBrandSource": {
@@ -466,6 +619,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "previewBrandMemory": {
@@ -475,6 +631,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getCurrentBrand": {
@@ -484,6 +643,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "confirmBrand": {
@@ -493,6 +655,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "extractBrand": {
@@ -502,6 +667,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createEmail": {
@@ -511,6 +679,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getEmail": {
@@ -520,6 +691,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "generateEmail": {
@@ -529,6 +703,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "prepareEmailConversion": {
@@ -538,6 +715,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "acceptEmailConversion": {
@@ -547,6 +727,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listEmailDerivatives": {
@@ -556,6 +739,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "remixRevision": {
@@ -565,6 +751,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createLocaleDraft": {
@@ -574,15 +763,45 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "importEmailSource": {
+    "method": "POST",
+    "path": "/v1/emails/{id}/source-import",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": true,
+    "sourceCommand": true,
+    "explicitKey": true,
+    "blocked": false
+  },
+  "forkEmailSource": {
+    "method": "POST",
+    "path": "/v1/emails/{id}/source-fork",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": true,
+    "explicitKey": true,
     "blocked": false
   },
   "saveDraft": {
     "method": "PATCH",
     "path": "/v1/emails/{id}/draft",
-    "keyed": false,
+    "keyed": true,
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": true,
+    "explicitKey": false,
     "blocked": false
   },
   "checkpointEmail": {
@@ -592,6 +811,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "restoreEmail": {
@@ -601,6 +823,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "previewEmail": {
@@ -610,15 +835,21 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "importHtml": {
     "method": "POST",
     "path": "/v1/emails/{id}/import-html",
-    "keyed": false,
+    "keyed": true,
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": true,
+    "explicitKey": false,
     "blocked": false
   },
   "downloadRevision": {
@@ -628,6 +859,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": true,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "preflightRevision": {
@@ -637,6 +871,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "exportRevision": {
@@ -646,6 +883,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "listCreationOperations": {
@@ -655,6 +895,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listCreationAttempts": {
@@ -664,6 +907,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getOperation": {
@@ -673,6 +919,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "cancelOperation": {
@@ -682,6 +931,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getAudienceSchema": {
@@ -691,6 +943,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createList": {
@@ -700,6 +955,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createTag": {
@@ -709,6 +967,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createContactField": {
@@ -718,6 +979,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "updateContactProfile": {
@@ -727,6 +991,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "suppressContact": {
@@ -736,6 +1003,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createSegment": {
@@ -745,6 +1015,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getSegment": {
@@ -754,6 +1027,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createSegmentVersion": {
@@ -763,6 +1039,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "previewSegment": {
@@ -772,6 +1051,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "freezeAudience": {
@@ -781,6 +1063,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listAudienceSnapshots": {
@@ -790,6 +1075,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getAudienceSnapshotMetadata": {
@@ -799,6 +1087,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getAudienceSnapshot": {
@@ -808,6 +1099,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "inspectImport": {
@@ -817,6 +1111,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "dryRunImport": {
@@ -826,6 +1123,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "confirmImport": {
@@ -835,6 +1135,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "importErrors": {
@@ -844,6 +1147,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createCampaign": {
@@ -853,6 +1159,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getWorkspacePreferences": {
@@ -862,6 +1171,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "setWorkspaceTimezone": {
@@ -871,6 +1183,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getCampaignCalendar": {
@@ -880,6 +1195,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getCampaign": {
@@ -889,6 +1207,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "listCampaignConfigurations": {
@@ -898,6 +1219,9 @@ export const operationRegistry = {
     "paged": true,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "configureCampaign": {
@@ -907,6 +1231,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "submitCampaignReview": {
@@ -916,6 +1243,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "approveCampaign": {
@@ -925,6 +1255,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "sendCampaign": {
@@ -934,6 +1267,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "scheduleCampaign": {
@@ -943,6 +1279,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "pauseCampaign": {
@@ -952,6 +1291,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "resumeCampaign": {
@@ -961,6 +1303,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": true
   },
   "cancelCampaign": {
@@ -970,6 +1315,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "createApiKey": {
@@ -979,6 +1327,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "rotateApiKey": {
@@ -988,6 +1339,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "revokeApiKey": {
@@ -997,6 +1351,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   },
   "getUsage": {
@@ -1006,6 +1363,9 @@ export const operationRegistry = {
     "paged": false,
     "binary": false,
     "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
     "blocked": false
   }
 } as const;

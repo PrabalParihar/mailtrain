@@ -1,4 +1,9 @@
-import { EmailSpecSchema, compileEmail, sanitizeRaw, type EmailSpec } from '../domain/email';
+import { compileEmail, type EmailSpec } from '../domain/email';
+import { EmailSourceSpecSchema } from '../domain/email-schema';
+import { validateRawSource } from '../domain/email-source-digest';
+import { validateSourceMetadata } from '../domain/email-source-values';
+import { assertCurrentAuthority } from './current-authority';
+import {randomUUID}from'node:crypto';
 import type { Principal } from './auth';
 import type { Tx } from './db';
 import { audit } from './audit';
@@ -21,6 +26,7 @@ export async function getEmail(tx: Tx, id: string) {
     title: string;
     doc_version: number;
     spec: EmailSpec;
+    raw_source_profile:'legacy-stored-1'|'exact-utf8-1'|null;
     updated_at: string;
     lineage: Awaited<ReturnType<typeof emailLineage>>;
   };
@@ -29,10 +35,17 @@ async function verifyBrand(tx: Tx, spec: EmailSpec) {
   if (!(await tx.query('SELECT id FROM brands WHERE id=$1', [spec.brand_kit_version_id])).rowCount)
     fail(404, 'RESOURCE_NOT_FOUND', 'Brand version not found in this workspace.');
 }
-export async function createEmail(tx: Tx, p: Principal, title: string, spec: EmailSpec) {
-  const s = EmailSpecSchema.parse(spec);
+export type SourceOrigin={origin?:'import'|'structured_fork'|'edit'|'restore'|'remix'|'locale';revision?:string;commandId?:string;requestId?:string};
+async function sourceContext(tx:Tx,p:Principal,context:SourceOrigin={}){
+  await tx.query("SELECT set_config('app.source_origin',$1,true),set_config('app.source_revision_id',$2,true),set_config('app.source_command_id',$3,true),set_config('app.source_request_id',$4,true),set_config('app.source_api_key_id',$5,true)",[context.origin??'edit',context.revision??'',context.commandId??'',context.requestId??randomUUID(),p.api_key?.id??'']);
+}
+function validateSource(spec:EmailSpec){validateSourceMetadata(spec);if(spec.editing_mode==='raw_html')validateRawSource(spec.raw_html!);}
+export async function createEmail(tx: Tx, p: Principal, title: string, spec: EmailSpec,context:SourceOrigin={}) {
+  const s = EmailSourceSpecSchema.parse(spec);
+  validateSource(s);
+  await assertCurrentAuthority(tx,p,'edit',p.api_key?'emails:write':undefined);
   await verifyBrand(tx, s);
-  if (s.editing_mode === 'raw_html') s.raw_html = sanitizeRaw(s.raw_html!).html;
+  await sourceContext(tx,p,context);
   const row = (
     await tx.query(
       'INSERT INTO emails(workspace_id,title,spec,created_by) VALUES($1,$2,$3,$4) RETURNING *',
@@ -43,14 +56,16 @@ export async function createEmail(tx: Tx, p: Principal, title: string, spec: Ema
   await audit(tx, p.workspace, p.user, 'email.created', row.id);
   return row;
 }
-export async function saveDraft(tx: Tx, p: Principal, id: string, version: number, value: unknown) {
-  const spec = EmailSpecSchema.parse(value);
+export async function saveDraft(tx: Tx, p: Principal, id: string, version: number, value: unknown,context:SourceOrigin={}) {
+  const spec = EmailSourceSpecSchema.parse(value);
+  validateSource(spec);
+  await assertCurrentAuthority(tx,p,'edit',p.api_key?'emails:write':undefined);
   const previous=await getEmail(tx,id);
   const lineage = previous.lineage;
   if (lineage?.kind === 'locale' && spec.locale !== lineage.target_locale)
     fail(409, 'LOCALE_IDENTITY_LOCKED', 'Create a separately linked locale draft to change its language.');
   await verifyBrand(tx, spec);
-  if (spec.editing_mode === 'raw_html') spec.raw_html = sanitizeRaw(spec.raw_html!).html;
+  await sourceContext(tx,p,context);
   const row = (
     await tx.query(
       'UPDATE emails SET spec=$1,doc_version=doc_version+1,updated_at=now() WHERE id=$2 AND doc_version=$3 RETURNING *',
@@ -70,12 +85,13 @@ export async function saveDraft(tx: Tx, p: Principal, id: string, version: numbe
   return { ...row, lineage: await emailLineage(tx, id) };
 }
 export async function checkpoint(tx: Tx, p: Principal, id: string, version: number) {
+  await assertCurrentAuthority(tx,p,'edit',p.api_key?'emails:write':undefined);
   await tx.query('SELECT id FROM emails WHERE id=$1 FOR UPDATE', [id]);
   const email = await getEmail(tx, id);
   if (email.doc_version !== version)
     fail(412, 'VERSION_MISMATCH', 'Save or reload the latest draft before creating a checkpoint.');
   const assets=assetReferences(email.spec).length?await resolveAssetManifest(tx,p,email.spec,'revision'):undefined;
-  const artifact = await compileEmail(email.spec,{assets});
+  const artifact = await compileEmail(email.spec,{assets,sourceProfile:email.raw_source_profile});
   const no = (
     await tx.query('SELECT coalesce(max(revision_no),0)+1 AS no FROM revisions WHERE email_id=$1', [
       id,
@@ -114,5 +130,5 @@ export async function restoreRevision(
   ).rows[0];
   if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Revision not found.');
   await checkpoint(tx, p, id, version);
-  return saveDraft(tx, p, id, version, row.spec);
+  return saveDraft(tx, p, id, version, row.spec,{origin:'restore',revision});
 }

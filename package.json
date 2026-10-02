@@ -51,7 +51,8 @@
     "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts && node scripts/smoke-code-editor-cancellation.mjs",
     "worker:media:local": "node --import tsx scripts/media-worker.ts",
     "smoke:media": "node scripts/smoke-media.mjs --scan",
-    "smoke:assets": "node --import tsx scripts/smoke-assets.ts"
+    "smoke:assets": "node --import tsx scripts/smoke-assets.ts",
+    "smoke:source-truth": "node --import tsx scripts/smoke-source-truth.ts && node --import tsx scripts/smoke-source-editor.ts && node --import tsx scripts/smoke-source-editor.ts --fragments"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

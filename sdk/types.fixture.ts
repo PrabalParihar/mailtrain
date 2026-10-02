@@ -1,6 +1,13 @@
 import type { LettercapeClient } from './client';
 // Compiled only: catches regressions in generated operation/body/path/query types.
 export function typeExamples(client: LettercapeClient) {
+  void client.call('importEmailSource',{path:{id:'example'},body:'\uFEFF<p>Exact</p>\r\n',idempotencyKey:'source-command',ifMatch:'"draft-1"'});
+  void client.call('forkEmailSource',{path:{id:'example'},body:{expected_artifact_hash:'a'.repeat(64)},idempotencyKey:'fork-command',ifMatch:'"draft-1"',actorId:'actor'});
+  void client.call('downloadRevision',{path:{id:'example'},query:{format:'source'}});
+  // @ts-expect-error source import is exact text rather than JSON
+  void client.call('importEmailSource',{path:{id:'example'},body:{html:'<p>Source</p>'},idempotencyKey:'source-command',ifMatch:'"draft-1"'});
+  // @ts-expect-error source fork requires the reviewed artifact digest
+  void client.call('forkEmailSource',{path:{id:'example'},body:{},idempotencyKey:'fork-command',ifMatch:'"draft-1"'});
   void client.call('uploadAssetContent',{path:{uploadId:'example'},body:new Uint8Array([1]),uploadToken:'a'.repeat(64)});
   void client.call('getAssetVariantContent',{path:{id:'example',variantId:'variant'}});
   void client.pages('listAssets',{query:{limit:25}});

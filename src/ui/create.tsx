@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Sparkles, ArrowUpRight, FilePenLine } from 'lucide-react';
 import { api, poll } from './api';
 import type { Brand } from '@/domain/brand';
-import {EmailSpecSchema,type EmailSpec} from '@/domain/email';
+import {EmailSourceSpecSchema as EmailSpecSchema,type EmailSpec} from '@/domain/email-schema';
 import{z}from'zod';
 import{CreationHistory}from'./creation-history';
 const localeNames: Record<string, string> = {

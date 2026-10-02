@@ -1,6 +1,11 @@
 'use client';
-import { useEffect, useLayoutEffect,useRef, useState } from 'react';
+import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
+import {EmailSourceSpecSchema} from '@/domain/email-schema';
+import {canonicalSpecString} from '@/domain/email-source-values';
+import {SavedEmailResponseSchema,type SourceProfile,type RawDiagnostic} from '@/domain/email-source-contracts';
+import {createSourceSaveCommand,createSourceReplacementCommand,createSourceForkCommand,serializeSourceSaveCommand,recoverSourceSaveCommand,validateSourceSaveReceipt,type SourceSaveCommand,type SourceSaveContext} from './source-save-command';
+import {readSourceRecovery,writeSourceDraftRecovery,writeSourceCommandRecovery,removeSourceRecovery} from './source-recovery-store';
 import {HtmlCodeEditor}from'./html-code-editor';
 import{AssetPicker,type AssetPickerAnchor}from'./asset-picker';
 import type{AssetVariantRef,AssetMetadata}from'@/domain/assets';
@@ -37,7 +42,8 @@ import{assertEmailUTMTargets,trackingFingerprint,copyProposalWithCurrentUTM}from
 import type{UTMParameterData}from'@/domain/utm';
 import { derivationSlot, pendingDerivation, rememberDerivation, acknowledgeDerivation } from './derivation-receipt';
 import type { emailLineage } from '@/server/emails';
-type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec; lineage?: Awaited<ReturnType<typeof emailLineage>> };
+type Doc = { id: string; title: string; doc_version: number; spec: EmailSpec; raw_source_profile?: SourceProfile|null; lineage?: Awaited<ReturnType<typeof emailLineage>> };
+function checkedDoc(value:Doc):Doc{const envelope=SavedEmailResponseSchema.shape.email.parse({id:value.id,title:value.title,doc_version:value.doc_version,spec:value.spec,...(value.lineage!==undefined?{lineage:value.lineage}:{}),...(value.raw_source_profile!==undefined?{raw_source_profile:value.raw_source_profile}:{})});return {...envelope,spec:EmailSourceSpecSchema.parse(envelope.spec)} as Doc;}
 type Revision = { id: string; revision_no: number; artifact_hash: string; subject: string };
 type Anchor = { epoch: number; version: number; spec: string };
 type Frozen = Revision & { anchor: Anchor };
@@ -51,11 +57,14 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
   const editRole = allowed(role, 'edit');
   const router = useRouter(),
     [doc, setDoc] = useState<Doc | null>(null),
+    [hasPendingSave,setHasPendingSave]=useState(false),
     [status, setStatus] = useState('Loading'),
     [error, setError] = useState(''),
     [selected, setSelected] = useState(''),
     [html, setHtml] = useState(''),
     [previewHtml,setPreviewHtml]=useState(''),
+    [rawDiagnostics,setRawDiagnostics]=useState<Array<RawDiagnostic&{node_id?:string}>>([]),
+    [rawDelivery,setRawDelivery]=useState(''),
     [showAssets,setShowAssets]=useState(false),
     [text, setText] = useState(''),
     [view, setView] = useState<'canvas' | 'code' | 'text'>('canvas'),
@@ -91,6 +100,12 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     conflictRef = useRef(false),
     undo = useRef<EmailSpec[]>([]),
     storage = 'mailcraft.draft.' + workspace + '.' + id;
+  const recoveryWrites=useRef<Promise<void>>(Promise.resolve()),pendingUncertain=useRef(false);
+  const lifecycle=useRef(crypto.randomUUID()),saveEpoch=useRef(0),pendingSave=useRef<SourceSaveCommand|null>(null),scopeRef=useRef({workspace,actor,email:id});
+  useLayoutEffect(()=>{scopeRef.current={workspace,actor,email:id};});
+  function sameContext(scope:{workspace:string;actor:string;email:string},life:string){return editorActive.current&&scopeRef.current.workspace===scope.workspace&&scopeRef.current.actor===scope.actor&&scopeRef.current.email===scope.email&&lifecycle.current===life;}
+  function saveContext(spec:EmailSpec=live.current!.spec):SourceSaveContext{return {...scopeRef.current,lifecycle:lifecycle.current,epoch:saveEpoch.current,baseVersion:live.current!.doc_version,spec};}
+  function preserveLocal(draft:Doc){const scope={...scopeRef.current},life=lifecycle.current;const snapshot=structuredClone(draft);recoveryWrites.current=recoveryWrites.current.catch(()=>{}).then(()=>writeSourceDraftRecovery(scope,snapshot));void recoveryWrites.current.catch(()=>{if(sameContext(scope,life))setError('Local draft recovery is unavailable. Keep this tab open until the draft is saved.');});}
   function anchor(): Anchor {
     return {
       epoch: epoch.current,
@@ -106,110 +121,111 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       a.spec === JSON.stringify(live.current.spec)
     );
   }
-  function install(d: Doc) {
+  const install=useCallback((input: Doc) => {
+    const d=checkedDoc(input);if(d.id!==scopeRef.current.email)throw Error('The returned document belongs to a different editor. Your local work is preserved.');saveEpoch.current++;
     epoch.current++;
     setRenderEpoch(epoch.current);
     live.current = d;
     setDoc(d);
-    ack.current = JSON.stringify(d.spec);
+    ack.current = canonicalSpecString(d.spec);
     dirtyAt.current = 0;
     setStatus('Saved · v' + d.doc_version);
     setSelected((prev) => prev || d.spec.sections[0]?.id || '');
-  }
+  },[]);
   async function reload() {
-    const r = await api<{ email: Doc }>(workspace, 'emails/' + id);
-    install(r.email);
-    setConflict(null);
-    conflictRef.current = false;
-    setError('');
-    localStorage.removeItem(storage);
+    const scope={...scopeRef.current},life=lifecycle.current;
+    const r = await api<{ email: Doc }>(workspace, 'emails/' + id,'GET',undefined,undefined,undefined,undefined,actor);
+    if(!sameContext(scope,life))return;
+    install(r.email);pendingSave.current=null;pendingUncertain.current=false;setHasPendingSave(false);
+    setConflict(null);conflictRef.current = false;setError('');
+    await removeSourceRecovery(scope,{draft:true,command:true});
   }
   useEffect(() => {
     let mounted = true;
+    lifecycle.current=crypto.randomUUID();saveEpoch.current=0;pendingSave.current=null;pendingUncertain.current=false;saving.current=null;live.current=null;ack.current='';conflictRef.current=false;
     editorActive.current = true;
-    void api<{ email: Doc }>(workspace, 'emails/' + id)
-      .then((r) => {
-        if (!mounted) return;
-        install(r.email);
-        const backup = localStorage.getItem(storage);
-        if (backup && editRole) {
-          try {
-            const local = JSON.parse(backup) as Doc;
-            if (JSON.stringify(local.spec) !== JSON.stringify(r.email.spec)) {
-              live.current = { ...r.email, spec: local.spec };
-              setDoc(live.current);
-              dirtyAt.current = Date.now();
-              lastEdit.current = Date.now();
-              if (local.doc_version !== r.email.doc_version) {
-                conflictRef.current = true;
-                setConflict(r.email);
-                setStatus('Conflict · local work preserved');
-              } else setStatus('Recovered local work · unsaved');
-            }
-          } catch {
-            setError('Local recovery data could not be parsed; the server draft is intact.');
-          }
-        }
-      })
-      .catch((e) => setError(e.message));
-    return () => {
-      mounted = false;
-      editorActive.current = false;
-      exportController.current?.abort();
-    };
-  }, [workspace, id, storage, editRole]);
+    const scope={workspace,actor,email:id},life=lifecycle.current;
+    void (async()=>{
+      await Promise.resolve();if(!mounted)return;setDoc(null);setConflict(null);setError('');setHasPendingSave(false);
+      const r=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
+      if(!mounted||!sameContext(scope,life))return;
+      // Read recovery before mounting dependent forms; a server-only first mount
+      // would turn recovered settings into a stale unrelated form baseline.
+      let recovery:Awaited<ReturnType<typeof readSourceRecovery>>={};
+      if(editRole){try{recovery=await readSourceRecovery(scope);}catch{if(mounted&&sameContext(scope,life))setError('Local recovery is unavailable. The server draft is intact; keep current edits in this tab until a save is acknowledged.');}}
+      if(!mounted||!sameContext(scope,life))return;
+      install(r.email);
+      // Old actor-unbound storage remains untouched and is never adopted.
+      try{if(localStorage.getItem(storage))setError('An older recovery copy is retained on this browser. It is not associated with your current account and has not been installed.');}catch{}
+      if(!editRole)return;
+      const local=recovery.draft ? checkedDoc(recovery.draft as Doc) : null;
+      if(local&&canonicalSpecString(local.spec)!==canonicalSpecString(r.email.spec)){
+        live.current={...local,lineage:r.email.lineage};setDoc({...live.current});dirtyAt.current=Date.now();lastEdit.current=Date.now();
+        if(local.doc_version!==r.email.doc_version&&!recovery.command){conflictRef.current=true;setConflict(r.email);setStatus('Conflict · local work preserved');}
+        else setStatus('Recovered local work · unsaved');
+      }
+      if(recovery.command){
+        const original=JSON.parse(recovery.command) as SourceSaveCommand;
+        const recovered=await recoverSourceSaveCommand(recovery.command,{...scope,lifecycle:life,epoch:saveEpoch.current,baseVersion:original.baseVersion,spec:original.spec});
+        if(!mounted||!sameContext(scope,life))return;
+        if(!recovered)throw Error('The retained original save command cannot be verified. Your server draft and recovery are preserved.');
+        pendingSave.current=recovered;pendingUncertain.current=true;setHasPendingSave(true);
+        // Keep the original base for explicit replay, including a lost response
+        // after the server committed. A later mutable head cannot acknowledge it.
+        live.current={...(local??r.email),doc_version:recovered.baseVersion,spec:local?.spec??recovered.spec};setDoc({...live.current});
+        dirtyAt.current=Date.now();lastEdit.current=Date.now();conflictRef.current=true;setConflict(r.email);setStatus('Save acknowledgment unresolved · original command retained');
+      }
+    })().catch(e=>{if(mounted&&sameContext(scope,life))setError(e.message);});
+    return () => {mounted=false;editorActive.current=false;exportController.current?.abort();};
+  }, [workspace, actor, id, storage, editRole,install]);
   const flushRef = useRef<() => Promise<boolean>>(async () => true);
   async function flush(): Promise<boolean> {
     if (!editRole) return !dirtyAt.current;
     if (saving.current) return saving.current;
-    if (!live.current || JSON.stringify(live.current.spec) === ack.current) return true;
-    if (conflictRef.current) return false;
-    if (!navigator.onLine) {
-      setStatus('Offline · local only');
-      return false;
-    }
-    const snapshot = structuredClone(live.current);
+    if (!live.current || (!pendingSave.current&&canonicalSpecString(live.current.spec)===ack.current)) return true;
+    if (conflictRef.current||pendingUncertain.current) return false;
+    if (!navigator.onLine) {setStatus('Offline · local only');return false;}
+    const scope={...scopeRef.current},life=lifecycle.current,context=saveContext();
     setStatus('Saving…');
-    const task = (async () => {
-      try {
-        const r = await api<{ email: Doc }>(
-          workspace,
-          'emails/' + id + '/draft',
-          'PATCH',
-          { spec: snapshot.spec },
-          snapshot.doc_version,undefined,undefined,actor,
-        );
-        ack.current = JSON.stringify(snapshot.spec);
-        if (live.current) {
-          live.current = { ...live.current, doc_version: r.email.doc_version, lineage: r.email.lineage };
-          setDoc({ ...live.current });
-          if (JSON.stringify(live.current.spec) === ack.current) {
-            dirtyAt.current = 0;
-            localStorage.removeItem(storage);
-            setStatus('Saved · v' + r.email.doc_version);
-          } else {
-            dirtyAt.current = Date.now();
-            localStorage.setItem(storage, JSON.stringify(live.current));
-            setStatus('Unsaved changes');
-          }
+    const task=(async()=>{
+      try{
+        const command=pendingSave.current??await createSourceSaveCommand(context);
+        if(!sameContext(scope,life))return false;
+        pendingSave.current=command;setHasPendingSave(true);
+        // Durability is transaction completion, before the network dispatch.
+        await writeSourceCommandRecovery(scope,serializeSourceSaveCommand(command));
+        if(!sameContext(scope,life))return false;
+        const response=await api<unknown>(scope.workspace,'emails/'+scope.email+'/'+(command.action==='source-fork'?'source-fork':'draft'),command.action==='source-fork'?'POST':'PATCH',command.action==='source-fork'?{expected_artifact_hash:command.expectedArtifactHash}:{spec:command.spec},command.baseVersion,command.key,undefined,scope.actor);
+        const validated=await validateSourceSaveReceipt(command,response,()=>saveContext());
+        EmailSourceSpecSchema.parse(validated.response.email.spec);
+        const current=await api<{email:Doc}>(scope.workspace,'emails/'+scope.email,'GET',undefined,undefined,undefined,undefined,scope.actor);
+        if(!sameContext(scope,life)||saveEpoch.current!==command.scope.epoch||live.current?.doc_version!==command.baseVersion)return false;
+        const server=checkedDoc(current.email);if(server.id!==scope.email)throw Error("The current server response belongs to a different document.");
+        if(server.doc_version!==validated.savedVersion||canonicalSpecString(server.spec)!==validated.acknowledgedCanonicalSpec){conflictRef.current=true;setConflict(server);setStatus('Conflict · local work preserved');throw Error('The original save was acknowledged, but the current server head changed. Compare or reload before continuing.');}
+        if((command.action==='source-fork'&&live.current.spec.editing_mode==='structured')||command.adoptBaseSpecHash){
+          const original=canonicalSpecString(live.current.spec),identity=await createSourceSaveCommand(saveContext());
+          if(!sameContext(scope,life)||live.current.doc_version!==command.baseVersion||canonicalSpecString(live.current.spec)!==original)return false;
+          if(identity.specHash!==(command.adoptBaseSpecHash??command.forkBaseSpecHash)&&!(command.adoptBaseSpecHash&&identity.specHash===command.specHash)){conflictRef.current=true;setConflict(server);setStatus('Conflict · local work preserved');throw Error('The replacement was acknowledged while newer local work changed. Compare or reload before adopting it.');}
+          install(server);
+        }else{
+          ack.current=validated.acknowledgedCanonicalSpec;
+          live.current={...live.current,doc_version:validated.savedVersion,raw_source_profile:server.raw_source_profile,lineage:server.lineage};setDoc({...live.current});
         }
-        setError('');
-        return true;
-      } catch (e) {
+        pendingSave.current=null;setHasPendingSave(false);
+        const dirty=canonicalSpecString(live.current.spec)!==ack.current;
+        if(dirty){dirtyAt.current=Date.now();preserveLocal(live.current);setStatus('Unsaved changes');}
+        else{dirtyAt.current=0;setStatus('Saved · v'+validated.savedVersion);}
+        await removeSourceRecovery(scope,{draft:!dirty,command:true,expectedDraft:{docVersion:command.baseVersion,specHash:command.specHash},expectedCommandKey:command.key});
+        if(sameContext(scope,life))setError('');return true;
+      }catch(e){
+        if(!sameContext(scope,life))return false;
+        if(pendingSave.current)pendingUncertain.current=true;
         setError((e as Error).message);
-        if (e instanceof ApiError && e.status === 412) {
-          conflictRef.current = true;
-          setStatus('Conflict · local work preserved');
-          const server = await api<{ email: Doc }>(workspace, 'emails/' + id);
-          setConflict(server.email);
-        } else setStatus(navigator.onLine ? 'Save failed · local only' : 'Offline · local only');
+        if(e instanceof ApiError&&e.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(scope.workspace,'emails/'+scope.email,'GET',undefined,undefined,undefined,undefined,scope.actor);if(sameContext(scope,life))setConflict(checkedDoc(server.email));}
+        else if(!conflictRef.current)setStatus(navigator.onLine?'Save failed · original command retained':'Offline · local only');
         return false;
-      } finally {
-        saving.current = null;
-      }
-    })();
-    saving.current = task;
-    return task;
+      }finally{if(sameContext(scope,life))saving.current=null;}
+    })();saving.current=task;return task;
   }
   useEffect(() => {
     flushRef.current = flush;
@@ -217,7 +233,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
   useEffect(() => {
     const timer = setInterval(() => {
       if (
-        dirtyAt.current &&
+        dirtyAt.current && !pendingUncertain.current &&
         (Date.now() - lastEdit.current > 750 || Date.now() - dirtyAt.current >= 4000)
       )
         void flushRef.current();
@@ -257,16 +273,17 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if (!doc) return;
     let active = true;
     const timer = setTimeout(() => {
-      void api<{ artifact: { html: string; text: string;preview_html?:string } }>(
+      void api<{ artifact: { html: string; text: string;preview_html?:string|null;manifest?:{raw_projection?:{delivery_status:string;diagnostics:RawDiagnostic[]};fragment_projection?:{delivery_status:string;diagnostics:Array<RawDiagnostic&{node_id?:string}>}} } }>(
         workspace,
         'emails/' + id + '/preview',
         'POST',
-        { spec: doc.spec },
+        { spec: doc.spec },undefined,undefined,undefined,actor,
       )
         .then((r) => {
           if (active) {
             setHtml(r.artifact.html);
-            setPreviewHtml(r.artifact.preview_html??r.artifact.html);
+            setPreviewHtml(r.artifact.preview_html===undefined?r.artifact.html:r.artifact.preview_html??'');
+            const projection=r.artifact.manifest?.raw_projection??r.artifact.manifest?.fragment_projection;setRawDiagnostics(projection?.diagnostics??[]);setRawDelivery(projection?.delivery_status??'');
             setText(r.artifact.text);
           }
         })
@@ -278,7 +295,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       active = false;
       clearTimeout(timer);
     };
-  }, [doc, workspace, id]);
+  }, [doc, workspace, id,actor]);
   function update(spec: EmailSpec) {
     if (
       !editRole ||
@@ -295,7 +312,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     setDoc({ ...live.current });
     if (!dirtyAt.current) dirtyAt.current = Date.now();
     lastEdit.current = Date.now();
-    try{localStorage.setItem(storage, JSON.stringify(live.current));}catch{setError('Local draft recovery is unavailable. Keep this tab open until the draft is saved.');}
+    preserveLocal(live.current);
     setStatus(navigator.onLine ? 'Unsaved changes' : 'Offline · local only');
     setReport(null);
     setRevision(null);
@@ -320,10 +337,10 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if(busyRef.current)throw Error('Finish the current editor action first.');check();busyRef.current='asset';setBusy('asset');setError('');
     try{if(!(await flush())||dirtyAt.current)throw Error('Save or resolve the current draft before applying this image.');const baseline=check(),origin=anchor();const result=await api<{asset:AssetMetadata}>(workspace,'assets/'+ref.asset_id,'GET',undefined,undefined,undefined,undefined,actor);check();if(!matches(origin))throw Error('The draft changed while resolving the image.');const variant=result.asset.variants.find(v=>v.variant_id===ref.variant_id);if(!variant||!['ready_private','published'].includes(result.asset.state))throw Error('This private variant is not ready.');if(variant.role==='animation'&&!variant.fallback)throw Error('Choose a static fallback before applying this animation.');const image={...baseline.block,asset_ref:ref,...(variant.role==='animation'?{fallback_ref:variant.fallback}:{} )};delete image.src;if(variant.role!=='animation')delete image.fallback_ref;
       const spec:EmailSpec={...baseline.current.spec,schema_version:'1.1',sections:baseline.current.spec.sections.map(b=>b.id===a.nodeId?image:b)};
-      const response=await api<{email:Doc}>(workspace,'emails/'+id+'/draft','PATCH',{spec},baseline.current.doc_version,undefined,undefined,actor);
+      const command=await createSourceReplacementCommand(saveContext(spec),baseline.current.spec);pendingSave.current=command;setHasPendingSave(true);await writeSourceCommandRecovery({...scopeRef.current},serializeSourceSaveCommand(command));await writeSourceDraftRecovery({...scopeRef.current},{...baseline.current,spec});const saved=await api<unknown>(workspace,'emails/'+id+'/draft','PATCH',{spec:command.spec},command.baseVersion,command.key,undefined,actor);const validated=await validateSourceSaveReceipt(command,saved,()=>saveContext());const head=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);const response={email:checkedDoc(head.email)};if(response.email.id!==id||response.email.doc_version!==validated.savedVersion||canonicalSpecString(response.email.spec)!==validated.acknowledgedCanonicalSpec)throw Error('The original image save was acknowledged, but the current server head changed. Reload before continuing.');
       if(!matches(origin)){setError('An image save was acknowledged after local work changed. Reload the current server version before continuing.');conflictRef.current=true;setConflict(response.email);throw Error('Current local image preserved after an interrupted acknowledgment.');}
-      undo.current=[...undo.current.slice(-49),structuredClone(baseline.current.spec)];setUndoCount(undo.current.length);install(response.email);localStorage.removeItem(storage);setReport(null);setRevision(null);
-    }catch(error){if(error instanceof ApiError&&error.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(workspace,'emails/'+id);setConflict(server.email);}setError(error instanceof Error?error.message:String(error));throw error;}finally{busyRef.current='';setBusy('');}
+      undo.current=[...undo.current.slice(-49),structuredClone(baseline.current.spec)];setUndoCount(undo.current.length);install(response.email);pendingSave.current=null;setHasPendingSave(false);await removeSourceRecovery({...scopeRef.current},{draft:true,command:true,expectedDraft:{docVersion:command.baseVersion,specHash:command.specHash},expectedCommandKey:command.key});setReport(null);setRevision(null);
+    }catch(error){if(pendingSave.current){pendingUncertain.current=true;setStatus('Save failed · original command retained');}if(error instanceof ApiError&&error.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);setConflict(checkedDoc(server.email));}setError(error instanceof Error?error.message:String(error));throw error;}finally{busyRef.current='';setBusy('');}
   }
   async function freeze() {
     if (!(await flush())) {
@@ -401,7 +418,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
             disabled={!editRole || !!busy}
             onClick={() =>
               void act('save', async () => {
-                await flush();
+                pendingUncertain.current=false;await flush();
               })
             }
           >
@@ -479,7 +496,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                   title: doc.title + ' (recovered copy)',
                   spec: doc.spec,
                 });
-                localStorage.removeItem(storage);
+                await removeSourceRecovery({...scopeRef.current},{draft:true,command:true});
                 router.push('/app/emails/' + r.email.id);
               })
             }
@@ -489,6 +506,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           <button onClick={() => void act('reload', reload)}>Reload newer</button>
         </div>
       )}
+      {hasPendingSave&&<button disabled={!editRole||!!busy} onClick={()=>void act('recover-save',async()=>{conflictRef.current=false;pendingUncertain.current=false;setConflict(null);await flush();})}>Retry original save acknowledgment</button>}
+      {(doc.spec.editing_mode==='raw_html'||doc.spec.sections.some(b=>b.type==='custom_html'||b.type==='columns'&&b.columns.flat().some(n=>n.type==='custom_html')))&&<section className="panel" aria-label="Raw source diagnostics"><p>Source profile: {doc.spec.editing_mode==='raw_html'?(doc.raw_source_profile??'exact-utf8-1'):'custom-html-source-1'} · {rawDelivery||'Projection pending'}. Your authored source is retained separately from the preview.</p>{rawDiagnostics.map((d,i)=><p key={i} className={d.severity==='blocking'?'alert danger':'small'}>{d.code}: {d.message} (source {d.node_id?d.node_id+': ':''}{d.start}–{d.end})</p>)}</section>}
       {showHistory && (
         <section className="panel history-panel">
           <div className="section-heading">
@@ -544,7 +563,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                           'The draft changed during restore. Reload the acknowledged server version; your local copy is preserved.',
                         );
                       install(restored.email);
-                      localStorage.removeItem(storage);
+                      await removeSourceRecovery({...scopeRef.current},{draft:true,command:true});
                       setReport(null);
                       setRevision(null);
                     })
@@ -605,7 +624,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
             const response=await api<{email:Doc}>(workspace,'emails/'+id+'/convert-to-blocks','POST',command.body,command.body.expected_version,command.key,undefined,actor).catch(caught=>{throw originalConversionRefusal(caught)??caught;});
             const current=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
             if(current.email.id!==id||response.email.id!==id||current.email.doc_version<response.email.doc_version)throw Error('The conversion receipt does not match current saved truth. Keep the original command and retry.');
-            if(matches(origin)&&!dirtyAt.current){install(current.email);localStorage.removeItem(storage);setReport(null);setRevision(null);setSelected(current.email.spec.sections[0]?.id??'');}
+            if(matches(origin)&&!dirtyAt.current){install(current.email);await removeSourceRecovery({...scopeRef.current},{draft:true,command:true});setReport(null);setRevision(null);setSelected(current.email.spec.sections[0]?.id??'');}
             else if(editorActive.current)setError('Conversion was acknowledged; newer local edits are preserved. Compare or reload the current saved head before continuing.');
           }finally{busyRef.current='';setBusy('');}
         }}
@@ -821,29 +840,23 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                         if (!(await flush()) || dirtyAt.current) return;
                         const origin = anchor(),
                           snapshot = structuredClone(live.current!);
-                        const compiled = await api<{ artifact: { html: string } }>(
-                          workspace,
-                          'emails/' + id + '/preview',
-                          'POST',
-                          { spec: snapshot.spec },
-                        );
-                        if (!matches(origin))
-                          throw new Error(
-                            'The draft changed before raw conversion. Try again with the current version.',
-                          );
-                        const r = await api<{ email: Doc }>(
-                          workspace,
-                          'emails/' + id + '/import-html',
-                          'POST',
-                          { html: compiled.artifact.html },
-                          snapshot.doc_version,
-                        );
-                        if (!matches(origin))
-                          throw new Error(
-                            'The draft changed during raw conversion. Your local copy is preserved.',
-                          );
-                        install(r.email);
-                        localStorage.removeItem(storage);
+                        const compiled=await api<{artifact:{html:string;hash:string;manifest:{assets?:{entries:Array<{asset_id:string;variant_id:string}>}}}}>(workspace,'emails/'+id+'/preview','POST',{spec:snapshot.spec},undefined,undefined,undefined,actor);
+                        if(!matches(origin))throw Error('The draft changed before raw conversion. Review the current version.');
+                        const entries=compiled.artifact.manifest.assets?.entries;
+                        const registry=entries?Array.from(new Map(entries.map(e=>[e.asset_id+':'+e.variant_id,{asset_id:e.asset_id,variant_id:e.variant_id}])).values()):undefined;
+                        const spec=EmailSourceSpecSchema.parse({...snapshot.spec,editing_mode:'raw_html',raw_html:compiled.artifact.html,...(registry?.length?{schema_version:'1.1',asset_registry:registry}:{})});
+                        const command=await createSourceForkCommand(saveContext(spec),compiled.artifact.hash,undefined,snapshot.spec);
+                        if(!matches(origin))throw Error('The draft changed before the fork command was captured.');
+                        pendingSave.current=command;setHasPendingSave(true);
+                        await writeSourceCommandRecovery({...scopeRef.current},serializeSourceSaveCommand(command));
+                        await writeSourceDraftRecovery({...scopeRef.current},{...snapshot,spec});
+                        const response=await api<unknown>(workspace,'emails/'+id+'/source-fork','POST',{expected_artifact_hash:command.expectedArtifactHash},command.baseVersion,command.key,undefined,actor);
+                        const validated=await validateSourceSaveReceipt(command,response,()=>saveContext());
+                        if(!matches(origin))throw Error('The draft changed during raw conversion. Your local copy and original command are preserved.');
+                        const server=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
+                        if(!matches(origin)||server.email.doc_version!==validated.savedVersion||canonicalSpecString(server.email.spec)!==validated.acknowledgedCanonicalSpec)throw Error('The current server head differs from the fork receipt. Compare or reload before continuing.');
+                        install(server.email);pendingSave.current=null;setHasPendingSave(false);
+                        await removeSourceRecovery({...scopeRef.current},{draft:true,command:true,expectedDraft:{docVersion:command.baseVersion,specHash:command.specHash},expectedCommandKey:command.key});
                         setReport(null);
                         setRevision(null);
                       })
@@ -990,7 +1003,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </p>
         </div>
         <div className="toolbar">
-          {['html', 'txt', 'png', 'pdf','zip'].map((format) => (
+          {['html', 'txt', 'png', 'pdf','zip',...(doc.spec.editing_mode==='raw_html'?['source']:[])].map((format) => (
             <button
               disabled={!editRole || !!busy || !!conflict}
               key={format}
@@ -1003,7 +1016,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                     if (!r || controller.signal.aborted || !matches(r.anchor)) return;
                     const response = await fetch(
                       '/v1/email-revisions/' + r.id + '/download?format=' + format,
-                      { headers: { 'X-Workspace-Id': workspace }, signal: controller.signal },
+                      { headers: { 'X-Workspace-Id': workspace,'X-Actor-Id':actor }, signal: controller.signal },
                     );
                     if (!response.ok) {
                       const j = await response.json();
@@ -1014,7 +1027,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `email-v${r.revision_no}.${format}`;
+                    a.download = `email-v${r.revision_no}.${format==='source'?'source.html.txt':format}`;
                     a.click();
                     setTimeout(() => URL.revokeObjectURL(url), 1000);
                   } catch (error) {
@@ -1026,7 +1039,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               }
             >
               <Download size={16} />
-              {format.toUpperCase()}
+              {format==='source'?'SOURCE (INERT TEXT)':format.toUpperCase()}
             </button>
           ))}
         </div>

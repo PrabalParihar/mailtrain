@@ -9,7 +9,10 @@ import { staticLint } from './preflight';
 import {load}from'cheerio';
 import{privateAssetBinding,AssetManifestSchema,type AssetManifest,type AssetManifestEntry}from'./assets';
 
-import {EmailSpecSchema as SharedEmailSpecSchema,type EmailSpec,type Block} from './email-schema';
+import {EmailSpecSchema as SharedEmailSpecSchema,EmailSourceSpecSchema,type EmailSpec,type Block} from './email-schema';
+import {projectRawHtml} from './raw-html-projection';
+import {projectHtmlFragments} from './html-fragment-projection';
+import type {SourceProfile} from './email-source-contracts';
 export {BlockSchema,LOCALES} from './email-schema';
 export type {EmailSpec,Block} from './email-schema';
 export const EmailSpecSchema=SharedEmailSpecSchema.superRefine((s,c)=>{
@@ -132,7 +135,7 @@ export function lintEmail(
   return staticLint(spec, forbidden, (source) => sanitizeRaw(source).html, artifact,toneRules);
 }
 
-function block(b: Block, accent: string, assets:AssetManifestEntry[]): ReturnType<typeof h> {
+function block(b: Block, accent: string, assets:AssetManifestEntry[],fragments?:ReadonlyMap<string,string>): ReturnType<typeof h> {
   const props = { key: b.id };
   switch (b.type) {
     case 'hero':
@@ -211,7 +214,7 @@ function block(b: Block, accent: string, assets:AssetManifestEntry[]): ReturnTyp
         h('a', { href: b.href, style: { color: accent } }, 'View product'),
       );
     case 'custom_html':
-      return h('div', { ...props, dangerouslySetInnerHTML: { __html: sanitizeRaw(b.html).html } });
+      return h('div', { ...props, dangerouslySetInnerHTML: { __html: fragments?.get(b.id)??sanitizeRaw(b.html).html } });
     case 'columns':
       return h(
         'table',
@@ -230,7 +233,7 @@ function block(b: Block, accent: string, assets:AssetManifestEntry[]): ReturnTyp
                   width: `${100 / b.columns.length}%`,
                   style: { verticalAlign: 'top', padding: 8 },
                 },
-                ...col.map((n) => block(n, accent,assets)),
+                ...col.map((n) => block(n, accent,assets,fragments)),
               ),
             ),
           ),
@@ -238,14 +241,14 @@ function block(b: Block, accent: string, assets:AssetManifestEntry[]): ReturnTyp
       );
   }
 }
-function trackedContent(s:{editing_mode:'structured'|'raw_html';sections:Block[];raw_html?:string;tracking?:UTMParameterData}){
+function trackedContent(s:{editing_mode:'structured'|'raw_html';sections:Block[];raw_html?:string;tracking?:UTMParameterData},skipOpaque=false){
  if(!s.tracking)return s;
  const policy=s.tracking;
  function html(source:string){decorateHtmlMarketingLinks(source,policy);return decorateHtmlMarketingLinks(sanitizeRaw(source).html,policy);}
  function simple(b:Exclude<Block,{type:'columns'}>):Exclude<Block,{type:'columns'}>{
   if(b.type==='button'||b.type==='product_card')return{...b,href:decorateMarketingHref(b.href,policy)};
   if(b.type==='social')return{...b,links:b.links.map(link=>({...link,href:decorateMarketingHref(link.href,policy)}))};
-  if(b.type==='custom_html')return{...b,html:html(b.html)};
+  if(b.type==='custom_html'&&!skipOpaque)return{...b,html:html(b.html)};
   return b;
  }
  if(s.editing_mode==='raw_html')return{...s,raw_html:html(s.raw_html!)};
@@ -253,8 +256,9 @@ function trackedContent(s:{editing_mode:'structured'|'raw_html';sections:Block[]
 }
 function trackedHtmlText(html:string){return sanitizeHtml(html,{allowedTags:[],allowedAttributes:{}})+'\n'+htmlMarketingTargets(html).join('\n');}
 function resolveImage(ref:{asset_id:string;variant_id:string},entries:AssetManifestEntry[]){const entry=entries.find(e=>e.asset_id===ref.asset_id&&e.variant_id===ref.variant_id);if(!entry)throw new Error('ASSET_REFERENCE_UNRESOLVED');return entry;}
-export async function compileEmail(value: EmailSpec, options:{assets?:AssetManifest}={}) {
-  const s = EmailSpecSchema.parse(value);
+export async function compileEmail(value: EmailSpec, options:{assets?:AssetManifest;sourceProfile?:SourceProfile|null}={}) {
+  const hasFragments=value.sections.some(b=>b.type==='custom_html'||b.type==='columns'&&b.columns.flat().some(n=>n.type==='custom_html'));
+  const s = value.editing_mode==='raw_html'||hasFragments?EmailSourceSpecSchema.parse(value):EmailSpecSchema.parse(value);
   const nodes=s.sections.flatMap(b=>b.type==='columns'?b.columns.flat():[b]);
   const refs=[...nodes.flatMap(b=>b.type==='image'&&b.asset_ref?[b.asset_ref,...(b.fallback_ref?[b.fallback_ref]:[])]:[]),...(s.asset_registry??[])];
   if(refs.length&&!options.assets)throw new Error('ASSET_MANIFEST_REQUIRED');
@@ -263,11 +267,31 @@ export async function compileEmail(value: EmailSpec, options:{assets?:AssetManif
   if(new Set(entries.map(e=>e.asset_id+':'+e.variant_id)).size!==entries.length)throw new Error('ASSET_MANIFEST_DUPLICATE');
   for(const ref of refs)resolveImage(ref,entries);
   for(const node of nodes){if(node.type!=='image'||!node.asset_ref)continue;const entry=resolveImage(node.asset_ref,entries);if(entry.role==='animation'){if(!node.fallback_ref||!entry.fallback||node.fallback_ref.asset_id!==entry.fallback.asset_id||node.fallback_ref.variant_id!==entry.fallback.variant_id||resolveImage(node.fallback_ref,entries).role!=='fallback')throw new Error('ASSET_FALLBACK_REQUIRED');}else if(node.fallback_ref)throw new Error('ASSET_FALLBACK_INVALID');}
-  const rendered=trackedContent(s);
+  if(s.editing_mode==='raw_html'){
+    const projected=projectRawHtml(s.raw_html!,{assets:options.assets});
+    let html=projected.email_html??'',delivery_status=projected.delivery_status;
+    const diagnostics=[...projected.diagnostics];
+    if(s.tracking&&delivery_status==='eligible_for_checks'){
+      try{html=decorateHtmlMarketingLinks(html,s.tracking);}
+      catch(error){
+        if(!(error instanceof UTMLinkError))throw error;
+        delivery_status='blocked';
+        const issue={code:'UNSAFE_LINK_REMOVED' as const,severity:'blocking' as const,start:0,end:s.raw_html!.length,message:'Tracking cannot be applied to this source: '+error.message};
+        if(diagnostics.length>=100)diagnostics[diagnostics.length-1]=issue;else diagnostics.push(issue);
+      }
+    }
+    const manifest={renderer:'mailcraft-raw-email-2',sanitizer:'raw-email-2',schema:s.schema_version,brand:s.brand_kit_version_id,locale:s.locale,mapping:'html-slots-1',spec:s,...(s.tracking?{link_policy:UTM_POLICY_VERSION}:{}),...(entries.length?{assets:options.assets}:{}),source:{profile:options.sourceProfile??'exact-utf8-1',sha256:projected.source_hash,bytes:projected.source_bytes},raw_projection:{browser_profile:projected.browser_profile,browser_hash:projected.browser_hash,email_profile:projected.email_profile,email_hash:projected.email_html===null?null:createHash('sha256').update(html).digest('hex'),delivery_status,diagnostics,omitted_diagnostics:projected.omitted_diagnostics}};
+    const text=projected.email_html===null?'':s.tracking?trackedHtmlText(html):sanitizeHtml(html,{allowedTags:[],allowedAttributes:{}});
+    const hash=createHash('sha256').update(JSON.stringify(manifest)+'\n'+html+'\n'+text).digest('hex');
+    return {html,text,hash,manifest,preview_html:projected.browser_html};
+  }
+  const fragments=hasFragments?projectHtmlFragments(nodes.filter(n=>n.type==='custom_html'),{assets:options.assets,tracking:s.tracking}):null;
+  const rendered=trackedContent(s,hasFragments);
   const manifest = {
-    renderer: s.tracking?'mailcraft-react-email-utm-1':'mailcraft-react-email-1',
+    renderer: fragments?'mailcraft-react-email-fragments-1':s.tracking?'mailcraft-react-email-utm-1':'mailcraft-react-email-1',
     ...(s.tracking?{link_policy:UTM_POLICY_VERSION}:{}),
-    sanitizer: 'allowlist-1',
+    sanitizer: fragments?'raw-email-2':'allowlist-1',
+    ...(fragments?{fragment_projection:fragments.manifest}:{}),
     schema: s.schema_version,
     brand: s.brand_kit_version_id,
     locale: s.locale,
@@ -275,6 +299,7 @@ export async function compileEmail(value: EmailSpec, options:{assets?:AssetManif
     spec: s,
     ...(entries.length?{assets:options.assets}:{}),
   };
+  function documentFor(fragmentHtml?:ReadonlyMap<string,string>){
   const inner = h(
     'table',
     {
@@ -288,7 +313,7 @@ export async function compileEmail(value: EmailSpec, options:{assets?:AssetManif
       h(
         'tr',
         {},
-        h('td', { style: { padding: 32 } }, ...rendered.sections.map((b) => block(b, s.theme.accent,entries))),
+        h('td', { style: { padding: 32 } }, ...rendered.sections.map((b) => block(b, s.theme.accent,entries,fragmentHtml))),
       ),
     ),
   );
@@ -325,15 +350,17 @@ export async function compileEmail(value: EmailSpec, options:{assets?:AssetManif
       outer,
     ),
   );
-  const html =
-    s.editing_mode === 'raw_html' ? (s.tracking?rendered.raw_html!:sanitizeRaw(s.raw_html!).html) : await render(document);
+  return document;
+  }
+  let html = fragments?.manifest.delivery_status==='unavailable'?'':await render(documentFor(fragments?.email));
+  let preview_html=fragments?(fragments.manifest.delivery_status==='unavailable'?null:await render(documentFor(fragments.browser))):undefined;
+  if(fragments&&(Buffer.byteLength(html)>4194304||preview_html!==null&&preview_html!==undefined&&Buffer.byteLength(preview_html)>4194304)){
+    fragments.manifest.delivery_status='unavailable';fragments.manifest.diagnostics=[{code:'RAW_PROJECTION_LIMIT',severity:'blocking',start:0,end:0,message:'The document projection exceeds its output limit; exact fragments remain stored.'}];html='';preview_html=null;
+  }
   const allowedBindings=new Set(refs.map(ref=>privateAssetBinding(resolveImage(ref,entries))));
   const parsed=load(html);
   parsed('img[src]').each((_,image)=>{const url=parsed(image).attr('src')!;let host:string;try{host=new URL(url).hostname;}catch{return;}if(host==='mailcraft-assets.invalid'&&!allowedBindings.has(url))throw new Error('ASSET_BINDING_UNREGISTERED');});
-  const text =
-    s.editing_mode === 'raw_html'
-      ? (s.tracking?trackedHtmlText(html):sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }))
-      : rendered.sections
+  const text = fragments?.manifest.delivery_status==='unavailable'?'':rendered.sections
           .flatMap((b) => (b.type === 'columns' ? b.columns.flat() : [b]))
           .map((b) =>
             b.type === 'hero'
@@ -349,12 +376,13 @@ export async function compileEmail(value: EmailSpec, options:{assets?:AssetManif
                       : b.type === 'image'
                         ? b.alt
                         : b.type === 'custom_html'
-                          ? (s.tracking?trackedHtmlText(b.html):sanitizeHtml(b.html, { allowedTags: [], allowedAttributes: {} }))
+                          ? (s.tracking?trackedHtmlText(fragments?.email.get(b.id)??b.html):sanitizeHtml(fragments?.email.get(b.id)??b.html, { allowedTags: [], allowedAttributes: {} }))
                           : b.type==='social'&&s.tracking?b.links.map(link=>link.label+': '+link.href).join('\n'):'',
           )
           .join('\n\n');
+  if(fragments){fragments.manifest.email_hash=html?createHash('sha256').update(html).digest('hex'):null;fragments.manifest.browser_hash=preview_html===null||preview_html===undefined?null:createHash('sha256').update(preview_html).digest('hex');}
   const hash = createHash('sha256')
     .update(JSON.stringify(manifest) + '\n' + html + '\n' + text)
     .digest('hex');
-  return { html, text, hash, manifest };
+  return { html, text, hash, manifest,...(fragments?{preview_html}: {}) };
 }

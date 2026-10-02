@@ -1,15 +1,16 @@
+import type {Block} from '@/domain/email-schema';
 import {emailConversionRoute}from'@/server/email-conversion';
 import {workspacePreferenceRoute} from '@/server/workspace-calendar';
 import{creationPage,creationView,creationAttempts}from'@/server/creation-history';
 import { membershipRoute } from '@/server/membership-route';
 import { EventType } from '@/domain/events';
 import { readEventBody } from '@/server/events';
-import { LINT_RULES_VERSION } from '@/domain/preflight';
+import { LINT_RULES_VERSION,RAW_LINT_RULES_VERSION } from '@/domain/preflight';
 import { resourcePage } from '@/server/pagination';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
-import { compileEmail, blankSpec, EmailSpecSchema, lintEmail, sanitizeRaw } from '@/domain/email';
+import { compileEmail, blankSpec, EmailSpecSchema, lintEmail } from '@/domain/email';
 import { BrandSchema } from '@/domain/brand';
 import{brandMemoryRoute}from'@/server/brand-memory-route';
 import { identity, localBootstrap, checkOrigin, withPrincipal } from '@/server/auth';
@@ -37,6 +38,9 @@ import{assetReferences,resolveAssetManifest,readAssetVariantsVerified}from'@/ser
 import{privatePreviewHtml,frozenPrivateImageBundle}from'@/server/asset-output';
 import type{AssetManifest}from'@/domain/assets';
 import {senderDomainRoute} from '@/server/sender-domain-route';
+import {EmailSourceSpecSchema}from'@/domain/email-schema';
+import {emailSourceRoute,revisionSourceResponse}from'@/server/email-source-route';
+import {readEmailSourceJson}from'@/server/email-source-body';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 type Context = { params: Promise<{ path: string[] }> };
@@ -57,7 +61,13 @@ async function handle(req: Request, ctx: Context) {
   try {
     assertRouteMethod(path, method);
     checkOrigin(req);
-    const body = await readJson(req);
+    if(root==='emails'&&id&&['draft','source-import','import-html','source-fork'].includes(command))return json(await emailSourceRoute(req,id,command as 'draft'|'source-import'|'import-html'|'source-fork'));
+    if(root==='email-revisions'&&command==='download'&&new URL(req.url).searchParams.get('format')==='source'){
+      const response=await revisionSourceResponse(req,id);response.headers.set('X-Request-Id',request_id);return response;
+    }
+    const sourceBody=root==='emails'&&method==='POST'&&(!id||command==='preview');
+    if(sourceBody)await withPrincipal(req,command==='preview'?'read':'edit',async tx=>{if(id)await getEmail(tx,id);});
+    const body=sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
     const version = () => {
       const raw = req.headers.get('if-match');
@@ -70,7 +80,7 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
     if(root==='assets'){const result=await assetRoute(req,path,body,key);if(result instanceof Response){result.headers.set('X-Request-Id',request_id);return result;}return json(result,method==='POST'&&(id==='uploads'||command==='fallback')?202:200);}
-    if(root==='emails'&&command==='preview'){const prepared=await withPrincipal(req,'read',async(tx,p)=>{const spec=EmailSpecSchema.parse(body.spec),assets=assetReferences(spec).length?await resolveAssetManifest(tx,p,spec,'preview'):undefined;return{p,artifact:await compileEmail(spec,{assets}),assets};});if(prepared.assets?.entries.length){const values=await readAssetVariantsVerified(prepared.p,prepared.assets,undefined,4*1024*1024);return json({artifact:{...prepared.artifact,preview_html:privatePreviewHtml(prepared.artifact.html,prepared.assets,values)}});}return json({artifact:prepared.artifact});}
+    if(root==='emails'&&command==='preview'){const prepared=await withPrincipal(req,'read',async(tx,p)=>{const spec=EmailSourceSpecSchema.parse(body.spec),assets=assetReferences(spec).length?await resolveAssetManifest(tx,p,spec,'preview'):undefined;return{p,artifact:await compileEmail(spec,{assets}),assets};});if(prepared.assets?.entries.length){const values=await readAssetVariantsVerified(prepared.p,prepared.assets,undefined,4*1024*1024);return json({artifact:{...prepared.artifact,preview_html:privatePreviewHtml(prepared.artifact.preview_html??prepared.artifact.html,prepared.assets,values)}});}return json({artifact:prepared.artifact});}
     if(root==='sender-identities')return json(await senderDomainRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if(root==='workspace-preferences')return json(await workspacePreferenceRoute(req,body,key));
     if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
@@ -249,7 +259,7 @@ async function handle(req: Request, ctx: Context) {
                 .rows[0];
               if (!brand) fail(409, 'BRAND_REQUIRED', 'Confirm a brand kit first.');
               const spec = body.spec
-                ? EmailSpecSchema.parse(body.spec)
+                ? EmailSourceSpecSchema.parse(body.spec)
                 : blankSpec(brand.id, brand.data.name);
               if (!body.spec) {
                 spec.theme.accent = brand.data.accent;
@@ -258,7 +268,7 @@ async function handle(req: Request, ctx: Context) {
                 const footer = spec.sections.find((b) => b.type === 'legal_footer');
                 if (footer?.type === 'legal_footer') footer.address = brand.data.address;
               }
-              return { email: await createEmail(tx, p, title, spec) };
+              return { email: await createEmail(tx,p,title,spec,{commandId:key??undefined,requestId:request_id}) };
             });
           }
           if (command === 'draft' && method === 'PATCH') {
@@ -282,18 +292,6 @@ async function handle(req: Request, ctx: Context) {
           if (command === 'preview') {
             const s = EmailSpecSchema.parse(body.spec);
             return { artifact: await compileEmail(s) };
-          }
-          if (command === 'import-html') {
-            const sanitized = sanitizeRaw(z.string().max(2000000).parse(body.html));
-            const e = await getEmail(tx, id);
-            await checkpoint(tx, p, id, version());
-            const updated = await saveDraft(tx, p, id, version(), {
-              ...e.spec,
-              editing_mode: 'raw_html',
-              raw_html: sanitized.html,
-              ...(e.spec.schema_version==='1.1'?{asset_registry:assetReferences(e.spec).map(({asset_id,variant_id})=>({asset_id,variant_id}))}:{}),
-            });
-            return { email: updated, warnings: sanitized.warnings };
           }
           fail(404, 'RESOURCE_NOT_FOUND', 'Command not found.');
         }),
@@ -331,6 +329,7 @@ async function handle(req: Request, ctx: Context) {
         const format = new URL(req.url).searchParams.get('format') ?? 'html';
         if (!['html', 'txt', 'png', 'pdf','zip'].includes(format))
           fail(422, 'VALIDATION_FAILED', 'Choose HTML, plaintext, PNG, PDF or an image ZIP bundle.');
+        if((row.manifest?.raw_projection??row.manifest?.fragment_projection)&&(row.manifest.raw_projection??row.manifest.fragment_projection).delivery_status!=='eligible_for_checks')fail(409,'RAW_DELIVERY_BLOCKED','Exact source is preserved. Correct the blocking source diagnostics before rendered exports, or download format=source.');
         const frozenAssets=row.manifest?.assets as AssetManifest|undefined;
         if(format==='html'&&frozenAssets?.entries.length)fail(409,'ASSET_PUBLICATION_NOT_CONFIGURED','Private images cannot be delivered as hosted HTML. Download the image ZIP bundle.');
         let data: Buffer | string = format === 'txt' ? row.plaintext : row.html;
@@ -362,9 +361,14 @@ async function handle(req: Request, ctx: Context) {
               const brand = (
                 await tx.query('SELECT data FROM brands WHERE id=$1', [r.spec.brand_kit_version_id])
               ).rows[0];
-              const findings = lintEmail(r.spec, brand?.data.forbidden_phrases ?? [], {
+              const projection=r.manifest?.raw_projection??r.manifest?.fragment_projection;
+              const sourceUnavailable=projection?.delivery_status==='unavailable';
+              const lintSpec=sourceUnavailable?{...r.spec,raw_html:'',sections:r.spec.sections.map((b:Block)=>b.type==='custom_html'?{...b,html:''}:b.type==='columns'?{...b,columns:b.columns.map(col=>col.map(n=>n.type==='custom_html'?{...n,html:''}:n))}:b)}:r.spec;
+              const findings = lintEmail(lintSpec, brand?.data.forbidden_phrases ?? [], {
                 html: r.html,assets:r.manifest?.assets,
               },brand?.data.tone_rules);
+              if(sourceUnavailable)findings.push({code:'RAW_LINT_LIMIT',severity:'info',location:'raw_html',message:'Detailed source lint was omitted because the bounded projection is unavailable. The exact source remains stored; projection diagnostics block delivery.'});
+              if(projection){for(const d of projection.diagnostics??[])findings.push({code:d.code,severity:d.severity,location:(d.node_id??'raw_html')+':'+d.start+'-'+d.end,message:d.message});if(projection.delivery_status!=='eligible_for_checks'&&!findings.some(x=>x.severity==='blocking'))findings.push({code:'RAW_DELIVERY_BLOCKED',severity:'blocking',location:'raw_html',message:'The authored source is preserved but this projection is not eligible for delivery.'});}
               const state = findings.some((x) => x.severity === 'blocking')
                 ? 'blocked'
                 : 'incomplete';
@@ -386,7 +390,7 @@ async function handle(req: Request, ctx: Context) {
                           '20-profile real-client service has not been procured. This is incomplete evidence.',
                       },
                     ]),
-                    LINT_RULES_VERSION,
+                    projection?RAW_LINT_RULES_VERSION:LINT_RULES_VERSION,
                   ],
                 )
               ).rows[0];

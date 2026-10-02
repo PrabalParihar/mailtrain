@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { EmailSpec, Finding } from './email';
 // A safety-rule change creates a new version even when compilation bytes are unchanged.
 export const LINT_RULES_VERSION = 'static-assets-4';
+export const RAW_LINT_RULES_VERSION = 'static-source-5';
 export const HTML_WARNING_BYTES = 100 * 1024;
 function luminance(hex: string) {
   const rgb = hex

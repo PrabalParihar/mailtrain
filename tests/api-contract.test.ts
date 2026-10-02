@@ -74,6 +74,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   ];
   const ids = ['', '{id}', 'uploads', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone'];
   const commands = [
+    'source-import','source-fork',
     'fallback', 'publish',
     'dns-checks','conversion-proposal','convert-to-blocks',
     'role','transfer-owner',
@@ -136,6 +137,31 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   assert.equal(covered.size, Object.keys(operationRegistry).length);
   assert.ok(covered.has('PUT /v1/assets/uploads/{uploadId}/content'));
   assert.ok(covered.has('GET /v1/assets/{id}/variants/{variantId}/content'));
+});
+test('source contracts distinguish exact text bytes, replay receipts and inert source download',()=>{
+  const input=spec.paths['/v1/emails/{id}/source-import']?.post;
+  assert.ok(input,'source text import must be documented');
+  assert.deepEqual(Object.keys(input.requestBody.content),['text/plain']);
+  assert.equal(input['x-lettercape-body-max-bytes'],2097152);
+  for(const name of ['If-Match','Idempotency-Key'])assert.equal(input.parameters.find((p:{name:string})=>p.name===name).required,true);
+  assert.equal(input.parameters.find((p:{name:string})=>p.name==='X-Actor-Id').required,false);
+  const draft=spec.paths['/v1/emails/{id}/draft'].patch;
+  assert.equal(draft['x-lettercape-body-max-bytes'],13697024);
+  assert.equal(draft.responses[200].content['application/json'].schema.$ref,'#/components/schemas/SavedEmailResponse');
+  const fork=ajv.compile(absolute(spec.components.schemas.SourceForkInput) as object);
+  assert.equal(fork({expected_artifact_hash:'a'.repeat(64)}),true);
+  assert.equal(fork({expected_artifact_hash:'bad'}),false);
+  assert.equal(fork({expected_artifact_hash:'a'.repeat(64),html:'untrusted'}),false);
+  const receipt=ajv.compile(absolute(spec.components.schemas.SaveReceipt) as object),id='11111111-1111-4111-8111-111111111111';
+  const value={receipt_version:1,workspace_id:id,email_id:id,request_base_version:1,saved_doc_version:2,command_id:'source-1',spec_hash:'a'.repeat(64),source:null};
+  assert.equal(receipt(value),true);
+  assert.equal(receipt({...value,source:{profile:'exact-utf8-1',sha256:'b'.repeat(64),bytes:2097152}}),true);
+  assert.equal(receipt({...value,source:{profile:'claimed-safe',sha256:'b'.repeat(64),bytes:1}}),false);
+  assert.equal(receipt({...value,source:{profile:'exact-utf8-1',sha256:'bad',bytes:1}}),false);
+  const download=spec.paths['/v1/email-revisions/{id}/download'].get;
+  assert.ok(download.parameters.find((p:{name:string})=>p.name==='format').schema.enum.includes('source'));
+  assert.ok(download.responses[200].content['text/plain']);
+  for(const name of ['X-Source-SHA256','X-Source-Profile','X-Content-Type-Options','Content-Disposition'])assert.ok(download.responses[200].headers[name]);
 });
 test('media contracts bind rights and bounded raw upload bodies without JSON coercion', () => {
   const schema = spec.components.schemas.AssetUploadInput;

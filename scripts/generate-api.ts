@@ -12,6 +12,9 @@ import { BrandSchema } from '../src/domain/brand';
 import{BrandSourceInput,BrandSource,BrandMemoryChunk,BrandMemoryContext,MemoryPreviewInput}from'../src/domain/brand-memory';
 import { EmailSpecSchema, blankSpec } from '../src/domain/email';
 import { KeyInput } from '../src/domain/api-keys';
+import {EmailSourceSpecSchema} from '../src/domain/email-schema';
+import {SaveReceiptSchema,SavedEmailResponseSchema,SourceProfileSchema} from '../src/domain/email-source-contracts';
+import {MAX_RAW_SOURCE_BYTES,MAX_SOURCE_COMMAND_JSON_BYTES} from '../src/domain/email-source-values';
 import { MEDIA_LIMITS, UploadIntentInput, AssetMetadataSchema, UploadIntentResponseSchema, UploadContentResponseSchema, FallbackInput, FallbackResponseSchema } from '../src/domain/assets';
 import { MappingSchema } from '../src/domain/contact-import';
 import { FieldSchema, RuleLeafSchema } from '../src/domain/segments';
@@ -37,6 +40,11 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  EmailSourceSpec: fromZod(EmailSourceSpecSchema),
+  SourceProfile: fromZod(SourceProfileSchema),
+  SaveReceipt: {...fromZod(SaveReceiptSchema),description:'Durable CAS receipt; saved_doc_version equals request_base_version+1. Hashes identify the actual committed spec and exact UTF-8 source. A receipt does not grant authority or certify render eligibility.'},
+  SavedEmailResponse: {...fromZod(SavedEmailResponseSchema),required:['request_id','email','receipt'],properties:{request_id:uuid,email:{...fromZod(SavedEmailResponseSchema.shape.email),properties:{...fromZod(SavedEmailResponseSchema.shape.email).properties as Record<string,unknown>,spec:ref('EmailSourceSpec')}},receipt:ref('SaveReceipt')},description:'Exact committed email and strict durable receipt. Server enforces matching email/version, CAS increment, canonical spec hash and exact source hash; these cross-field/digest checks exceed JSON Schema shape validation.'},
+  SourceForkInput: fromZod(z.object({expected_artifact_hash:z.string().regex(/^[a-f0-9]{64}$/)}).strict()),
   AssetUploadInput: fromZod(UploadIntentInput),
   AssetFallbackInput: fromZod(FallbackInput),
   AssetMetadata: fromZod(AssetMetadataSchema),
@@ -76,7 +84,7 @@ const schemas: Record<string, Schema> = {
     false,
   ),
   EmailInput: object(
-    { title: { type: 'string', minLength: 1, maxLength: 160 }, spec: ref('EmailSpec') },
+    { title: { type: 'string', minLength: 1, maxLength: 160 }, spec: ref('EmailSourceSpec') },
     ['title'],
     false,
   ),
@@ -93,10 +101,10 @@ const schemas: Record<string, Schema> = {
     ['prompt', 'brand_kit_version_id'],
     false,
   ),
-  DraftInput: object({ spec: ref('EmailSpec') }, undefined, false),
+  DraftInput: object({ spec: ref('EmailSourceSpec') }, undefined, false),
   RestoreInput: object({ revision_id: uuid }, undefined, false),
-  PreviewInput: object({ spec: ref('EmailSpec') }, undefined, false),
-  HtmlInput: object({ html: { type: 'string', maxLength: 2000000 } }, undefined, false),
+  PreviewInput: object({ spec: ref('EmailSourceSpec') }, undefined, false),
+  HtmlInput: object({ html: { type: 'string', maxLength: MAX_RAW_SOURCE_BYTES,'x-max-utf8-bytes':MAX_RAW_SOURCE_BYTES } }, undefined, false),
   UrlInput: object({ url: { type: 'string', format: 'uri', maxLength: 2048 } }, undefined, false),
   NamedInput: object({ name: { type: 'string', minLength: 1, maxLength: 100 } }, undefined, false),
   ProfileInput: object(
@@ -364,11 +372,17 @@ type Definition = {
   example?: unknown;
   binary?: boolean;
   binaryBody?: boolean;
+  textBody?: boolean;
+  sourceCommand?: boolean;
+  explicitKey?: boolean;
+  sourceJson?: boolean;
+  sourceDownload?: boolean;
   binaryMediaTypes?: string[];
   description?: string;
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  SourceForkInput:{expected_artifact_hash:'a'.repeat(64)},
   AssetUploadInput: {filename:'example.png',declared_mime:'image/png',byte_size:1024,sha256:'a'.repeat(64),rights:{attested:true,terms_version:MEDIA_LIMITS.rights},alt:'Example product',decorative:false},
   AssetFallbackInput: {selected_frame:0},
   SenderDraftInput:{name:'Example sender draft',provider:'ses',account_label:'Example account label',region:'us-east-1',from_name:'Example brand',from_address:'news@example.test',reply_to:null},
@@ -452,11 +466,11 @@ function add(d: Definition) {
       name: 'Idempotency-Key',
       in: 'header',
       required: true,
-      schema: { type: 'string', minLength: 8, maxLength: 200 },
+      schema: { type: 'string', minLength: d.sourceCommand ? 1 : 8, maxLength: 200 },
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
-  if(d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
+  if(d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',
@@ -471,8 +485,8 @@ function add(d: Definition) {
   const success = d.binary
     ? {
         description: d.binaryMediaTypes ? 'Authorized immutable private derivative bytes. No public hosting or original-byte access.' : 'Frozen bytes; browser image/PDF simulations, not real-client evidence.',
-        headers: { 'X-Request-Id': { schema: string }, ...(d.binaryMediaTypes ? {'Cache-Control':{schema:{const:'private, no-store'}}} : { 'X-Artifact-Hash': { schema: string } }) },
-        content: Object.fromEntries((d.binaryMediaTypes ?? ['application/octet-stream']).map(mime=>[mime,{schema:{type:'string',format:'binary'}}])),
+        headers: { 'X-Request-Id': { schema: string }, ...(d.binaryMediaTypes ? {'Cache-Control':{schema:{const:'private, no-store'}}} : { 'X-Artifact-Hash': { schema: string } }),...(d.sourceDownload?{'X-Source-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Present for format=source; exact frozen UTF-8 source hash.'},'X-Source-Profile':{schema:ref('SourceProfile'),description:'Present for format=source; historical storage profile.'},'X-Content-Type-Options':{schema:{const:'nosniff'}},'Content-Disposition':{schema:string,description:'format=source uses attachment; filename="email-vN.source.html.txt".'},'Cache-Control':{schema:{const:'no-store'}}}:{}) },
+        content: Object.fromEntries((d.binaryMediaTypes ?? (d.sourceDownload?['application/octet-stream','text/plain']:['application/octet-stream'])).map(mime=>[mime,{schema:{type:'string',format:'binary'}}])),
       }
     : {
         description: d.blocked
@@ -497,7 +511,9 @@ function add(d: Definition) {
         : 'Implemented development behavior; all full-GA release obligations remain open.'),
     security: d.public ? [] : d.session ? [{ session: [] }] : [{ apiKey: [] }, { session: [] }],
     parameters,
-    ...(d.binaryBody
+    ...(d.textBody
+      ? {requestBody:{required:true,description:'Exact inert UTF-8 source, at most2097152 actual bytes. Preserve BOM, mixed line endings and Unicode without normalization. Empty source is valid. Reject malformed UTF-8, NUL, lone UTF-16 surrogates and Content-Encoding. This does not authorize rendering or distribution.',content:{'text/plain':{schema:{type:'string',maxLength:MAX_RAW_SOURCE_BYTES,'x-max-utf8-bytes':MAX_RAW_SOURCE_BYTES},example:'\uFEFF<!-- authored source -->\r\n<p>Example</p>\r'}}}}
+      : d.binaryBody
       ? {requestBody:{required:true,description:'Raw uncompressed bytes, exactly matching the admitted digest and size; 20 MiB maximum. No JSON, base64 or multipart encoding. Transfer retry is explicit and uses the same upload ID/token/bytes.',content:{'application/octet-stream':{schema:{type:'string',format:'binary',minLength:1,maxLength:MEDIA_LIMITS.upload}}}}}
       : d.body
       ? {
@@ -512,7 +528,8 @@ function add(d: Definition) {
           },
         }
       : {}),
-    responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}) },
+    responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}),...(d.sourceCommand||d.sourceJson?{408:errors[400],415:errors[400]}:{}) },
+    ...(d.textBody||d.sourceJson?{'x-lettercape-body-max-bytes':d.textBody?MAX_RAW_SOURCE_BYTES:MAX_SOURCE_COMMAND_JSON_BYTES}:{}),
     'x-lettercape-scopes': d.scope ? [d.scope] : [],
     'x-lettercape-availability': d.blocked ? 'blocked' : 'development',
     'x-lettercape-idempotent-command': !!d.keyed,
@@ -524,6 +541,9 @@ function add(d: Definition) {
     paged: !!d.paged,
     binary: !!d.binary,
     binaryBody: !!d.binaryBody,
+    textBody: !!d.textBody,
+    sourceCommand: !!d.sourceCommand,
+    explicitKey: !!d.explicitKey,
     blocked: !!d.blocked,
   };
 }
@@ -673,6 +693,7 @@ add({
   body: 'EmailInput',
   response: 'EmailResponse',
   keyed: true,
+  sourceJson: true,
   scope: 'emails:write',
   example: { title: 'Example draft' },
 });
@@ -706,12 +727,14 @@ add({id:'acceptEmailConversion',path:'/v1/emails/{id}/convert-to-blocks',method:
 add({ id: 'listEmailDerivatives', path: '/v1/emails/{id}/derivatives', method: 'GET', response: 'DerivativesPage', paged: true, scope: 'emails:read' });
 for (const [id, command, body] of [['remixRevision', 'remix', 'RemixInput'], ['createLocaleDraft', 'localize', 'LocaleDraftInput']] as const)
   add({ id, path: '/v1/email-revisions/{id}/' + command, method: 'POST', response: 'DerivationResponse', body, keyed: true, status: 201, scope: 'emails:write', description: command === 'localize' ? 'Creates a separately versioned manual locale draft linked to the frozen source. Source text is retained, not translated or reviewed; no AI/provider/send success is implied.' : 'Copies a frozen source into a separately versioned same-workspace remix with immutable source provenance. Source remains intact.' });
+add({id:'importEmailSource',path:'/v1/emails/{id}/source-import',method:'POST',response:'SavedEmailResponse',textBody:true,sourceCommand:true,explicitKey:true,keyed:true,etag:true,scope:'emails:write',description:'Preserve exact inert UTF-8 source and checkpoint the previous head atomically. Explicit original key and If-Match bind recovery; SDK never generates a command key or retries this operation automatically. Source fidelity and safe projection are separate.'});
+add({id:'forkEmailSource',path:'/v1/emails/{id}/source-fork',method:'POST',body:'SourceForkInput',response:'SavedEmailResponse',sourceJson:true,sourceCommand:true,explicitKey:true,keyed:true,etag:true,scope:'emails:write',description:'Fork the acknowledged structured artifact to raw source on the server, matching expected_artifact_hash and original If-Match. Never accepts browser preview bytes as canonical source. Explicit same-key recovery; no automatic SDK retry.'});
 for (const [id, command, method, body, response, keyed, etag] of [
-  ['saveDraft', 'draft', 'PATCH', 'DraftInput', 'EmailResponse', false, true],
+  ['saveDraft', 'draft', 'PATCH', 'DraftInput', 'SavedEmailResponse', true, true],
   ['checkpointEmail', 'revisions', 'POST', 'Empty', 'RevisionResponse', true, true],
   ['restoreEmail', 'restore', 'POST', 'RestoreInput', 'EmailResponse', true, true],
   ['previewEmail', 'preview', 'POST', 'PreviewInput', 'GenericResponse', false, false],
-  ['importHtml', 'import-html', 'POST', 'HtmlInput', 'EmailResponse', false, true],
+  ['importHtml', 'import-html', 'POST', 'HtmlInput', 'SavedEmailResponse', true, true],
 ] as const)
   add({
     id,
@@ -721,6 +744,8 @@ for (const [id, command, method, body, response, keyed, etag] of [
     response,
     keyed,
     etag,
+    sourceCommand: ['saveDraft','importHtml'].includes(id),
+    sourceJson: ['saveDraft','importHtml','previewEmail'].includes(id),
     scope: 'emails:write',
   });
 add({
@@ -729,12 +754,14 @@ add({
   method: 'GET',
   response: 'GenericResponse',
   binary: true,
+  sourceDownload:true,
+  description:'Frozen output bytes. format=source returns exact authored UTF-8 as an inert text/plain attachment with nosniff, no-store, source hash and storage profile; it is not a delivery artifact. Other formats retain projection, media and release checks.',
   scope: 'emails:export',
   query: [
     {
       name: 'format',
       in: 'query',
-      schema: { type: 'string', enum: ['html', 'txt', 'png', 'pdf'], default: 'html' },
+      schema: { type: 'string', enum: ['html', 'txt', 'png', 'pdf', 'zip', 'source'], default: 'html' },
     },
   ],
 });

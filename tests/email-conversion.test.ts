@@ -93,5 +93,13 @@ test('an oversized opaque fragment with many children returns a limit without a 
 test('nonraw and empty-content sources are unavailable and out-of-contract source/version reject without truncation',async()=>{
  const structured=await conversionProposal(blankSpec('owned-kit','Owned'),1);assert.equal(structured.status,'unsupported');assert.equal(structured.original_html,'');
  const empty=await conversionProposal(raw(' \n\t'),1);assert.equal(empty.status,'unsupported');assert.equal(empty.original_html,' \n\t');
- await assert.rejects(conversionProposal(raw('x'.repeat(2000001)),1));await assert.rejects(conversionProposal(raw('<p>x</p>'),0));
+ await assert.rejects(conversionProposal(raw('x'.repeat(2097153)),1));await assert.rejects(conversionProposal(raw('<p>x</p>'),0));
+});
+
+test('conversion binds source profiles and returns only inert original preview while retaining exact bytes',async()=>{
+ const source='\uFEFF<!-- preserved -->\r\n<p onclick="run()"><script>run()</script><a href="https://example.com">Go</a></p>\r',spec=raw(source);
+ const exact=await conversionProposal(spec,1,undefined,'exact-utf8-1'),legacy=await conversionProposal(spec,1,undefined,'legacy-stored-1');
+ assert.equal(exact.original_html,source);assert.equal(exact.source_profile,'exact-utf8-1');assert.equal(exact.browser_profile,'raw-browser-1');
+ assert.ok(exact.original_preview_html&&!exact.original_preview_html.includes('<script')&&!exact.original_preview_html.includes('onclick')&&!exact.original_preview_html.includes('href='));
+ assert.notEqual(exact.source_hash,legacy.source_hash);assert.notEqual(exact.proposal_hash,legacy.proposal_hash);assert.equal(legacy.original_html,source);
 });

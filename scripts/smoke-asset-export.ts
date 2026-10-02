@@ -17,9 +17,9 @@ env.loadEnvConfig(process.cwd());
 const origin = process.env.APP_ORIGIN!, address = new URL(origin);
 assert.equal(process.env.LOCAL_DEVELOPMENT, 'true');
 assert.equal(address.hostname, '127.0.0.1');
-assert.ok(['3002', '3003'].includes(address.port));
+assert.ok(['3002', '3003'].includes(address.port)||(address.port==='3004'&&process.env.SOURCE_TRUTH_FIXTURE==='true'));
 const database = new URL(process.env.MIGRATION_DATABASE_URL!);
-assert.equal(database.hostname, '127.0.0.1'); assert.equal(database.port, '55439'); assert.equal(database.pathname, '/mailcraft');
+assert.equal(database.hostname, '127.0.0.1'); assert.equal(database.port, '55439'); assert.ok(database.pathname==='/mailcraft'||(process.env.SOURCE_TRUTH_FIXTURE==='true'&&database.pathname.startsWith('/creation_fixture_')));
 const db = new pg.Pool({ connectionString: database.toString() }), workspace = randomUUID(), other = randomUUID(), brand = randomUUID(), user = 'asset-export-' + randomUUID(), cookie = randomBytes(32).toString('hex'), token = hash(Buffer.from(cookie)), workspaces = [workspace, other], evidence: string[] = [];
 let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
 function hash(bytes: Uint8Array) { return createHash('sha256').update(bytes).digest('hex'); }
@@ -81,9 +81,14 @@ try {
   browser = await chromium.launch({ headless: true }); const page = await browser.newPage(); await page.setContent(preview.preview_html); const imageLocator = page.locator('img').first(); await imageLocator.evaluate((img: HTMLImageElement) => img.decode());
   assert.deepEqual(await imageLocator.evaluate((img: HTMLImageElement) => { const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight; const context = canvas.getContext('2d')!; context.drawImage(img, 0, 0); return Array.from(context.getImageData(0, 0, 1, 1).data); }), [255, 0, 0, 255]); await page.screenshot({ path: '/tmp/lettercape-media-export-preview.png' });
   const remixed = await successful(await call('email-revisions/' + revision.id + '/remix', 'POST', { title: 'Owned managed remix' }), 201); assert.deepEqual(remixed.revision.manifest.assets, revision.manifest.assets);
-  const rawFork = (await successful(await call('emails/' + remixed.email.id + '/import-html', 'POST', { html: revision.html }, { 'If-Match': 'draft-' + remixed.email.doc_version }))).email;
+  const forkArtifact=(await successful(await call('emails/'+remixed.email.id+'/preview','POST',{spec:remixed.email.spec}))).artifact;
+  const rawFork = (await successful(await call('emails/' + remixed.email.id + '/source-fork', 'POST', { expected_artifact_hash:forkArtifact.hash }, { 'If-Match': 'draft-' + remixed.email.doc_version }))).email;
   assert.equal(rawFork.spec.editing_mode, 'raw_html'); assert.equal(rawFork.spec.asset_registry.length, gif ? 2 : 1);
   const rawRevision = (await successful(await call('emails/' + rawFork.id + '/revisions', 'POST', {}, { 'If-Match': 'draft-' + rawFork.doc_version }))).revision; assert.deepEqual(rawRevision.manifest.assets, revision.manifest.assets);
+  assert.equal(rawFork.spec.raw_html.includes('data:image/'),false,'Transient private preview bytes must not become canonical source');
+  const rawPreview=(await successful(await call('emails/'+rawFork.id+'/preview','POST',{spec:rawFork.spec}))).artifact;
+  await page.setContent(rawPreview.preview_html);const rawImage=page.locator('img').first();await rawImage.evaluate((img:HTMLImageElement)=>img.decode());assert.deepEqual(await rawImage.evaluate((img:HTMLImageElement)=>{const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const context=canvas.getContext('2d')!;context.drawImage(img,0,0);return Array.from(context.getImageData(0,0,1,1).data);}),[255,0,0,255]);
+  note('Actual raw browser projection resolves the registered immutable static fallback pixel; canonical source contains no transient data image PASS.');
   assert.equal((await call('emails/' + created.id + '/draft', 'PATCH', { spec }, { 'If-Match': 'draft-999' })).status, 412);
   assert.equal((await call('assets/' + asset.id, 'GET', undefined, {}, other)).status, 404); assert.equal((await call('email-revisions/' + revision.id + '/download?format=zip', 'GET', undefined, {}, other)).status, 404);
   assert.equal((await call('assets/' + asset.id + '/variants/' + entry.variant_id + '/content', 'GET', undefined, { 'X-Actor-Id': user + '-changed' })).status, 409);
@@ -97,6 +102,6 @@ try {
   await browser?.close();
   const objects = (await db.query('SELECT source_key key FROM assets WHERE workspace_id=ANY($1::uuid[]) UNION SELECT object_key FROM asset_variants WHERE workspace_id=ANY($1::uuid[]) UNION SELECT object_key FROM asset_object_staging WHERE workspace_id=ANY($1::uuid[])', [workspaces])).rows, store = new FileAssetStore(process.env.ASSET_STORE_ROOT!);
   for (const object of objects) if (object.key) await store.removeAuthorized(object.key);
-  const tx = await db.connect(); try { await tx.query('BEGIN'); for (const table of ['api_rate_events','api_keys','asset_revision_references', 'asset_draft_references', 'asset_variants', 'asset_scans', 'media_jobs', 'asset_object_staging', 'asset_rights', 'asset_uploads', 'assets', 'asset_quotas', 'email_lineage', 'render_downloads', 'preflights', 'idempotency', 'audit_events', 'operations', 'revisions', 'emails', 'brands', 'memberships']) await tx.query('DELETE FROM ' + table + ' WHERE workspace_id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM workspaces WHERE id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1 AND user_id=$2', [token, user]); await tx.query('COMMIT'); } catch (error) { await tx.query('ROLLBACK'); throw error; } finally { tx.release(); await db.end();await closeDb(); }
+  const tx = await db.connect(); try { await tx.query('BEGIN'); for (const table of ['email_source_provenance','api_rate_events','api_keys','asset_revision_references', 'asset_draft_references', 'asset_variants', 'asset_scans', 'media_jobs', 'asset_object_staging', 'asset_rights', 'asset_uploads', 'assets', 'asset_quotas', 'email_lineage', 'render_downloads', 'preflights', 'idempotency', 'audit_events', 'operations', 'revisions', 'emails', 'brands', 'memberships']) await tx.query('DELETE FROM ' + table + ' WHERE workspace_id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM workspaces WHERE id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1 AND user_id=$2', [token, user]); await tx.query('COMMIT'); } catch (error) { await tx.query('ROLLBACK'); throw error; } finally { tx.release(); await db.end();await closeDb(); }
   note('Exact owned export workspace/session/object cleanup PASS.'); await writeFile('/tmp/lettercape-media-export-evidence.log', evidence.join('\n') + '\n');
 }

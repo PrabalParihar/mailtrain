@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {blankSpec,compileEmail,EmailSpecSchema,sanitizeRaw}from'../src/domain/email';
+import {blankSpec,compileEmail,EmailSpecSchema}from'../src/domain/email';
+import {projectRawHtml} from '../src/domain/raw-html-projection';
 import {decorateHtmlMarketingLinks}from'../src/domain/utm-html';
 const tracking={utm_source:'newsletter',utm_medium:'email',utm_campaign:'été 日本 & sale'};
 test('strict optional tracking defaults absent and binds deterministic policy without source mutation',async()=>{
@@ -30,10 +31,10 @@ test('source-location HTML patches preserve every untouched byte and entity/quer
  assert.equal(changed,html.replace('https://example.com/a%2fb?x=a%20b&amp;flag=#part',expected));assert.equal(decorateHtmlMarketingLinks(changed,tracking),changed);
  assert.equal(decorateHtmlMarketingLinks('<a href=https://example.com/a>Link</a>',tracking),'<a href="https://example.com/a?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=%C3%A9t%C3%A9%20%E6%97%A5%E6%9C%AC%20%26%20sale">Link</a>');
 });
-test('raw mode applies explicit policy to sanitized HTML without modifying original draft markup',async()=>{
+test('raw external resources preserve source, block delivery and do not decorate an ineligible projection',async()=>{
  const original=blankSpec('brand','Brand'),raw='<p>Raw <a href="https://example.com/raw?x=a%20b&amp;flag=#part">Offer</a></p><img src="https://example.com/pixel?x=1" /><a href="{{UNSUBSCRIBE_URL}}">Exit</a>';
  const source={...original,editing_mode:'raw_html' as const,raw_html:raw,tracking},before=structuredClone(source),a=await compileEmail(source);assert.deepEqual(source,before);
- assert.equal(a.html,decorateHtmlMarketingLinks(sanitizeRaw(raw).html,tracking));assert.ok(a.text.includes('https://example.com/raw?x=a%20b&flag=&utm_source=newsletter'));assert.ok(!a.html.includes('pixel?x=1&amp;utm_'));
+ assert.ok('raw_projection' in a.manifest);assert.equal(a.html,projectRawHtml(raw).email_html);assert.equal(a.manifest.raw_projection?.delivery_status,'blocked');assert.equal(a.manifest.spec.raw_html,raw);assert.ok(a.manifest.raw_projection?.diagnostics.some(d=>d.code==='EXTERNAL_RESOURCE_BLOCKED'));assert.ok(!a.html.includes('utm_source='));
 });
 test('conflicts unsupported merge/signed links and ambiguous raw attributes produce located semantic refusal before saving',()=>{
  const original=blankSpec('brand','Brand');
@@ -52,3 +53,5 @@ test('parser-reconstructed raw anchors sharing a source interval receive exactly
 test('enabled tracking missing or empty raw content returns the existing located validation issue without throwing',()=>{
  for(const raw of[undefined,'']){const value={...blankSpec('brand','Brand'),tracking,editing_mode:'raw_html',raw_html:raw};const result=EmailSpecSchema.safeParse(value);assert.equal(result.success,false);if(!result.success)assert.ok(result.error.issues.some(issue=>issue.path.includes('raw_html')));}
 });
+
+test("eligible raw source decorates only its email projection and retains exact authority",async()=>{const raw='<p><a href="https://example.org/offer">Offer</a></p>',spec={...blankSpec("brand","Brand"),editing_mode:"raw_html" as const,raw_html:raw,tracking},artifact=await compileEmail(spec);assert.ok('raw_projection' in artifact.manifest);assert.equal(artifact.manifest.raw_projection?.delivery_status,"eligible_for_checks");assert.equal(artifact.html,decorateHtmlMarketingLinks(projectRawHtml(raw).email_html!,tracking));assert.equal(artifact.manifest.spec.raw_html,raw);assert.ok(!artifact.preview_html?.includes("utm_source="));});

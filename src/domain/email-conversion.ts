@@ -2,10 +2,13 @@ import{privateAssetBinding,type AssetManifest}from'./assets';
 import {createHash} from 'node:crypto';
 import {parseFragment,type DefaultTreeAdapterTypes} from 'parse5';
 import {EmailSpecSchema,compileEmail,sanitizeRaw,type EmailSpec,type Block} from './email';
+import {EmailSourceSpecSchema}from'./email-schema';
+import{projectRawHtml}from'./raw-html-projection';
+import type{SourceProfile}from'./email-source-contracts';
 import {ConversionProposalInput,ConversionProposalSchema,type ConversionProposal} from './email-conversion-contracts';
 export {ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema,type ConversionProposal} from './email-conversion-contracts';
 
-const POLICY='raw-to-blocks-1';
+const POLICY='raw-to-blocks-source-2';
 const voidTags=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
 type Node=DefaultTreeAdapterTypes.ChildNode;
 type Note=ConversionProposal['notes'][number];
@@ -67,11 +70,11 @@ function intact(tree:DefaultTreeAdapterTypes.DocumentFragment,html:string) {
 }
 
 /** Produces a review proposal only; it never replaces or decorates the supplied source. */
-export async function conversionProposal(spec:EmailSpec,version:number,assets?:AssetManifest):Promise<ConversionProposal> {
- const source=EmailSpecSchema.parse(spec),sourceVersion=ConversionProposalInput.parse({expected_version:version}).expected_version;
- const original=source.raw_html??'',sourceHash=digest({source_doc_version:sourceVersion,spec:source});
+export async function conversionProposal(spec:EmailSpec,version:number,assets?:AssetManifest,sourceProfile:SourceProfile='exact-utf8-1'):Promise<ConversionProposal> {
+ const source=EmailSourceSpecSchema.parse(spec),sourceVersion=ConversionProposalInput.parse({expected_version:version}).expected_version;
+ const original=source.raw_html??'',projection=projectRawHtml(original,{assets}),sourceHash=digest({source_doc_version:sourceVersion,spec:source,source_profile:sourceProfile,browser_profile:projection.browser_profile,email_profile:projection.email_profile,assets:assets??null});
  function finish(status:'available'|'unsupported',proposed:EmailSpec|null,preview:string|null,converted:number,opaque:number,notes:Note[]) {
-  const proposal={source_doc_version:sourceVersion,source_hash:sourceHash,status,original_html:original,spec:proposed,preview_html:preview,converted_nodes:converted,opaque_nodes:opaque,notes};
+  const proposal={source_doc_version:sourceVersion,source_hash:sourceHash,status,original_html:original,original_preview_html:projection.browser_html,source_profile:sourceProfile,browser_profile:projection.browser_profile,spec:proposed,preview_html:preview,converted_nodes:converted,opaque_nodes:opaque,notes};
   return ConversionProposalSchema.parse({...proposal,proposal_hash:digest({policy:POLICY,...proposal})});
  }
  function refuse(code:'unsupported_source'|'limit',message:string){return finish('unsupported',null,null,0,0,[{code,message}]);}

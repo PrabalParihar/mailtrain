@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {UTMParameters,UTMLinkError} from './utm';
 import {assertEmailUTMTargets} from './email-utm';
+import {MAX_RAW_SOURCE_BYTES,rawSourceBytes,validateSourceMetadata} from './email-source-values';
 const assetRef=z.object({asset_id:z.uuid(),variant_id:z.uuid()}).strict();
 
 // Browser-safe document shape. Server compiler adds sanitized-render validation.
@@ -99,8 +100,7 @@ const locales = [
   'he-IL',
 ] as const;
 export const LOCALES = locales;
-export const EmailSpecSchema = z
-  .object({
+const emailShape = {
     schema_version: z.enum(['1.0','1.1']),
     editing_mode: z.enum(['structured', 'raw_html']),
     locale: z.enum(locales),
@@ -120,9 +120,10 @@ export const EmailSpecSchema = z
     raw_html: z.string().max(2000000).optional(),
     tracking: UTMParameters.optional(),
     asset_registry:z.array(assetRef).max(200).optional(),
-  })
-  .strict()
-  .superRefine((s, c) => {
+  };
+const documentSchema=z.object(emailShape).strict();
+type EmailDocument=z.infer<typeof documentSchema>;
+function validateDocument(s:EmailDocument,c:z.RefinementCtx,sourceAdmission=false){
     if(s.schema_version==='1.0'&&s.asset_registry!==undefined)c.addIssue({code:'custom',message:'An asset registry requires explicit schema 1.1',path:['schema_version']});
     let count = 0;
     const ids = new Set<string>();
@@ -143,10 +144,18 @@ export const EmailSpecSchema = z
     }
     if (count > 200)
       c.addIssue({ code: 'custom', message: 'Maximum 200 nodes', path: ['sections'] });
-    if (s.editing_mode === 'raw_html' && !s.raw_html)
+    if (s.editing_mode === 'raw_html' && (sourceAdmission?s.raw_html===undefined:!s.raw_html))
       c.addIssue({ code: 'custom', message: 'Raw HTML required', path: ['raw_html'] });
-    if(s.tracking&&UTMParameters.safeParse(s.tracking).success&&(s.editing_mode!=='raw_html'||!!s.raw_html)){try{assertEmailUTMTargets(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
+    if((!sourceAdmission||s.editing_mode!=='raw_html')&&s.tracking&&UTMParameters.safeParse(s.tracking).success&&(s.editing_mode!=='raw_html'||!!s.raw_html)){try{assertEmailUTMTargets(s,{skipOpaque:sourceAdmission});}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
     if (JSON.stringify(s).length > 1048576 && s.editing_mode === 'structured')
       c.addIssue({ code: 'custom', message: 'Maximum 1 MiB structured document' });
-  });
+  }
+export const EmailSpecSchema=documentSchema.superRefine((s,c)=>validateDocument(s,c));
+// Saving source validates the same document structure while retaining inert raw
+// bytes. Delivery target validation belongs to the separately derived projection.
+export const EmailSourceSpecSchema=z.object({...emailShape,raw_html:z.string().max(MAX_RAW_SOURCE_BYTES).optional()}).strict().superRefine((s,c)=>{
+  validateDocument(s,c,true);
+  try{if(s.raw_html!==undefined)rawSourceBytes(s.raw_html);validateSourceMetadata(s);}
+  catch(error){c.addIssue({code:'custom',message:error instanceof Error?error.message:'Invalid exact source values',path:['raw_html']});}
+});
 export type EmailSpec = z.infer<typeof EmailSpecSchema>;

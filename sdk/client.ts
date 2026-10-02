@@ -6,7 +6,9 @@ type Params<I extends OperationId> = Op<I> extends { parameters: infer P } ? P :
 type Path<I extends OperationId> = Params<I> extends { path: infer P } ? P : never;
 type Query<I extends OperationId> = Params<I> extends { query?: infer Q } ? NonNullable<Q> : never;
 type Body<I extends OperationId> =
-  Op<I> extends { requestBody: { content: { 'application/octet-stream': unknown } } }
+  Op<I> extends { requestBody: { content: { 'text/plain': unknown } } }
+    ? string
+    : Op<I> extends { requestBody: { content: { 'application/octet-stream': unknown } } }
     ? Uint8Array | ArrayBuffer | Blob
     : Op<I> extends { requestBody: { content: { 'application/json': infer B } } } ? B : never;
 type SuccessResponse<I extends OperationId> =
@@ -26,9 +28,11 @@ export type CallOptions<I extends OperationId> = {
   signal?: AbortSignal;
   idempotencyKey?: string;
   ifMatch?: string;
+  actorId?: string;
 } & ([Path<I>] extends [never] ? { path?: never } : { path: Path<I> }) &
   ([Body<I>] extends [never] ? { body?: never } : { body: Body<I> }) &
-  ((typeof operationRegistry)[I]['binaryBody'] extends true ? {uploadToken:string} : {uploadToken?:never});
+  ((typeof operationRegistry)[I]['binaryBody'] extends true ? {uploadToken:string} : {uploadToken?:never}) &
+  ((typeof operationRegistry)[I]['explicitKey'] extends true ? {idempotencyKey:string;ifMatch:string} : object);
 type RequiredFields<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
 type Args<I extends OperationId> = [RequiredFields<CallOptions<I>>] extends [never]
   ? [input?: CallOptions<I>]
@@ -64,6 +68,7 @@ type TransportOptions = {
   idempotencyKey?: string;
   ifMatch?: string;
   uploadToken?: string;
+  actorId?: string;
 };
 export type ClientConfig = {
   baseUrl: string;
@@ -131,6 +136,12 @@ export class LettercapeClient {
     input.signal?.throwIfAborted();
     const contract = operationRegistry[operation];
     if (!contract) throw new Error('Unknown documented operation');
+    if (contract.explicitKey) {
+      if (!input.idempotencyKey || input.idempotencyKey.length > 200)
+        throw new Error('Supply the original explicit command key for source recovery.');
+      if (!input.ifMatch || !/^(?:"draft-[1-9][0-9]*"|"[1-9][0-9]*"|[1-9][0-9]*)$/.test(input.ifMatch))
+        throw new Error('Supply the original acknowledged If-Match version.');
+    }
     const path = contract.path.replace(/\{([^}]+)\}/g, (_, name: string) => {
       const value = input.path?.[name];
       if (typeof value !== 'string' || !value)
@@ -149,8 +160,19 @@ export class LettercapeClient {
     const key = contract.keyed ? (input.idempotencyKey ?? crypto.randomUUID()) : undefined;
     if (key) headers.set('Idempotency-Key', key);
     if (input.ifMatch) headers.set('If-Match', input.ifMatch);
+    if (input.actorId) headers.set('X-Actor-Id', input.actorId);
     let body: BodyInit | undefined;
-    if (contract.binaryBody) {
+    if (contract.textBody) {
+      if (typeof input.body !== 'string' || /[\u0000\uD800-\uDFFF]/u.test(input.body))
+        throw new Error('Supply valid UTF-8 source without NUL or unpaired surrogates.');
+      if (input.body.length > 2097152)
+        throw new Error('Source exceeds 2 MiB of UTF-8 bytes.');
+      const bytes = new TextEncoder().encode(input.body);
+      if (bytes.byteLength > 2097152)
+        throw new Error('Source exceeds 2 MiB of UTF-8 bytes.');
+      body = bytes;
+      headers.set('Content-Type', 'text/plain; charset=utf-8');
+    } else if (contract.binaryBody) {
       if (!input.uploadToken || !/^[a-f0-9]{64}$/.test(input.uploadToken))
         throw new Error('Supply the acknowledged upload token.');
       const source = input.body;
@@ -166,7 +188,7 @@ export class LettercapeClient {
       body = input.body === undefined ? undefined : JSON.stringify(input.body);
       if (body !== undefined) headers.set('Content-Type', 'application/json');
     }
-    const safe = contract.method === 'GET' || (contract.keyed && !!key);
+    const safe = contract.method === 'GET' || (contract.keyed && !!key && !contract.sourceCommand);
     try {
       for (let attempt = 0; ; attempt++) {
         input.signal?.throwIfAborted();
