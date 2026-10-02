@@ -25,5 +25,5 @@ Files src/ui/email-utm.tsx/editor, browser smoke/package/CI.
 - [x] Enable/apply/remove, retained invalid form, same/external policy stale reload, current unrelated edits, initial/Viewer/conflict, autosave/offline/checkpoint/reload, repeated clicks/error/workspace navigation/390px and old frozen artifact pin. Expected full checks and affected preview/preflight/derivation/export/campaign browser PASS; commit/task-done.
 
 ### Task 4: Single review and publication
-- [ ] ONE fresh whole-slice reviewer BASE..HEAD/spec/plan/ledger/all Review Focus; grade real effects; ONE native Important/Critical RED→GREEN pass; defer Minors and rule every declined judgment.
-- [ ] Final full checks, current-plan exhaustive public Rulings/Minors, clean expected Desktop tracked-only sync/hashes/actual canonical browser, authorized ordinary main push/exact-head CI. Delete only completed current workspace after committed preservation. All65/all13 remain required and production closed.
+- [x] ONE fresh whole-slice reviewer BASE..HEAD/spec/plan/ledger/all Review Focus; grade real effects; ONE native Important/Critical RED→GREEN pass; defer Minors and rule every declined judgment.
+- [x] Final full checks, current-plan exhaustive public Rulings/Minors, clean expected Desktop tracked-only sync/hashes/actual canonical browser, authorized ordinary main push/exact-head CI. Delete only completed current workspace after committed preservation. All65/all13 remain required and production closed.

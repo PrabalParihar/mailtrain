@@ -1,6 +1,6 @@
 # Production release evidence
 
-Full Baseline A remains required. Public deployment has not occurred. No paid account or resource has been activated. Current optional UTM development checks pass204tests/API93/full build and owned browser/export regressions; dccc071 is published/canonical353hashes but exact CI36984321270 failed on existing key Home navigation before UTM. Assertion-preserving diagnostic follow-up remains pending. UTM-FROZEN-CONTENT-CHECKPOINT.md preserves all single-review rulings and five Important fixes. All13gates remain open.
+Full Baseline A remains required. Public deployment has not occurred. No paid account or resource has been activated. Current optional UTM development checks pass204tests/API93/full build and owned browser/export regressions; reviewed source31c45fe is published/canonical353hashes with complete canonical key/UTM browser PASS and [exact CI36988823751](https://github.com/PrabalParihar/mailtrain/actions/runs/36988823751) SUCCESS in both jobs. Earlier navigation failure/probes are retained; its original timing cause remains unestablished. UTM-FROZEN-CONTENT-CHECKPOINT.md preserves all single-review rulings and five Important fixes. All13gates remain open.
 
 | Gate | Current evidence | State |
 |---|---|---|
