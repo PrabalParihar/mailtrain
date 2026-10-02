@@ -1,0 +1,12 @@
+{
+  "name": "lettercape-media-runtime",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "engines": {
+    "node": "24.12.0"
+  },
+  "dependencies": {
+    "sharp": "0.35.5"
+  }
+}
