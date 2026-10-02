@@ -32,8 +32,8 @@ Files src/server/workspace-calendar.ts, audience-routes/auth/http/API handler/ge
 
 ### Task 5: Calendar/timezone UI and recovery
 Files src/ui/workspace-calendar.tsx, operations/app/css, scripts/smoke-workspace-calendar.ts, package/CI. Accessible month/events/display-zone preference, planned labels and disclosed unmeasured heuristic.
-- [ ] Actual Chromium RED controls missing.
-- [ ] Actual initial/offline/error/repeated/lost acknowledgment/POST→failed GET/storage-unavailable, independent stale CAS/retained input/explicit reload, month/date folds/paging/error/empty/Viewer/mobile/workspace navigation. Expected full checks plus campaign/Voice/preflight/key/contract regressions PASS; commit/task-done.
+- [x] Actual Chromium RED controls missing.
+- [x] Actual initial/offline/error/repeated/lost acknowledgment/POST→failed GET/storage-unavailable, independent stale CAS/retained input/explicit reload, month/date folds/paging/error/empty/Viewer/mobile/workspace navigation. Expected full checks plus campaign/Voice/preflight/key/contract regressions PASS; commit/task-done.
 
 ### Task 6: Single review/source publication
 - [ ] Fresh whole-slice BASE..HEAD/spec/plan/ledger/all Review Focus. Grade effects; ONE native Important/Critical RED→GREEN pass; defer Minors/rule every declined judgment.

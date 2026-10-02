@@ -1,4 +1,5 @@
 'use client';
+import {WorkspaceCalendar} from './workspace-calendar';
 import{CampaignConfiguration}from'./campaign-configuration';
 import { useEffect, useState } from 'react';
 import{WebhookDeliveryHistory}from'./webhook-history';
@@ -163,6 +164,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
           {error || campaignPage.error || revisionPage.error}
         </p>
       )}
+      <WorkspaceCalendar key={workspace} workspace={workspace} role={role}/>
       <form
         className="panel campaign-create"
         onSubmit={(e) => {
@@ -207,7 +209,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
       </div>
       {items.length ? (
         items.map((c) => (
-          <section className="panel campaign-card" key={c.id}>
+          <section className="panel campaign-card" id={"campaign-"+c.id} key={c.id}>
             <div className="section-heading">
               <h2>{c.name}</h2>
               <span className="badge neutral">{c.state.replaceAll('_', ' ')}</span>

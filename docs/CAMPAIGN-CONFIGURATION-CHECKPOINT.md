@@ -76,4 +76,4 @@ Final: Ruling: explicit new user request authorizes the formerly deferred child 
 
 Final: minor (deferred): child configuration lifecycle status/editable controls can remain draft after parent review/cancel; server state guard prevents mutation, but explicit reload is needed for accurate child status.
 
-The lifecycle-display Minor was deferred at the original review. The user explicitly requested a tested follow-up after executor recovery; that follow-up is being implemented separately.
+The lifecycle-display Minor was deferred at the original review. The user explicitly requested a tested follow-up after executor recovery; that follow-up now passes four actual HTTP/Chromium regressions in the workspace-calendar slice. Publication/review evidence is recorded in WORKSPACE-CALENDAR-CHECKPOINT.md. The original review and its single native fix pass remain complete.
