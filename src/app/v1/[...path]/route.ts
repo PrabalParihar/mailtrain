@@ -1,3 +1,5 @@
+import {prepareRecipientAssessment,assessmentDetail,assessmentHistory,assessmentObservations,cancelRecipientAssessment} from '@/server/recipient-assessments';
+import {RecipientAssessmentInput} from '@/domain/recipient-assessments';
 import {localeSourceComparison} from '@/server/locale-source-comparison';
 import type {Block} from '@/domain/email-schema';
 import {emailConversionRoute}from'@/server/email-conversion';
@@ -68,7 +70,8 @@ async function handle(req: Request, ctx: Context) {
     }
     const sourceBody=root==='emails'&&method==='POST'&&(!id||command==='preview');
     if(sourceBody)await withPrincipal(req,command==='preview'?'read':'edit',async tx=>{if(id)await getEmail(tx,id);});
-    const body=sourceBody?await readEmailSourceJson(req):await readJson(req);
+    const recipientBody=root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
+    const body=recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
     const version = () => {
       const raw = req.headers.get('if-match');
@@ -78,6 +81,15 @@ async function handle(req: Request, ctx: Context) {
       return v;
     };
     if(root==='emails'&&id&&['conversion-proposal','convert-to-blocks'].includes(command))return json(await emailConversionRoute(req,id,command,body,key));
+    if(recipientBody){
+      const result=await withPrincipal(req,'audience',async(tx,p)=>{
+        if(root==='campaigns')return method==='POST'?prepareRecipientAssessment(tx,p,id,RecipientAssessmentInput.parse(body),key):assessmentHistory(req,tx,p,id);
+        if(command==='cancel'){z.object({}).strict().parse(body);return cancelRecipientAssessment(tx,p,id,key);}
+        return command==='observations'?assessmentObservations(req,tx,p,id):assessmentDetail(tx,p,id);
+      });
+      const assessment=(result as {assessment?:{id:string}}).assessment;
+      return json(result,root==='campaigns'&&method==='POST'?202:200,root==='campaigns'&&method==='POST'&&assessment?{Location:'/v1/recipient-assessments/'+assessment.id,'Retry-After':'2'}:{});
+    }
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
     if(root==='assets'){const result=await assetRoute(req,path,body,key);if(result instanceof Response){result.headers.set('X-Request-Id',request_id);return result;}return json(result,method==='POST'&&(id==='uploads'||command==='fallback')?202:200);}

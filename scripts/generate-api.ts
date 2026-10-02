@@ -1,3 +1,4 @@
+import {RecipientAssessmentInput,RecipientAssessmentView,RecipientObservationView}from'../src/domain/recipient-assessments';
 import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
 import {SenderDraftInput,SenderVersionInput,SenderCheckInput,SenderView,SenderVersionView,DNSObservation,DNSCheckView} from '../src/domain/sender-domain';
@@ -155,6 +156,9 @@ const schemas: Record<string, Schema> = {
     ['csv'],
     false,
   ),
+  RecipientAssessmentInput:fromZod(RecipientAssessmentInput),
+  RecipientAssessmentView:fromZod(RecipientAssessmentView),
+  RecipientObservationView:fromZod(RecipientObservationView),
   CampaignConfigurationInput:fromZod(CampaignConfigurationInput),
   CampaignConfigurationView:fromZod(CampaignConfigurationView),
   CampaignConfigurationSnapshot:fromZod(CampaignConfigurationSnapshot),
@@ -248,6 +252,8 @@ for (const [name, item] of Object.entries({
   Contacts: 'Contact',
   Campaigns: 'Campaign',
   CampaignConfigurations:'CampaignConfigurationSnapshot',
+  RecipientAssessments:'RecipientAssessmentView',
+  RecipientObservations:'RecipientObservationView',
   AudienceSnapshots: 'AudienceSnapshotMetadata',
   Segments: 'Segment',
   Audit: 'Audit',
@@ -298,6 +304,7 @@ schemas.CampaignResponse = envelope({ campaign: ref('Campaign') });
 schemas.WorkspacePreferencesResponse=envelope({preferences:ref('WorkspacePreferences')});
 schemas.WorkspaceTimezoneResponse=envelope({preferences:ref('WorkspacePreferences'),changed:{type:'boolean'},notice:string});
 schemas.CampaignCalendarResponse=envelope({data:array(ref('CalendarEntry')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},month:fromZod(CalendarMonth),time_zone:string,timezone_version:{type:'integer',minimum:1},notice:string});
+schemas.RecipientAssessmentResponse=envelope({assessment:ref('RecipientAssessmentView')});
 schemas.CampaignDetailResponse=envelope({campaign:ref('CampaignConfigurationView')});
 schemas.CampaignConfigurationResponse=envelope({campaign:ref('CampaignConfigurationView'),changed:{type:'boolean'},notice:string});
 schemas.AudienceSnapshotMetadataResponse=envelope({snapshot:ref('AudienceSnapshotMetadata')});
@@ -446,6 +453,7 @@ const examples: Record<string, unknown> = {
   InspectInput: { csv: 'email\nfixture@example.com' },
   ImportInput: { csv: 'email\nfixture@example.com', mapping: { email: 'email', attributes: {} } },
   CampaignInput: { name: 'Example campaign', revision_id: exampleId },
+  RecipientAssessmentInput:{expected_version:1,expected_digest:'a'.repeat(64),topic_id:null},
   CampaignConfigurationInput:{expected_version:1,name:'Example planned campaign',revision_id:exampleId,planned_timing:{local_time:'2026-11-01T01:30',time_zone:'America/New_York',utc_offset:'-04:00'}},
   KeyInput: { name: 'Example reader', scopes: ['emails:read'], expires_in_days: 90 },
 };
@@ -920,6 +928,12 @@ add({
 add({id:'getWorkspacePreferences',path:'/v1/workspace-preferences',method:'GET',response:'WorkspacePreferencesResponse',session:true,description:'Current content-role session; display preference only.'});
 add({id:'setWorkspaceTimezone',path:'/v1/workspace-preferences/timezone',method:'POST',body:'WorkspaceTimezoneInput',example:{expected_version:1,time_zone:'UTC'},response:'WorkspaceTimezoneResponse',keyed:true,session:true,description:'Current Owner/Admin session and exact preference version. Replay acknowledges the original command and returns current preference. Campaign intent, hashes and approval remain intact; this does not schedule delivery.'});
 add({id:'getCampaignCalendar',path:'/v1/campaigns/calendar',method:'GET',response:'CampaignCalendarResponse',paged:true,scope:'campaigns:read',query:[{name:'month',in:'query',required:true,schema:fromZod(CalendarMonth)}],description:'Complete valid planned timing displayed in saved workspace timezone. Signed cursor binds actor, tenant, month and timezone version. Redacted metadata only; no accepted delivery schedule or audience-performance measurement.'});
+const assessmentDescription='Historical recipient observations from an exact immutable campaign configuration and verified frozen audience. Current Owner/Admin audience authority and additional audience:read API-key scope required on every request/replay. Selected topic is assessment context only. No approval, dispatch authorization, delivery attempt, provider call, frequency reservation or send quota. Production worker identity remains unqualified; local development worker only.';
+add({id:'prepareRecipientAssessment',path:'/v1/campaigns/{id}/recipient-assessments',method:'POST',body:'RecipientAssessmentInput',response:'RecipientAssessmentResponse',status:202,keyed:true,explicitKey:true,scope:'campaigns:write',description:assessmentDescription+' Version and digest CAS; original keyed receipt is historical, retrieve detail for current progress. Maximum10,000 members; input16KiB.'});
+add({id:'listRecipientAssessments',path:'/v1/campaigns/{id}/recipient-assessments',method:'GET',response:'RecipientAssessmentsPage',paged:true,scope:'campaigns:read',description:assessmentDescription});
+add({id:'getRecipientAssessment',path:'/v1/recipient-assessments/{id}',method:'GET',response:'RecipientAssessmentResponse',scope:'campaigns:read',description:assessmentDescription});
+add({id:'listRecipientObservations',path:'/v1/recipient-assessments/{id}/observations',method:'GET',response:'RecipientObservationsPage',paged:true,scope:'campaigns:read',description:assessmentDescription+' Contact IDs only; no recipient addresses. Signed cursor binds actor/tenant/assessment and date filters, default25/max100.'});
+add({id:'cancelRecipientAssessment',path:'/v1/recipient-assessments/{id}/cancel',method:'POST',body:'Empty',response:'RecipientAssessmentResponse',keyed:true,explicitKey:true,scope:'campaigns:write',description:assessmentDescription+' Retains manifest and committed observations. A completed run remains completed.'});
 add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignDetailResponse',scope:'campaigns:read'});
 add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
 add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS, exact owned content and explicit planned timing. Optional audience_snapshot_id requires current Owner/Admin audience authority and additional audience:read on a key; omission preserves the existing selection. Exact frozen members/source digest are verified and bound without live re-evaluation. Material changes clear review/approval; no-op does not append history. Original receipts require current authority and do not imply current lifecycle state or accepted delivery.'});

@@ -5,3 +5,8 @@ test('source writes and inert revision downloads retain email permission boundar
   for(const command of ['source-import','source-fork','import-html','draft'])assert.equal(scopeForResource('emails',command==='draft'?'PATCH':'POST',command),'emails:write');
   assert.equal(scopeForResource('email-revisions','GET','download'),'emails:export');
 });
+test('dedicated recipient assessment scope derives from campaign resources',()=>{
+ assert.equal(scopeForResource('recipient-assessments','GET','observations'),'campaigns:read');
+ assert.equal(scopeForResource('recipient-assessments','POST','cancel'),'campaigns:write');
+ assert.equal(scopeForResource('campaigns','POST','recipient-assessments'),'campaigns:write');
+});

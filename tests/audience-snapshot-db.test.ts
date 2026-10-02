@@ -72,8 +72,8 @@ test('snapshot bindings and source reads are tenant fenced with nullable composi
     const source = (await db.query("SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='audience_snapshots'::regclass")).rows[0];
     assert.deepEqual(source, { relrowsecurity: true, relforcerowsecurity: true });
     const keys = (await db.query("SELECT conrelid::regclass::text AS table_name,pg_get_constraintdef(oid) AS definition FROM pg_constraint WHERE contype='f' AND confrelid='audience_snapshots'::regclass ORDER BY table_name")).rows;
-    assert.deepEqual(keys.map(row => row.table_name), ['campaign_revisions', 'campaigns']);
-    for (const row of keys) assert.match(row.definition, /FOREIGN KEY \(workspace_id, audience_snapshot_id\) REFERENCES audience_snapshots\(workspace_id, id\)/);
+    assert.deepEqual(keys.map(row => row.table_name), ['campaign_revisions', 'campaigns', 'recipient_assessments']);
+    for (const row of keys) assert.match(row.definition, row.table_name==='recipient_assessments'?/FOREIGN KEY \(workspace_id, snapshot_id\) REFERENCES audience_snapshots\(workspace_id, id\)/:/FOREIGN KEY \(workspace_id, audience_snapshot_id\) REFERENCES audience_snapshots\(workspace_id, id\)/);
     const role = (await db.query("SELECT rolcanlogin,rolsuper,rolbypassrls FROM pg_roles WHERE rolname='mailcraft_campaign_history_admin'")).rows[0];
     assert.deepEqual(role, { rolcanlogin: false, rolsuper: false, rolbypassrls: false });
   } finally { await Promise.all([app.end(), db.end()]); }

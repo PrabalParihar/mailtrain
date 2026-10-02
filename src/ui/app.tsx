@@ -465,7 +465,7 @@ export function MailcraftApp({
             />
           )}
           {section === 'audience' && <AudiencePanel key={workspace+':'+(current?.role??'Viewer')} workspace={workspace} role={current?.role??'Viewer'} />}
-          {section === 'campaigns' && <CampaignPanel key={workspace+':'+(current?.role??'Viewer')} workspace={workspace} role={current?.role??'Viewer'} />}
+          {section === 'campaigns' && <CampaignPanel key={JSON.stringify([workspace,actor,current?.role??'Viewer'])} workspace={workspace} role={current?.role??'Viewer'} actor={actor} />}
           {section === 'settings' && (
             <SettingsPanel key={workspace} workspace={workspace} role={current?.role ?? ''} />
           )}

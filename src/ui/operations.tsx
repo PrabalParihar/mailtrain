@@ -1,4 +1,5 @@
 'use client';
+import {RecipientAssessments}from'./recipient-assessments';
 import {WorkspaceCalendar} from './workspace-calendar';
 import{CampaignConfiguration}from'./campaign-configuration';
 import { useEffect, useState } from 'react';
@@ -118,7 +119,7 @@ export function AudiencePanel({ workspace, role }: { workspace: string; role: st
   );
 }
 type Campaign = z.infer<typeof CampaignConfigurationView>;
-export function CampaignPanel({ workspace,role }: { workspace: string;role:string }) {
+export function CampaignPanel({ workspace,role,actor }: { workspace: string;role:string;actor:string }) {
   const campaignPage = useResourcePage<Campaign>(workspace, 'campaigns');
   const revisionPage = useResourcePage<{ id: string; revision_no: number; subject: string }>(
     workspace,
@@ -224,6 +225,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
             <p className="small muted">
               Sender/provider: not configured · Tracking: off · Schedule: none
             </p>
+            <RecipientAssessments key={JSON.stringify([workspace,c.id,role,actor])} workspace={workspace} id={c.id} role={role} actor={actor} version={c.version} digest={c.digest}/>
             <CampaignConfiguration key={workspace+':'+c.id+':'+role} workspace={workspace} id={c.id} role={role} savedState={c.state} savedVersion={c.version} onUpdate={reload}/>
             <div className="toolbar">
               <button

@@ -54,6 +54,7 @@ jobs:
           # Owned fixture apps finish before the shared Next dev lock is acquired.
           npm run smoke:source-truth
           npm run smoke:locale-comparison
+          npm run smoke:recipient-assessments
           npm run dev > /tmp/lettercape-dev.log 2>&1 &
           for attempt in $(seq 1 60); do
             curl --fail --silent http://127.0.0.1:3000/v1/health && break

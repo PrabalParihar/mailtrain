@@ -1,5 +1,7 @@
 # Verified coverage checkpoint — 2026-10-02
 
+
+Current recipient preparation development checkpoint: native471tests/API120/lint/type/build and actual recipient HTTP/Chromium/two-tab/crash/restart pass; REQ036 advances to Partial for historical preparation/log visibility only. Submission/attempt ledger and all GA gates remain open. [RECIPIENT-ASSESSMENTS-CHECKPOINT.md](RECIPIENT-ASSESSMENTS-CHECKPOINT.md) retains reviews, corrections and evidence. Whole-slice review/canonical closeout recorded there before synchronization.
 Current locale comparison/manual selected-text development checkpoint:431/431 native tests, zero fail/skip,115API contracts/lint/type/build and actual parent-drift/repeated-copy/recovery/navigation/empty/Viewer/Hebrew390px plus full source/editor baseline pass. Current Linux image/closed startup passes. No translation/reviewer/fresh-source claim; immutable origin remains stale, all65/all13 unchanged. Canonical4787d95/535tracked hashes/build/lint/type/API115 and actual complete locale HTTP/Chromium pass; original109draft/221revision hashes and private metadata remain unchanged. Root author inspection is recorded; independent review and full GA acceptance remain open. [LOCALE-COMPARISON-CHECKPOINT.md](LOCALE-COMPARISON-CHECKPOINT.md).
 
 Current source development checkpoint: exact raw/custom HTML preservation, source provenance, bounded inert browser/email projections, strict original-command receipts and actor-scoped IndexedDB recovery have426/426 corrected native tests with zero skips plus actual source/fragment/media/picker HTTP and Chromium proofs. One frozen whole review and one native Important correction pass are complete; one source Minor and six inherited media Minors remain deferred. Corrected Linux packaging/closed startup and canonical526tracked-hash/build/full actual browser/media qualification pass at761d89e. Additive033 preserves original109draft/221revision column hashes. Publication and current-head remote CI remain blocked. No requirement/gate is promoted; all65/all13 remain binding. [SOURCE-TRUTH-CHECKPOINT.md](SOURCE-TRUTH-CHECKPOINT.md) retains full five handoffs, actual REDs and costs.
@@ -25,13 +27,13 @@ Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is p
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (41)
+## Partial local implementation with acceptance still required (42)
 
-REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-036, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (19)
+## Required capability not delivered; implementation and/or configuration missing (18)
 
-REQ-005, REQ-012, REQ-018, REQ-020, REQ-022, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-005, REQ-012, REQ-018, REQ-020, REQ-022, REQ-033, REQ-034, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 

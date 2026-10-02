@@ -44,3 +44,5 @@ Open obligations: full-GA command families/adapters/conformance, expanded typed 
 Deferred review issue: when Retry-After exceeds the wait budget, RETRY_DEFERRED currently omits the originating request ID/status. Recover using the existing command key; preserve these diagnostics before GA.
 
 `compareLocaleSource` reads original frozen parent/current parent/saved locale-child source through the same tenant and actor scope. It does not translate, review, approve or advance source lineage. The three escaped specs share an8MiB server comparison budget;413 preserves the saved source/draft. Read responses can be cancelled. Copied manual text still uses explicit original-command draft save and CAS recovery.
+
+Recipient assessment commands require an explicit original idempotency key, current Owner/Admin audience authority, and campaigns plus audience:read scopes. Selected topic is assessment context only. Retrieve current detail after a historical receipt replay. Observations never authorize sending or reserve frequency; production dispatch remains unavailable.

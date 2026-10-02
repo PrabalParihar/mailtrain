@@ -103,9 +103,11 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && command === 'confirm') methods = ['POST'];
     else if (uuid.test(id) && command === 'errors') methods = ['GET'];
   }
+  if(root==='recipient-assessments'&&uuid.test(id??'')){if(!command||command==='observations')methods=['GET'];else if(command==='cancel')methods=['POST'];}
   if (root === 'campaigns') {
     if (!id) methods = ['GET', 'POST'];
     else if(id==='calendar'&&!command)methods=['GET'];
+    else if(uuid.test(id)&&command==='recipient-assessments')methods=['GET','POST'];
     else if(uuid.test(id)&&(!command||command==='configurations'))methods=['GET'];
     else if (
       uuid.test(id) &&
@@ -125,7 +127,8 @@ export async function readJson(
 ): Promise<Record<string, unknown>> {
   if (['GET', 'HEAD', 'DELETE'].includes(request.method)) return {};
   const length = Number(request.headers.get('content-length') ?? 0);
-  if (length > maxBytes) fail(413, 'PAYLOAD_TOO_LARGE', 'Request exceeds 2 MiB.');
+  const limitMessage=maxBytes===2*1024*1024?'Request exceeds 2 MiB.':'Request exceeds '+maxBytes+' bytes.';
+  if (length > maxBytes) fail(413, 'PAYLOAD_TOO_LARGE', limitMessage);
   const reader = request.body?.getReader();
   if (!reader) return {};
   let bytes = 0;
@@ -137,7 +140,7 @@ export async function readJson(
       bytes += value.byteLength;
       if (bytes > maxBytes) {
         await reader.cancel();
-        fail(413, 'PAYLOAD_TOO_LARGE', 'Request exceeds 2 MiB.');
+        fail(413, 'PAYLOAD_TOO_LARGE', limitMessage);
       }
       chunks.push(value);
     }

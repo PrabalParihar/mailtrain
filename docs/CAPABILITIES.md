@@ -69,3 +69,5 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-063 | 10 AI evaluation and trust | Partial / development | Versioned no-tool structured AI prompt/validation; 50 real golden briefs pending |
 | REQ-064 | 13 and 16 Production delivery | Partial / development | Pinned lockfile/build/test/lint/typecheck and release blocker register; production gates pending |
 | REQ-065 | 18 and 19 Later product surfaces | Roadmap | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
+
+Recipient assessment preparation/logs: strict frozen configurations and current historical checks, durable local worker and cancel/recovery/paged logs. This is Partial REQ036, not approval/submission/delivery; production worker gates remain open. See RECIPIENT-ASSESSMENTS-CHECKPOINT.md. Current tracker42 partial/18 undelivered/5 roadmap, zero whole requirement/gate accepted.

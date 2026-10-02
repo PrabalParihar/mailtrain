@@ -1,5 +1,7 @@
 # Lettercape delivery checkpoint — 2026-10-02
 
+
+Current recipient preparation development checkpoint: native471tests/API120/lint/type/build and actual recipient HTTP/Chromium/two-tab/crash/restart pass; REQ036 advances to Partial for historical preparation/log visibility only. Submission/attempt ledger and all GA gates remain open. [RECIPIENT-ASSESSMENTS-CHECKPOINT.md](RECIPIENT-ASSESSMENTS-CHECKPOINT.md) retains reviews, corrections and evidence. Whole-slice review/canonical closeout recorded there before synchronization.
 Current locale comparison/manual selected-text development checkpoint:431/431 native tests, zero fail/skip,115API contracts/lint/type/build and actual parent-drift/repeated-copy/recovery/navigation/empty/Viewer/Hebrew390px plus full source/editor baseline pass. Current Linux image/closed startup passes. No translation/reviewer/fresh-source claim; immutable origin remains stale, all65/all13 unchanged. Canonical4787d95/535tracked hashes/build/lint/type/API115 and actual complete locale HTTP/Chromium pass; original109draft/221revision hashes and private metadata remain unchanged. Root author inspection is recorded; independent review and full GA acceptance remain open. [LOCALE-COMPARISON-CHECKPOINT.md](LOCALE-COMPARISON-CHECKPOINT.md).
 
 Current source and media development checkpoints: exact UTF-8 raw/custom HTML, durable original-command recovery, isolated registered GIF/static fallback and frozen exports are tested locally. The source correction passes426tests/zero skips, full checks/API114 and actual source/fragment/media/editor baseline HTTP/Chromium. One frozen source review and one Important pass close both confirmed Important findings; one source Minor and six inherited media Minors remain deferred. Canonical source761d89e/526tracked hashes/build/full actual source+fragment+baseline+media qualification passes, with original109draft/221revision hashes preserved after additive033. Publication/current-head remote CI and all13 release gates remain open. See [SOURCE-TRUTH-CHECKPOINT.md](SOURCE-TRUTH-CHECKPOINT.md) and [MEDIA-ASSETS-CHECKPOINT.md](MEDIA-ASSETS-CHECKPOINT.md).
@@ -38,7 +40,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 
 ## Delivery classes for every requirement
 
-41requirements are partially implemented;19full capability paths remain not started/undelivered;5PRD roadmap rows retain their stated later commitments. External blockers overlap these classes and do not remove work from the baseline. An external blocker prevents live acceptance; it does not prevent independent implementation of the corresponding contracts, UI, workers and tests.
+42requirements are partially implemented;18full capability paths remain not started/undelivered;5PRD roadmap rows retain their stated later commitments. External blockers overlap these classes and do not remove work from the baseline. An external blocker prevents live acceptance; it does not prevent independent implementation of the corresponding contracts, UI, workers and tests.
 
 | ID | Required feature | Current code delivery | External acceptance blocker |
 |---|---|---|---|
@@ -77,7 +79,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 | REQ-033 | 5.9 Managed SES and provider keys | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-034 | 5.9 Trial domain and warming | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-035 | 5.9 Immediate schedule approval | Partial | Sender/DNS/provider accounts, signed events and consent policy |
-| REQ-036 | 5.9 Recipient jobs and logs | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
+| REQ-036 | 5.9 Recipient jobs and logs | Partial — locally qualified preparation and logs; submission/attempt ledger pending | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-037 | 5.9 Abuse controls | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-039 | 5.10 A/B subject testing | PRD roadmap retained | No distinct account blocker identified; implementation/acceptance still required |
@@ -124,6 +126,6 @@ After this slice, the next code milestones are: complete team/editor/code-round-
 4. Verify the exact Railway destination/resource allocation and all-inUS$30monthly constraint including fees/taxes/shared workloads; deploy private services only after the applicable gates permit it. Do not change unrelated workspace projects to force a cap.
 5. Complete load/restore/incident/security/accessibility/privacy evidence, independent assessment and10actual design-partner workspaces; close all13gates and obtain accountable final launch signoff.
 
-A credible full-production date cannot be bounded from the current evidence:19capability paths are undelivered,41are partial, provider/legal/procurement and external assessment/design-partner timing have no confirmed dates, and zero gates are signed closed. Full readiness is a multi-milestone build and acceptance effort, not an hours-away launch. Re-estimate after the next independent module and again once external prerequisite dates and provider qualification results are known. A narrow source slice estimate must never be extrapolated into a full-product deadline or percentage.
+A credible full-production date cannot be bounded from the current evidence:18capability paths are undelivered,42are partial, provider/legal/procurement and external assessment/design-partner timing have no confirmed dates, and zero gates are signed closed. Full readiness is a multi-milestone build and acceptance effort, not an hours-away launch. Re-estimate after the next independent module and again once external prerequisite dates and provider qualification results are known. A narrow source slice estimate must never be extrapolated into a full-product deadline or percentage.
 
 The exact65-row capability register is CAPABILITIES.md; gate owners/evidence remain in RELEASE.md. All22UTM execution/review rulings and their costs are preserved exhaustively in UTM-FROZEN-CONTENT-CHECKPOINT.md; no Minor was reported for that slice. Earlier deferred Minors remain in their checkpoints. No production provider/model/send/spend/public deployment occurred.

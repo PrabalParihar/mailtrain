@@ -1212,6 +1212,66 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "prepareRecipientAssessment": {
+    "method": "POST",
+    "path": "/v1/campaigns/{id}/recipient-assessments",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": true,
+    "blocked": false
+  },
+  "listRecipientAssessments": {
+    "method": "GET",
+    "path": "/v1/campaigns/{id}/recipient-assessments",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "getRecipientAssessment": {
+    "method": "GET",
+    "path": "/v1/recipient-assessments/{id}",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "listRecipientObservations": {
+    "method": "GET",
+    "path": "/v1/recipient-assessments/{id}/observations",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "cancelRecipientAssessment": {
+    "method": "POST",
+    "path": "/v1/recipient-assessments/{id}/cancel",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": true,
+    "blocked": false
+  },
   "getCampaign": {
     "method": "GET",
     "path": "/v1/campaigns/{id}",
