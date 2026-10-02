@@ -35,3 +35,11 @@ test('server raw fork pins actual artifact and retries without duplicating check
  assert.equal((await db.query('SELECT count(*)FROM revisions WHERE email_id=$1',[created.id])).rows[0].count,'2');
  const event=(await db.query('SELECT *FROM email_source_provenance WHERE email_id=$1',[created.id])).rows[0];assert.equal(event.origin,'structured_fork');assert.ok(event.source_revision_id);
 }));
+
+for(const [name,html,code]of [['blocked','<!--[if mso]><v:rect>Original</v:rect><![endif]--><p>Fallback</p>','SOURCE_PROJECTION_BLOCKED'],['unavailable','<br>'.repeat(21000),'SOURCE_PROJECTION_UNAVAILABLE']]as const)test('raw fork refuses '+name+' fragment projection without mode/version/history/receipt mutation',async()=>sourceDatabase(async({db,p,brand,tx})=>{
+ const created=await tx(c=>createEmail(c,p,'Owned refused fork',{...blankSpec(brand,'Owned'),sections:[{id:'opaque',type:'custom_html',html}]})),frozen=await tx(c=>checkpoint(c,p,created.id,1)),key=randomUUID();
+ assert.equal(frozen.manifest.fragment_projection.delivery_status,name);
+ await assert.rejects(tx(c=>forkEmailToRaw(c,p,created.id,1,frozen.artifact_hash,key)),{code});
+ const current=(await db.query('SELECT doc_version,spec,raw_source_profile FROM emails WHERE id=$1',[created.id])).rows[0];assert.equal(current.doc_version,1);assert.deepEqual(current.spec,created.spec);assert.equal(current.raw_source_profile,null);
+ assert.equal((await db.query('SELECT count(*)FROM revisions WHERE email_id=$1',[created.id])).rows[0].count,'1');assert.equal((await db.query('SELECT count(*)FROM idempotency WHERE key=$1',[key])).rows[0].count,'0');assert.equal((await db.query('SELECT count(*)FROM email_source_provenance WHERE email_id=$1',[created.id])).rows[0].count,'0');
+}));

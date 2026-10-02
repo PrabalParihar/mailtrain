@@ -1,5 +1,6 @@
 // Pure server projection: canonical custom HTML is never replaced by these maps.
 import {createHash} from 'node:crypto';
+import {countMarkupStarts} from './raw-html-work-budget';
 import type {AssetManifest} from './assets';
 import type {Block} from './email-schema';
 import {projectRawHtml} from './raw-html-projection';
@@ -19,7 +20,7 @@ export function projectHtmlFragments(fragments:Fragment[],context:{assets?:Asset
  // source and make the projection explicitly unavailable rather than truncating it.
  for(const fragment of fragments){
   manifest.sources.push({node_id:fragment.id,source_sha256:createHash('sha256').update(fragment.html).digest('hex'),source_bytes:Buffer.byteLength(fragment.html)});
-  const pattern=/<!--[\s\S]*?-->|<\/?[a-z][^>]*>/gi;while(pattern.exec(fragment.html)!==null)if(++tokens>20000)break;
+  if(tokens<=20000)tokens+=countMarkupStarts(fragment.html,20000-tokens);
  }
  if(tokens>20000)limit();
  else for(const fragment of fragments){

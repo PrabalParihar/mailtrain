@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
+import {effectiveProjectionStatus} from '@/domain/projection-status';
 import {EmailSourceSpecSchema} from '@/domain/email-schema';
 import {canonicalSpecString} from '@/domain/email-source-values';
 import {SavedEmailResponseSchema,type SourceProfile,type RawDiagnostic} from '@/domain/email-source-contracts';
@@ -840,8 +841,9 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                         if (!(await flush()) || dirtyAt.current) return;
                         const origin = anchor(),
                           snapshot = structuredClone(live.current!);
-                        const compiled=await api<{artifact:{html:string;hash:string;manifest:{assets?:{entries:Array<{asset_id:string;variant_id:string}>}}}}>(workspace,'emails/'+id+'/preview','POST',{spec:snapshot.spec},undefined,undefined,undefined,actor);
+                        const compiled=await api<{artifact:{html:string;hash:string;manifest:{assets?:{entries:Array<{asset_id:string;variant_id:string}>};raw_projection?:{delivery_status:string};fragment_projection?:{delivery_status:string}}}}>(workspace,'emails/'+id+'/preview','POST',{spec:snapshot.spec},undefined,undefined,undefined,actor);
                         if(!matches(origin))throw Error('The draft changed before raw conversion. Review the current version.');
+                        const projectionStatus=effectiveProjectionStatus(compiled.artifact.manifest);if(projectionStatus!=='eligible_for_checks')throw Error(projectionStatus==='unavailable'?'Generated source is unavailable. Exact authored fragments remain in the structured draft; correct the source diagnostics before switching modes.':'Correct the blocking source diagnostics before switching modes. Exact authored fragments remain in the structured draft.');
                         const entries=compiled.artifact.manifest.assets?.entries;
                         const registry=entries?Array.from(new Map(entries.map(e=>[e.asset_id+':'+e.variant_id,{asset_id:e.asset_id,variant_id:e.variant_id}])).values()):undefined;
                         const spec=EmailSourceSpecSchema.parse({...snapshot.spec,editing_mode:'raw_html',raw_html:compiled.artifact.html,...(registry?.length?{schema_version:'1.1',asset_registry:registry}:{})});

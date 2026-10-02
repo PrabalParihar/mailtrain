@@ -1,4 +1,5 @@
 import{z}from'zod';
+import {effectiveProjectionStatus} from '../domain/projection-status';
 import type{Tx}from'./db';import type{Principal}from'./auth';
 import{assertCurrentAuthority}from'./current-authority';import{keyed}from'./commands';import{fail}from'./errors';
 import{getEmail,saveDraft,checkpoint}from'./emails';
@@ -56,7 +57,7 @@ export async function forkEmailToRaw(tx:Tx,p:Principal,id:string,expectedVersion
  const stored=await replay(tx,p,id,'email.source-fork',commandId,{expected_version:expectedVersion,artifact_hash:expectedArtifactHash},async()=>{
   const email=await lockEmail(tx,p,id);if(email.doc_version!==expectedVersion)fail(412,'VERSION_MISMATCH','The draft changed before raw fork.');if(email.spec.editing_mode!=='structured')fail(409,'STRUCTURED_MODE_REQUIRED','Only a structured draft can fork its generated source.');
   const frozen=await checkpoint(tx,p,id,expectedVersion);if(frozen.artifact_hash!==expectedArtifactHash)fail(409,'SOURCE_ARTIFACT_CHANGED','The current artifact differs. Review the current generated source.');
-  if(frozen.manifest.raw_projection?.delivery_status==='unavailable')fail(409,'SOURCE_PROJECTION_UNAVAILABLE','Generated source is unavailable.');
+  const projectionStatus=effectiveProjectionStatus(frozen.manifest);if(projectionStatus==='unavailable')fail(409,'SOURCE_PROJECTION_UNAVAILABLE','Generated source is unavailable. Exact authored fragments remain in the structured draft; correct the source diagnostics before switching modes.');if(projectionStatus==='blocked')fail(409,'SOURCE_PROJECTION_BLOCKED','Correct the blocking source diagnostics before switching modes. Exact authored fragments remain in the structured draft.');
   const spec=rawForkSpec(frozen.spec,frozen);
   const saved=await saveDraft(tx,p,id,expectedVersion,spec,{origin:'structured_fork',revision:frozen.id,commandId});await authority(tx,p);return {...compact(response(p,saved,expectedVersion,commandId)),source_revision:frozen.id as string};
  });

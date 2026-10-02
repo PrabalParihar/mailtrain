@@ -1,6 +1,7 @@
 // Server-only pure projection. It parses text; it never fetches, evaluates or
 // persists source. A manifest is already-authorized metadata, not asset bytes.
 import {createHash} from 'node:crypto';
+import {countMarkupStarts} from './raw-html-work-budget';
 import sanitizeHtml from 'sanitize-html';
 import {parse,type DefaultTreeAdapterTypes} from 'parse5';
 import {AssetManifestSchema,privateAssetBinding,type AssetManifest,type AssetManifestEntry} from './assets';
@@ -59,11 +60,7 @@ export function projectRawHtml(source:string,context:{assets?:AssetManifest;work
   if(source.trim()==='')add('RAW_SOURCE_EMPTY','blocking','Empty source is preserved and can be saved or downloaded; delivery requires nonempty email content.');
   // Conservative lexical budget before allocating a parse tree. This gate is
   // not the sanitizer, and false positives leave the exact source recoverable.
-  let tokens=0;
-  const tokenPattern=/<!--[\s\S]*?-->|<\/?[a-z][^>]*>/gi;
-  while(tokenPattern.exec(source)!==null){
-    if(++tokens>MAX_RAW_PROJECTION_NODES){limit();return finish(null,null);}
-  }
+  if(countMarkupStarts(source)>MAX_RAW_PROJECTION_NODES){limit();return finish(null,null);}
   const tree=parse(source,{sourceCodeLocationInfo:true,onParseError(error){
     if(error.code!=='missing-doctype')add('PARSER_REPAIR','blocking','The browser parser repaired ambiguous source; delivery fidelity requires correction.',error.startOffset,error.endOffset);
   }});

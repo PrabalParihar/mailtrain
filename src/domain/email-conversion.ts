@@ -78,6 +78,7 @@ export async function conversionProposal(spec:EmailSpec,version:number,assets?:A
   return ConversionProposalSchema.parse({...proposal,proposal_hash:digest({policy:POLICY,...proposal})});
  }
  function refuse(code:'unsupported_source'|'limit',message:string){return finish('unsupported',null,null,0,0,[{code,message}]);}
+ if(projection.delivery_status==='unavailable')return refuse('limit','The bounded source projection is unavailable. Conversion stopped before further parsing; the exact source was not changed.');
  if(source.editing_mode!=='raw_html')return refuse('unsupported_source','Only an existing raw HTML draft can be converted. The source was not changed.');
  if(/<!doctype\b|<!--|<\/?(?:html|head|body)\b|<\/?[a-z][\w.-]*:|\bxmlns(?:\s|:|=)/i.test(original))return refuse('unsupported_source','Document wrappers, comments, VML and namespace constructs need raw-mode review. The source was not changed.');
  if(sanitizeRaw(original).html!==original)return refuse('unsupported_source','The existing sanitizer changes this source. Conversion cannot preserve its exact bytes; keep it in raw mode.');

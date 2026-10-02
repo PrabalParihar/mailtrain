@@ -2,7 +2,7 @@
 
 This slice preserves the accepted inert UTF-8 source across create/import/save/reload/checkpoint/restore/remix. Separate bounded browser and email projections retain unsupported source while clearly blocking rendered delivery. Saved requires the original strict receipt, source/spec digests, current actor/document/lifecycle and a current server-head check. This remains local development evidence. All 65 requirements and all 13 Baseline A gates remain binding; no entire requirement or GA gate is accepted.
 
-Candidate isolation: `codex/source-truth`, base `092e978`, `/tmp/lettercape-source-truth-native`. Main/canonical media remains clean at `092e978`; migration033 has not been applied there. An untracked generator toolchain symlink is setup only and is excluded from commits. The existing installed toolchain was copied into this isolated Next root after its outside-root symlink failed; no dependency version, lockfile or download changed.
+Source isolation: `codex/source-truth`, base `092e978`, `/tmp/lettercape-source-truth-native`. The frozen review candidate is `408a1e063831b1200d4e46fa76a9bbc8d0bdd2b6`; one root Important correction pass follows it. Main/canonical synchronization and migration033 are recorded separately below. An untracked generator toolchain symlink is setup only and is excluded from commits. The existing installed toolchain was copied into this isolated Next root after its outside-root symlink failed; no dependency version, lockfile or download changed.
 
 ## Final behavior and costs
 
@@ -18,7 +18,7 @@ Candidate isolation: `codex/source-truth`, base `092e978`, `/tmp/lettercape-sour
 
 ## Native validation
 
-The final aggregate is 418/418 pass, zero failures/skips, against a generated restricted fixture database with actual Chromium IndexedDB and the pinned native decoder. Lint, TypeScript and 114 generated API/SDK contracts pass. The native production build and complete original baseline HTTP/Chromium run also pass; no remote CI is inferred.
+The corrected aggregate is 426/426 pass, zero failures/skips, against a generated restricted fixture database with actual Chromium IndexedDB and the pinned native decoder. Lint, TypeScript and 114 generated API/SDK contracts pass. The native production build and complete original baseline HTTP/Chromium run also pass; no remote CI is inferred.
 
 Actual source browser checks passed strict wrong200 refusal, real commit with lost reply/reload/original replay, held receipt/later typing, exact inert source attachment, blocked rendered export/preflight, server-frozen fork, empty source, repeated lost-fork replay with one checkpoint/version, Owner-held reply then Viewer current-head refusal, read-only Viewer recovery isolation, 390px navigation/no overflow/no source execution/no external requests. Fragment HTTP/browser checks passed exact source save/checkpoint, hash provenance, inert browser output, located blocking VML preflight/rendered refusal and aggregate unavailable source preservation.
 
@@ -32,7 +32,7 @@ Initial raw restoration failed because the strict saved-email transport was give
 
 New fragment fixture initially asserted 201 on the existing ordinary create/checkpoint 200 contract; only its expected status was corrected. New profile conversion test initially passed its profile as the asset-manifest argument; its call signature was corrected. Old preflight UI assertions hardcoded Rules static-3; they now verify the declared source rule version. No readiness or actual provider responses were seeded. Physical quota probing produced retained failures and was stopped; transaction abort/complete is the proven storage boundary.
 
-Legacy rows beyond the new source admission bound, production retention/operator reconciliation, browser eviction/memory/load, provider AI/spend/billing/ESP consent, real Outlook/20-profile captures, independent security/legal/privacy/support/economics, public asset CDN and deployment all remain unqualified. All inherited six media Minors remain disclosed in MEDIA-ASSETS-CHECKPOINT.md; they were not reopened or silently accepted. Whole-source review, current-head Linux/canonical qualification, publication approval and exact-head remote CI are pending until their real evidence is appended. Automatic approval review previously rejected an ordinary main push as private project source to an unverified external GitHub remote under the original no-push instruction; no retry/workaround was made and the direct native permission request remains unanswered.
+Legacy rows beyond the new source admission bound, production retention/operator reconciliation, browser eviction/memory/load, provider AI/spend/billing/ESP consent, real Outlook/20-profile captures, independent security/legal/privacy/support/economics, public asset CDN and deployment all remain unqualified. All inherited six media Minors remain disclosed in MEDIA-ASSETS-CHECKPOINT.md; they were not reopened or silently accepted. One frozen whole-source review and one root Important pass are complete. Current corrected Linux qualification passes; canonical synchronization remains pending until its evidence is appended. Publication approval and exact-head remote CI remain open. Automatic approval review previously rejected an ordinary main push as private project source to an unverified external GitHub remote under the original no-push instruction; no retry/workaround was made and the direct native permission request remains unanswered.
 
 ## Implementer handoffs, preserved verbatim
 
@@ -554,3 +554,315 @@ Evidence file SHA256 (local retained logs, no credentials):
 | `/tmp/lettercape-source-lint-final5.log` | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
 
 Local staged diff checking initially classified intentional CR endings in the 43-byte exact-source fixture as whitespace errors. `.gitattributes` now disables text normalization for that fixture and permits CR at EOL; its original byte hash is unchanged. Source bytes were not stripped to satisfy formatting.
+
+
+## ONE immutable whole-source review — preserved verbatim
+
+Root read all263lines/full52,138bytes before modifying source. BASE092e978 → candidate408a1e0. Report SHA256 `9c949e1d5406b6d0ef74c820bac2e5c54fec9193d6085257e6683031d8aae6e0`; patch SHA256 `7fe66e3b7b11a3ce798992b75ecd65ae3b2e42c2f29a45f1fe492d771f1c91c9`; inventory SHA256 `8811eedbd2106b965b5b000deea8666f6d2d08f4114f0ee76d7c96ef75edbffe`. Verdict0Critical/2Important/1newMinor with six inherited media Minors disclosed. Reviewer executed no new probes and reviewed no later root correction. The complete58-ruling ledger and all costs remain below.
+
+# Immutable whole SOURCE-slice review
+
+Date: 2026-10-02. Reviewer: `/root/monaco_whole_review`, the sole reviewer for this new slice. This is the ONE SOURCE review, separate from the closed MEDIA and Monaco reviews. No children or subsequent review pass were used.
+
+## Verdict and review boundaries
+
+**Changes required: 0 Critical, 2 Important, 1 new Minor.** The exact storage, server receipt, compact replay and recovery architecture is coherent and substantially improves the previously lossy path. Two source-projection boundaries still contradict the stated bounded-work and honest mode-transition contracts: the lexical budget has unbounded failed-match work, and structured-to-raw fork does not propagate fragment projection failure. Defer the new Minor and the six inherited MEDIA Minors unless their severity changes through separate evidence.
+
+This verdict is a read-only code/documentation assessment of frozen BASE `092e9785d503940708d034366d169ad9293f9b81` to HEAD `408a1e063831b1200d4e46fa76a9bbc8d0bdd2b6`, branch `codex/source-truth`, isolated `/tmp/lettercape-source-truth-native`. All 74 changed tracked files matched their HEAD blobs when inventoried. The untracked `tooling/openapi/node_modules` setup symlink is excluded. No source, index, migration, database, account, dependency, private environment or canonical/main mutation occurred in this review. Only review artifacts under `/tmp` were written.
+
+I read applicable AGENTS, the complete source design and plan, SOURCE-TRUTH-CHECKPOINT including all five handoffs and root integration/failure/cost records, the patch, changed implementation/test/fixture/SDK/CI paths and surrounding authority/compiler/editor boundaries. Generated OpenAPI and declaration changes were assessed through their generating schemas, operation registry, SDK client, type fixtures and retained generation/check evidence; this is not independent execution of every generated declaration. No new browser, race, adverse, load, database or renderer probe was executed, and no author suite was rerun. Findings below are code findings, with the runtime consequences clearly distinguished from measured evidence.
+
+All 65 requirements and all 13 Baseline A gates remain binding. **Zero complete requirements and zero full GA gates are accepted by this report.** This is neither independent whole-system acceptance nor public-launch, security-GA, Outlook/VML or production-capacity certification. Parent owns the ONE native Important correction pass, source/index/commits/migrations/canonical integration and later qualification. This report does not certify changes made after its frozen HEAD.
+
+## Actionable findings
+
+### I1 — Important: the lexical budget can consume quadratic work before it counts a token
+
+Locations: `src/domain/raw-html-projection.ts:63–66`, `src/domain/html-fragment-projection.ts:22`; accepted-source bounds at `src/domain/email-source-values.ts:23–25`, `src/domain/email-schema.ts:65,156–158`. Related conversion continuation: `src/domain/email-conversion.ts:75,82–85`. The stream timer/admission boundary is `src/server/email-source-body.ts:21–26,32–33`.
+
+Both pre-parse gates use `/<!--[\s\S]*?-->|<\/?[a-z][^>]*>/gi`. Their counters increment only after a complete match. A representable accepted source containing many overlapping incomplete tag starts with no terminating `>` causes the backtracking matcher to scan the remaining suffix at each possible start before failing. Unclosed comment starts have the corresponding failed-delimiter scan. The 20,000 counter never accounts for those failed searches. The algorithm therefore admits quadratic failed-match work before the intended allocation/work gate. Raw source may contain up to 2,097,152 UTF-8 bytes; fragments retain their 200,000-character per-block and 1 MiB aggregate document constraints, which still permit material failed-match work. These strings are intentionally acceptable inert source, so rejecting all malformed HTML would violate the exact editable-source contract.
+
+The projector is synchronous in the application process. The reader's 30-second timeout ends before parsing/projection and cannot interrupt synchronous regex work; its two-reader admission cap also ends at body completion. Preview/checkpoint/conversion can consequently stall application work despite reporting a bounded projection design. The retained node/depth tests exercise completed markup, not this failed-match edge. Conversion also continues to sanitize and `parseFragment` after obtaining an unavailable raw projection; fix the work gate across these callers rather than treating a null original preview as sufficient admission denial.
+
+**Required correction:** use a linear lexical scanner/tokenizer with explicit accounting for incomplete starts and bounded traversal, shared by raw and aggregate fragment projection. Preserve source and return a blocking unavailable projection on exceeded work; never trim, replace or reject valid source merely to make the projection cheaper. Stop conversion's further parse/sanitize work when the source projection has already exceeded the structural budget, or establish an equivalent explicit bounded conversion admission. Root should qualify malformed and ordinary maximum-size inputs in its native pass.
+
+**Evidence/limits/cost:** static control-flow and matcher analysis only; no adverse input was executed, no latency, CPU percentage or outage was measured, and no remote exploit was attempted. This is not an RCE or source-loss finding. Replacing the prepass costs a small shared scanner plus meaningful boundary tests; conservative over-counting may refuse some projections while their exact source remains editable/downloadable. It does not remove the separate production process/load/deadline qualification obligation.
+
+### I2 — Important: raw fork discards fragment failure status and can acknowledge empty or fidelity-losing source
+
+Locations: `src/server/email-source.ts:54–65`, especially line59; `src/domain/html-fragment-projection.ts:28–40`; `src/domain/email.ts:355–358`; client `src/ui/editor.tsx:843–858`. Existing rendered-output gate: `src/app/v1/[...path]/route.ts:332`; preflight status propagation: lines364–371.
+
+`forkEmailToRaw` permits only structured input, checkpoints the current server head and verifies the expected artifact hash. It then checks **only** `frozen.manifest.raw_projection?.delivery_status === 'unavailable'`. Structured custom HTML exposes its status in `fragment_projection`, so this condition cannot reject the pertinent structured projection failure. The compiler intentionally emits `html=''`, `text=''`, `preview_html=null` for unavailable fragment projection. `rawForkSpec` uses that frozen HTML, and the client constructs its expected raw command from `compiled.artifact.html` without inspecting fragment status. A structured document whose aggregate fragments exceed the budget can therefore receive a successful durable raw-fork receipt for empty canonical raw source and advance its mode/version. This is distinct from the supported deliberate empty raw edit.
+
+The same missing status propagation covers `blocked` fragments. Conditional/VML/stylesheet/unregistered-image content is retained exactly in structured fragments and blocks output, but its sanitized generated HTML has already removed unsupported material. Fork replaces the active raw source with that derived HTML, then recompilation has no original fragment fidelity blockers to report. The user sees only the generic compiled-source mode-transition explanation; this slice has no separate reviewed proposal authorizing replacement of blocked authored content with sanitizer output. The delivery gate correctly protects the original revision, but the mode transition loses the reason for that protection on the new head.
+
+**Required correction:** before storing/capturing/dispatching a fork command, evaluate the effective projection status for both raw and fragment manifests. Refuse unavailable generated output; also preserve or explicitly resolve fidelity blockers rather than laundering blocked fragments into an apparently eligible raw head. The first increment's stated policy supports refusing blocked forks with an actionable explanation. A different explicit sanitizer-replacement proposal would require its own clear consent/checkpoint/status contract and is outside this increment. Keep source-only save/checkpoint/download available and preserve original key/base/action on genuinely eligible fork replay. Enforce the boundary on the server, then mirror it in the UI before recording an empty/transformed desired draft.
+
+**Evidence/limits/cost:** code-only finding, no new unavailable/blocked-fork runtime probe executed. Author native fork evidence covers an ordinary eligible structured document, while fragment evidence verifies unavailability and rendered-output refusal without attempting this transition. The previous structured source is retained in the immutable checkpoint: this does **not** establish permanent deletion of all originals or history. It does establish a misleading successful active-mode/source transition and loss of blocker provenance. Correction costs a centralized effective-status check and focused transition/replay qualification; availability decreases for unsupported fragment forks until their source is repaired or a separately specified replacement flow exists.
+
+### M1 — Minor: manual image replacement's async cleanup lacks the ordinary save lifecycle fence
+
+Locations: `src/ui/editor.tsx:335–343`, compared with `sameContext` at106, ordinary `flush` at188–227 and lifecycle reset at145–179.
+
+`applyAsset` checks its node/actor/document anchor before command hashing, but after awaiting `createSourceReplacementCommand` it unconditionally installs `pendingSave` and writes through the then-current `scopeRef`. Its catch/finally also unconditionally writes pending-uncertain/status/error/conflict and clears `busyRef`, without checking the lifecycle that started the task. An editor context change during asynchronous hashing or a later awaited request can therefore put an old command/error into the new editor's pending state or clear a newer action's busy indicator. Ordinary `flush` has the required ownership checks around these same stages.
+
+The recovery store and receipt validator independently compare actor/workspace/document hashes and reject wrong-scope adoption. No cross-actor database write, private-byte disclosure or newer source overwrite is established; this is stale UI/task ownership and recovery availability, so Minor. Defer per parent policy. A later fix should capture scope/lifecycle, check it after each async boundary before assigning pending state, and fence catch/finally and current-head GET effects. No new runtime probe was executed.
+
+## Exhaustive source-spec, handoff and integration ruling ledger
+
+Status vocabulary: **Supported** means code plus cited retained author evidence support the stated local behavior; **Qualified** means a deliberately narrow behavior/cost is acceptable with the stated limit; **Open** means no full acceptance; **Issue** maps to a finding above. Earlier worker GREEN and freezes describe handoff time, not the final integrated HEAD. No entry promotes an entire GA requirement.
+
+| # | Claim/ruling and source boundary | Review verdict, evidence and material cost/limit |
+| --- | --- | --- |
+| S01 | One canonical source; no competing sanitized live column | Supported. `emails.spec.raw_html` and structured `custom_html.html` remain authoritative; compiler maps are derived. No persistence sanitizer or preview writeback remains in new create/save/restore/derive paths. |
+| S02 | Exact accepted Unicode/UTF-8 | Supported. Values reject NUL/lone surrogate/malformed UTF-8 and preserve BOM/EOL/case/entities/composition. Fatal decoding retains BOM; actual source bytes drive hash/limit. Exact means decoded accepted UTF-8, not arbitrary legacy encoding or HTTP framing. |
+| S03 | Empty raw draft | Supported. Admission/storage/receipt accept empty; projection/preflight blocks meaningful delivery. Native editor empty-save evidence exists. An unavailable generated fork becoming empty is I2, not this supported behavior. |
+| S04 | Source versus render admission | Supported. `EmailSourceSpecSchema` retains shape, locale, node/reference and byte limits, while raw/opaque UTM render issues do not deny source repair. Typed destinations and explicit UTM policy controls remain strict. Source acceptance grants no render/send/asset authority. |
+| S05 | Metadata and structural bounds | Supported. Actual non-source canonical UTF-8 metadata ≤1 MiB; raw ≤2 MiB, shared ≤200 blocks/two columns/unique IDs, custom HTML ≤200,000 characters per block. Raw inactive sections/registry still count toward metadata/reference bounds. Exact valid source is not silently stripped. |
+| S06 | Own canonical JSON identity | Qualified. Sorted own data keys, array order and exact strings; rejects coercion/accessors/cycles/symbols/nonplain data/depth>256. No getter/toJSON execution in admitted data. It is not a security membrane for arbitrary executable Proxy input. Hashing/serialization adds bounded copies and CPU. |
+| S07 | Strict projection contract | Supported. Source and output profiles/hashes differ; output UTF-8 ≤4 MiB each, null/hash coherence, ordered UTF-16 ranges, 100 diagnostics including summary. Null output is unavailable, not partial success. |
+| S08 | 20,000 lexical/authored nodes and depth64 | Issue I1. Actual authored tag/text/comment and shared fragment counts are implemented, implied parser roots are excluded; malformed failed-match work bypasses prepass accounting. Post-parse counting is not an independent allocation/CPU deadline. |
+| S09 | Fragment aggregate budget | Qualified except I1. Shared authored-node budget across fragments; nested columns included. Combined derived fragment bytes ≤4 MiB and full document browser/email bytes checked separately; unavailable clears all fragment maps/document output. Conservative combined budget may refuse a projection earlier than independent per-output ceilings. |
+| S10 | Bounded diagnostics | Supported. Generic escaped text with stable codes/ranges and node IDs; capped findings with omitted count/summary. React displays diagnostics as text. No source payload in diagnostic messages or reinsertion mechanism. The cap bounds reports, not source or actual work. |
+| S11 | Browser projection inertness | Supported locally. Explicit allowlists remove active/navigation/resource attributes; browser removes href and remote src, restrictive CSP/empty iframe sandbox. Native source/fragment tripwires report zero observed source execution/outbound requests and zero uncaught errors. This is the tested corpus, not universal browser-security proof. |
+| S12 | Email projection fidelity classification | Qualified. Active removal/style normalization warnings versus blocking unsupported stylesheet/namespace/conditional/VML/parser/unsafe-link/resource findings. Eligible means candidate for downstream checks, not byte-faithful source or delivered-client approval. Broad comments/namespaces/regex sentinel reinsertion were correctly rejected alternatives. |
+| S13 | Conditional/VML and Outlook | Open. Original text remains exact and accessible, unsupported fidelity is blocked. No narrow MSO/VML grammar or actual Outlook/client matrix is qualified. Full TECH-032/REQ-016 roundtrip remains partial. I2 must preserve the blocker across mode transition. |
+| S14 | Remote resources | Supported. Import/project do not fetch arbitrary source URLs; external/unregistered images remain in source and block new rendered output. No invented asset/proxy/publication. Safe mailto/tel links are email destinations, not image authority; inherited MEDIA M1 remains separate. |
+| S15 | Managed marker/public URL binding | Supported within supplied verified context. Projection clones/validates exact manifest entries; duplicate identity/public URL and missing animation fallback reject. A structurally valid manifest alone is not scan/current-rights authority. Server resolves under tenant/current authority. Prefix spelling cannot authorize an image. |
+| S16 | Private browser bytes and GIF fallback | Supported locally. Inert data-raw-asset-binding has no src; server replaces only exact registered binding with verified static bytes. Animation's registered fallback remains bound; email keeps animation binding. Source has no transient data/presigned URL. Real GIF/PNG pixel and source-media evidence supports this seam; prior MEDIA fallback costs remain inherited. |
+| S17 | UTM decoration once on derived email | Supported. Eligible raw/fragments decorate the delivery copy only; browser destinations remain inert. Ambiguous/conditional/unsupported targets block rather than silently skipping their tracking. Original source/full spec hashes are unchanged. Old remote-pixel assertion was changed to the deliberate blocked-output contract, not made permissive. |
+| S18 | Deterministic artifacts and old hashes | Supported locally. New raw/fragment source/profile/projection evidence enters the artifact hash; no-fragment structured baseline remains unchanged. Migration adds separate profiles without rewriting old frozen spec/artifact/manifest/hash. No historical artifact acquires new safety evidence. |
+| S19 | Checkpoint on unavailable projection | Supported. Exact canonical spec and source/projection status freeze even with empty html/plaintext/null preview. It remains a source checkpoint, not a successful render. Ordinary rendered-format gate handles both raw/fragment status; fork omission is I2. |
+| S20 | Preflight/source rule version | Supported. `static-source-5` propagates bounded located projection blockers and skips expensive opaque detail when unavailable; a status blocker is inserted if needed. Static preflight is not real client evidence or independent render approval. |
+| S21 | Rendered HTML/TXT/ZIP/PNG/PDF versus source attachment | Supported at download route, subject to I2 transition. New projection status must be eligible before rendered output. `format=source` bypasses delivery fidelity only for inert exact text under edit/export/current tenant authority, with attachment/nosniff/no-store/CSP/hash/profile/content length. No hosted active source origin. |
+| S22 | Immutable source download authorization | Qualified. Existing edit permission plus emails:export applies; authority checked before/after immutable RLS SELECT. Removing FOR SHARE is justified because revisions lack runtime UPDATE authority. No invented structured authored source; raw fork is explicit. Legacy malformed/oversize download recovery remains Open. |
+| S23 | Migration033 minimal/additive | Supported. Number033 correctly follows media031/032. Head/revision profile backfill changes separate columns only; actual stored legacy text is labeled legacy-stored-1. Structured profile null, new accepted raw exact-utf8-1. No restored pre-sanitization original is invented. No main033 application claimed in this frozen isolated review. |
+| S24 | DB-owned profiles/provenance | Supported. Trigger denies direct profile change; actual DB UTF-8 octets and SHA256 populate one append-only event per raw accepted doc_version. Fixed search path, tenant/actor context, composite email/revision/key FKs and FORCE RLS; runtime SELECT only and no direct event INSERT/UPDATE/DELETE. Migration/owner privilege is trusted, not a runtime bypass proof. |
+| S25 | Built-in SHA256 versus pgcrypto | Qualified. PostgreSQL built-in byte hash avoids a new extension/account/dependency; hash cost is proportional to accepted bytes. Source-profile RED and actual restricted UPDATE denial are retained. Profile new-write truth differs deliberately from historical parent profile. |
+| S26 | Create/save/restore/remix/locale | Supported locally. Exact stored source remains available through the common source schema; locale/direction copying and brand/media/current-authority/CAS rules remain. Real origin/parent revision profile enters provenance. Locale creation is manual source copying, not AI translation/client approval. |
+| S27 | Current authority before/after work | Supported locally. Specialized route authenticates/resource-checks before stream, then fresh principal/current authority for mutation; services recheck replay/final authority. Session, membership, key scopes/expiry/revocation/workspace status and resource RLS remain authoritative. Optional actor header is a fence, not delegation. |
+| S28 | Atomic import and racing CAS | Supported by code/retained restricted DB tests. Head lock/version check/checkpoint/exact save/provenance/keyed fact share a transaction. One native author CAS winner and rollback of losing import documented; this reviewer ran no race. No network-body transaction. |
+| S29 | Original source command receipts | Supported. Strict base+1/workspace/email/key/full canonical spec hash/source exact bytes/profile, generated from committed document. Client recomputes submitted/returned identities. HTTP200/doc_version alone cannot mark Saved. Source receipt is storage evidence, never fidelity/security approval. |
+| S30 | Compact idempotency, original hydration | Supported. Draft receipt+summary hydrates only identical canonical original input; import receipt+nonsource metadata uses identical original source; fork receipt points to immutable frozen revision/artifact. No hydration from a newer head, no second autosave raw blob. Same actor/action/key/base/body replay returns its own fact; changed command409. Caller loss of original body can make replay unavailable, an accepted explicit cost. |
+| S31 | Current newer head versus old receipt | Supported locally. Replay never writes new head; editor fresh actor-bound GET must equal acknowledged version/spec before adopting. A historical durable receipt does not establish current head. Later local typing remains dirty and carries only the validated base version. |
+| S32 | Server-generated fork artifact/registry | Supported for eligible input, Issue I2 for failed fragments. Server freezes current actual artifact and verifies expected hash; no caller HTML authority/private-preview bytes. Registry derives frozen entries. Lost eligible fork retains action/hash/key/base across reload and one version/checkpoint. |
+| S33 | Conservative raw-to-blocks proposal | Qualified. Exact original source remains in proposal; separate inert original_preview_html/null and source/browser/email policy hashes bind proposal. Wrappers/comments/VML/namespaces/parser repair/sanitizer differences refuse; representable conversion remains explicit reviewed acceptance. Existing opaque blocks stay source, not JSX/eval. I1 notes unavailable projection must also stop further expensive parse work. |
+| S34 | Source body stream bounds | Supported locally. Text ≤2 MiB; only source-bearing JSON ≤13,697,024 actual bytes; generic JSON still2 MiB. Compression/MIME/charset/declared invalid size/mismatch/actual overflow/fatal invalid bytes deny; bounded chunk read/abort outside transaction. Worst JSON escaping is accessible rather than an unreachable promise. |
+| S35 | Two readers and30-second timeout | Qualified. Code cap is per process, only while reading, and releases on settlement/abort. Retained actual abort/reuse exists; actual30-second stalled read and cluster-wide or postparse CPU/memory admission are unqualified. Two large buffers may coexist with parsed/canonical/response copies. I1 cannot be justified by this timer. |
+| S36 | Route mounting/method/origin/scope | Supported. Source commands dispatched before generic consumption; exact POST/PATCH/id/suffix handling and strict bodies/If-Match/key checks. Existing origin/auth/request-ID envelope retained. Source import/fork/save require emails:write; source attachment emails:export. No route body reread or global size increase. |
+| S37 | Optional X-Actor-Id compatibility | Qualified. Browser sends verified actor fence, new SDK accepts actorId, server compares supplied header to real principal. Optional existing client header is intentional compatibility; mandatory CAS/key/current authority remains. No role/client actor grants authority. |
+| S38 | OpenAPI/shared receipt propagation | Supported by generator/retained API114/type fixtures. Source schema and strict shared receipt replace generic save response; actual-byte extensions/documented transport; cross-field/hash semantics explicitly beyond JSON Schema. All media paths/schemas retained unchanged. Generated files represent development, not published SDK/GA. |
+| S39 | SDK explicit recovery | Supported locally. New import/fork require explicit original key/If-Match type/runtime, exact text UTF-8 bytes; all four source mutations disable auto retry even429/retryable503. Compatibility saveDraft/importHtml initial key generation exposes original key on failure. Other SDK retries unchanged. Mock transports are byte/policy evidence, not DB durability. |
+| S40 | SDK source downloads | Supported. Binary Uint8Array preserves BOM/source, headers exposed, caller can inspect evidence. It does not recompute/validate application receipt semantics automatically; editor owns honest Saved checks. No publication or real production transport qualification. |
+| S41 | Ordinary save lifecycle fences | Supported locally. Frozen original command before dispatch, scope/lifecycle/epoch/base checks after async hashes/storage/network/current-head; catch/finally owned task checks. Wrong200, original replay, later typing and Owner→Viewer held reply retained native evidence. Old context never uses a receipt as a new authority grant. |
+| S42 | Manual image replacement | Qualified with Minor M1. Desired complete spec and original adoptBaseSpecHash prevent later different local work adoption; real lost replacement replay one-version evidence. Async pending/catch/finally lifecycle ownership is incomplete, but strict store/receipt guards prevent established cross-scope source adoption. |
+| S43 | IndexedDB authority and exact scope | Supported locally. Key is exact [workspace,actor,email], one draft+one serialized original command, strict revalidation of scope/spec/source hash. No automatic cross-actor adoption or replay; explicit lifecycle rebind preserves original full body/base/key/action. Old actor-unbound localStorage remains inert/untouched. No encryption against same-origin script or device user is claimed. |
+| S44 | Local durability before dispatch | Supported by real transactioncomplete/abort evidence. Open/blocked/request/transaction errors reject; actual abort rolls back and promises don't resolve on request success. Storage failure retains memory and pauses ambiguous dispatch. Browser clearing/eviction/device failure remains possible. |
+| S45 |20-slot quota/conditional cleanup | Supported. Atomic count+put, deny21st without eviction; updates permitted. Digest outside IDB transaction then exact canonical/version reread inside transaction prevents old cleanup deleting later draft; command key compared inside transaction. Extra bounded copies/read/hash cost is justified. Explicit reset removes only selected actor slot. |
+| S46 | Physical browser quota | Open. Estimate guard is conservative advisory; padded Chromium quota caused actual attempts to accept writes despite CDP0. Native final deliberately proves core/abort/20slot behavior only. No physical quota success, priced storage promise or endless retries; false near-quota refusal possible. |
+| S47 | Reload recovery and form baseline | Supported locally. Recovery is read before initial install/form mount, so retained UTM settings don't start against unrelated server-only state. Original uncertain command is explicit conflict/retry; no automatic replay/new key. Changed base/payload may require manual recovery. Pending same-policy recovery resumes only after explicit reload/reset. |
+| S48 | Save/autosave/status/navigation | Qualified. Ordinary debounce/max dirty interval retains baseline750ms/4s threshold with250ms tick, durable receipt and preserved dirty work. Uncertain command pauses automatic retry, explicit retry owns original command. Busy/read-only UI and actor/layout/navigation regression author tests pass in selected workflows. No full accessibility timing/load acceptance or mobile editor edit/reload corpus is inferred from the390px Viewer screenshot. |
+| S49 | Browser-safe imports and compiler separation | Supported. Create/derived/editor helpers import browser-safe schema/values/contracts rather than Node crypto/sanitizer/compiler. Original conversion preview uses safe derived field. Native build/type/esbuild tests support boundary; no source-eval, template runtime or arbitrary JSX introduced. |
+| S50 | Fixture exactness and source logging | Supported.43-byte fixture retained BOM/mixed CR with -text and cr-at-eol, SHA17df8f0540032fa4649cd68365dd3199d1b5f5b24d2ee3c6a64eff4568312e83. Ordinary audits/provenance/diagnostics log IDs/digests not raw bodies. Synthetic inert fixture bodies exist in tests; this is not approval to log customer source. |
+| S51 | CI and actual executable smoke | Supported as wiring, Open for remote exact-head evidence. package smoke executes restricted DB proof plus actual editor and fragment browser CLI; workflow invokes it, no vacuous export-only helper. Fixtures carry actual tenant/actor context and exact owned cleanup incl provenance. Existing baseline scripts update receipts/fork/storage policy expectations rather than seeding readiness. No remote current-head CI result is claimed. |
+| S52 | Dependency/toolchain/package boundaries | Qualified. Pinned graph/lock unchanged; local existing toolchain copy/symlink supports isolation without new package/provider. Native build and retained Linux UID1001/current3846 assets/privateArtifactsfalse/startup refusal pass. Setup symlink excluded; productionimage result is author evidence, not independent deployment or prior slice rereview. Low inherited advisory stays Open. |
+| S53 | Real media/renderer interaction | Supported locally by retained actual GIF/native scans/decoder/private fallback pixel/ZIP/PNG/PDF/current-takedown settlement evidence. Source-specific inert binding replacement preserves existing output budget/current-state boundaries. No reopening or independent reassessment of baseline032 crash/reap/output fixes; no public CDN/ESP/send acceptance. |
+| S54 | Evidence honesty and source-bound review | Qualified. Current final418 passes distinguish earlier worker aggregates/REDs. Frozen SHA inventory qualifies actual HEAD; prior worker file hashes are historical handoff evidence. No root author log is relabeled as reviewer execution, no two404 console-clean claim, no all-client/fullGA inference. |
+| S55 | History, legal and production economics | Open. One small provenance/receipt per accepted version, import≤1MiB nonsource metadata, source JSONB/revision/WAL/history storage remain material growth. Compact replay avoids another raw autosave blob but does not qualify retention/erasure/last50/pinned policy/support/legal economics or unlimited source history. |
+| S56 | Legacy oversize/malformed recovery | Open. Profile migration preserves old bytes; current new admission/download validation may refuse legacy values above2MiB or unrepresentable shape. No truncation or invented repair. Explicit recovery/migration policy is still required before complete legacy compatibility acceptance. Author read-only canonical preflight shows one current raw head, maximum 1,260 bytes and no head over the new bound; that does not qualify oversized historical rows in general. |
+| S57 | Launch/account/publication limitations | Open. Providers/AI image/ESP/consent/billing/spend/CDN/region/storage/retention/legal/privacy/client/load/support/accessibility/security acceptance and final launch remain separate. Prior ordinarypush auto-review rejection/private-source remote concern retained; no retry/workaround or new reviewer permission request. Main/canonical033/current-head CI integration not performed by this review. |
+| S58 | All65/all13 binding and declined alternatives | Supported as scope constraint. No reduced GA/pilot exception. Rejected lossy sanitizer storage, two live authorities, auto raw conversion, client hashes/assets as authority, original source iframe, arbitrary fetch/proxy, base64/global JSON increase, permissive VML reinsertion, invented legacy originals and sends remain rejected. I1/I2 are corrections within the existing local contract, not broad scope expansion. |
+
+## Retained failures and why they do not become acceptance
+
+The checkpoint retains the full original failed-name list and complete worker handoffs verbatim; those are included in the reviewed file hash inventory. Domain initial missing-module/source-loss RED and separate output-byte/empty RED, storage105-character→34-character actual restricted DB RED, profile direct-write RED and fullraw-idempotency RED are meaningful observations of the old/missing behavior. Their corresponding current exact105-character storage, server-owned profile and compact replay checks pass locally. Canonical JSON rather than JSON.stringify key order correctly fixes the smoke replay comparator without normalizing source.
+
+Domain's early383/285/97fail/1skip aggregate and client's394/295/98fail/1skip aggregate reflect unavailable sandbox DB/sockets plus the genuine old UTM remote-pixel expectation. Storage's399/387/11fail/1skip aggregate ran before shared route/generator/UI/authority fixtures were integrated. Failed OpenAPI/SDK inventory, missing membership/source-context fixtures and old UTM assertions were corrected under actual contracts. The native decoder skip in those earlier runs is not acceptance; final root418/418 has0skip and actual pinned decoder. No reviewer rerun verifies every intermediate cause independently; full retained raw failures remain readable rather than erased.
+
+Retained integration REDs include DB-only transport fields rejected by strict saved-email shape; browser Node imports/default-loader interop/outside-root toolchain resolution; source-limit fixture2,000,001 corrected to2,097,153ASCII bytes; UTM form mounting before async recovery; fragment fixture201 versus existing200; profile passed in wrong asset argument; hardcoded static-3 preflight versus static-source-5. These are accounted for in code and final author evidence, not disguised as new source-format acceptance. The extra node-budget RED initially used a within-budget paragraph fixture; final interleaved void/text fixture genuinely exceeds actual shared authored-node count.
+
+IndexedDB native1 named-function helper/type fixture failures, native2/3/5/6/7 physical quota nonrefusal and native4 observer counting an unrelated transaction remain disclosed. Final native3/3 uses real IndexedDB transaction completion/abort, actor slots, exact2MiB source/command, corruption/hash denial,20slot denial and conditional cleanup. Physical quota probe remains opt-in and final core explicitly reports OPEN. It does not mock a quota failure or turn the CDP override into passing physical evidence.
+
+Worker process/RSS observations of151–204MB include startup/module/fixture overhead; source smoke203bytes/hash0b412c0defcce01480039921e426b1c002b232fe1c9e9ccba26ddada96280b9c, versions2/3/4 and445ms final are limited local observations. Full2MiB DB boundary roughly600–1045ms includes generated migration overhead, not edit latency. Pure2MiB entity expansion about1.35s is not a CPU deadline/capacity benchmark. No provider fee or account commitment occurred, but parsing/hashing/canonical snapshots/UTF8 encodings/IDB structured clone/database locks/WAL/revisions and receipt/provenance growth still consume resources.
+
+## Six inherited MEDIA Minors, disclosed without reopening
+
+1. Shared safeHref admits mailto/tel for schema1.1 remote image src rather than an HTTPS-only image policy. Existing deferred availability/validation cost, not a newly demonstrated source security issue.
+2. assetReferences counts occurrences before deduplication; sections plus raw registry can double-count and conservatively reject a valid≤200unique-reference document.
+3. Static preview/render admission can count unused animation bytes and fallback under multiple bindings, conservatively exhausting1MiB/4MiB media availability.
+4. Supervisor documentation's exact output-fileset claim exceeds enumeration enforcement, and host output mount lacks a filesystem quota. Normal algorithm bounds remain; no RCE/exploit was established.
+5. Multiple scanner stderr JSON lines can lose the specific failure code to MEDIA_RUNTIME_FAILED; failure stays nonclean rather than ready.
+6. One inherited Low DOMPurify3.4.15 GHSA-p98j-92pf-mc4p advisory, also surfaced through Monaco's wrapper. IN_PLACE plus a node-removing hook is required by the noted reachability basis; absent wrapper configuration leaves no demonstrated reachable exploit here. Monaco has its own bundled sanitizer, so package-only override is insufficient: pinned vendor upgrade/rebuild/cancellation guard qualification has cost and remains deferred. This is one advisory, not two independent vulnerabilities; no advisory-free/security-GA claim.
+
+The preceding closed MEDIA report is historical evidence, not a source-review input for reopening its findings: `/tmp/lettercape-media-whole-review.md`, SHA256 `66627d4e2e23c10f49b18e0895dfa31959750f05cbfe87771b58ba7908dd7b43`. Its threeImportant corrections are in BASE; source/media retained runtime interaction evidence is distinct from another whole MEDIA review.
+
+## Verification and acceptance limits
+
+Reviewer verification comprised immutable git/blob/file hashing, code/diff/document reading, line-reference inspection and retained-log reading. No source probes were executed; the I1 and I2 edge cases and M1 lifecycle consequence are static findings. No platform-interrupted operation from the closed MEDIA review was resumed. No private env/secret was read, printed or hashed. This review has no blocked tool approval and requested no publication permission.
+
+Retained **author** evidence includes418/418 restricted generated DB/actual IndexedDB/pinned decoder; lint5/type6/API114/build2; source native10; fragment browser2; actual source/media native2; mobile picker native1 with real lost replacement replay; and full original baseline editor/Monaco/conversion API/browser/full-review keyboard/mobile/UTM/preflight. Native source/fragment cases report zero uncaught/source execution/outbound requests; the full Monaco baseline retains **two unknown404 console diagnostics**, so it is not console-clean. Mobile source screenshot is a read-only Viewer layout before projection completion, not proof of completed viewer preview or full mobile raw edit/save/reload fidelity.
+
+Linux candidate build log supports image config `sha256:21b36a5bb0cf50f6117b2efe13c441b1f3a19fe201bb29b42922b251ce821ede`, UID1001, current `/code-editor/0.57.0-3846dfd5f064/` assets and absence of private artifacts. Production startup actually refused with exit1, and release:check actually reports all13gates unmet. Those are fail-closed packaging observations, not deployment, production traffic, full security/legal/economic/client/load qualification or canonical integration proof.
+
+An additional retained author read-only canonical pre-migration inventory reports 109 emails with aggregate content SHA256 `95d2d1cd1822bab9b78601321d99db238f2298ba245b9b3b209d257063a4a172`, 221 revisions with aggregate SHA256 `a600901eefd05fae90e155eb30f2aece3f9a0236dcd0b91ccfb0f938666294d4`, source migration absent, and one current raw head of maximum 1,260 UTF-8 bytes with zero heads exceeding the new bound. It outputs no row content or credentials. This is pre-migration preservation evidence and a current-head bound observation, not post-migration canonical acceptance or general legacy-oversize qualification.
+
+Gate status retained: GATE01 pending;02 partial;03 partial;04 blocked;05 blocked;06 partial;07 blocked;08 pending;09 pending;10 pending;11 partial;12 pending;13 blocked. Every one of the65requirements remains binding; source-related REQ013/016/017 and named TECH010/011/012/030/031/032/033/040/090/091 have only the local source behaviors/evidence above. The rest of the baseline is not promoted by this slice. Full VML/Outlook/universalconversion, real20profile captures, physical browser quota/eviction/load, legacy oversized recovery, production provider/consent/billing/legal/storage/publicasset/retention/support/economics and current-head remoteCI remain unqualified.
+
+## Frozen artifacts and evidence hashes
+
+Patch: `/tmp/lettercape-source-review.patch`, SHA256 `7fe66e3b7b11a3ce798992b75ecd65ae3b2e42c2f29a45f1fe492d771f1c91c9`.
+
+Complete source/evidence inventory: `/tmp/lettercape-source-review-inventory.json`, SHA256 `8811eedbd2106b965b5b000deea8666f6d2d08f4114f0ee76d7c96ef75edbffe`. It contains all 74 file SHA256 values, HEAD blob IDs, matching working blob IDs and 22 retained evidence-file hashes. This report is hashed externally after writing so its own bytes do not contain a circular self-hash.
+
+### Reviewed source files
+
+| Path | SHA256 at frozen HEAD |
+| --- | --- |
+| `.gitattributes` | `5c551f5cfd8f204820f5987ff0b769bfa73998f9590f9a8f047f46d70cf199b9` |
+| `.github/workflows/verify.yml` | `e95e8e8172dc0b93f30a635b7d61ec67ade350c8f60bc91eeedf532a20862127` |
+| `db/033-email-source-contract.sql` | `10d0c6293befe8f12903374926c696cef88405f47de49859d47b1d699dc3a57a` |
+| `docs/COVERAGE-CHECKPOINT.md` | `3db5eaf8db47d769e8732d08f61f8bacc34073e75d59cac6c42bd1ea4c0ebc15` |
+| `docs/SOURCE-TRUTH-CHECKPOINT.md` | `98b24fb241a09ad332bfe1d0a522c3840d0e67242b4c8f9940bec53edde593e8` |
+| `docs/superpowers/plans/2026-10-02-source-truth.md` | `30712137d301e8b2e0a48f8d816bf0a15a9ed804d83f99b5e86f75276445908e` |
+| `docs/superpowers/specs/2026-10-02-source-truth-design.md` | `0a41d6b20ce80a913cf2888f9d6b9bbfbb204c7baba6c180a98b4aec755db979` |
+| `package.json` | `5546a52bd7b92276c340e8ae1da8be0d40824cbe713e03cd2c533d7984e06a9c` |
+| `public/openapi.json` | `9152545813ef15f03f248d66f199d5de14beed6541dff45b86267d4296c36081` |
+| `scripts/assets-browser.ts` | `0911322218c61207173a51dda6096e849b0da7739515073d33a700e85ba70108` |
+| `scripts/conversion-review-browser.ts` | `db3ba5b7c86ff632b143444def57e7f97d101b81865b3a0c5d81f1f869234171` |
+| `scripts/fixtures/email-source-context.ts` | `434b3cb4536719d4533497655e44196871ce5bf658a2c87bb526561af45a630a` |
+| `scripts/generate-api.ts` | `553c6b5097afffb7d53354bb54375e6f104b4a65642761700d16a84092775c28` |
+| `scripts/media-worker.ts` | `6184d11e743135abeab76f4368e15c2354288304a88651f42bbef1e9677a1774` |
+| `scripts/smoke-asset-export.ts` | `2b10de23577311543929140a46dba86ec12adfaa965182e4aa61d1baf66ed52d` |
+| `scripts/smoke-code-editor.ts` | `29d695fde4b8ae3f321edf97c120d482d6b1466b81426652a9855f1e8f9855ba` |
+| `scripts/smoke-conversion-api.ts` | `8bf4bc85773a5a5629f374b7dc3589dd030b54a4e867d3b7c99f63a131dce6b1` |
+| `scripts/smoke-conversion.ts` | `e14248b1fbd1651244f713f3c86784dcf5b253b906713c8057dfed73ad8d6678` |
+| `scripts/smoke-editor.ts` | `6342acfc1ba5419bc7813ef21115d55e5f51f204202c17985812daeb8108c784` |
+| `scripts/smoke-preflight.ts` | `8d2968ad00f6a3e4ed383ad86d2f6330b8c181d20803f7a3db115c1f2e535f7b` |
+| `scripts/smoke-source-editor.ts` | `5d242903250589836481068964392080665f9f1e9301e3ca2a350c51c44280d2` |
+| `scripts/smoke-source-truth.ts` | `daad2e6106291f1cf4abf777b40375b2b6c085017bf1ff5471d75f85565e8a3a` |
+| `scripts/smoke-utm.ts` | `fb7d5227eb1574bd7ea1ee3084861bfe3b3925cc2be4cfd6be49749942a1a78a` |
+| `sdk/README.md` | `86ce4e0ed884e8cf457a9785e5ab12c9cd63048fc7be14cf6f4f74375004ad0e` |
+| `sdk/client.ts` | `a722ad4374abfdb8c5dcf5570dc03fb68f1b111ef50e5aa75e71bf03328e79bf` |
+| `sdk/operations.ts` | `8038280593a5a59a43ba1ecd2d0b0739dd3e8f18c21923f461f2edad9809597c` |
+| `sdk/schema.d.ts` | `13e644c65c82c4d8b6b46559d6184249716ceb54da1742b8b70fd87ed4ded326` |
+| `sdk/types.fixture.ts` | `5dc85d8996bed873bae9abc0d43ffa00410334817ef3a0fefe5c2ce6ba3d902b` |
+| `src/app/v1/[...path]/route.ts` | `d92b94819438ad044843c9dd0b51606d9afb3e2244c850013b85f8433ed03412` |
+| `src/domain/email-conversion-contracts.ts` | `1396575b6b26b99e2f266955749ac557409a714d6ef284bc582902da65b28d44` |
+| `src/domain/email-conversion.ts` | `1f2f76617bc66a0faa3473d7947c354ffe7e8fdf89de22f17935e4e52743f137` |
+| `src/domain/email-schema.ts` | `ef04e19d2b662f4e5c2265274ce2d49c58f90a8e017de6cbe16a2a5f4ccf7eb2` |
+| `src/domain/email-source-contracts.ts` | `ba313032cb1d374681430ecf32299dc2d7d45b0501a637f72b517e66b47ba9dc` |
+| `src/domain/email-source-digest.ts` | `35973e4a4bea4ec6fa47f32da8a6d3639d228a0743b3a476fbff56a0cb14929c` |
+| `src/domain/email-source-values.ts` | `2eb9fa2f074e0e57556e5bb5ff990fed5f4e90d5ede7951f798a026959c67fb5` |
+| `src/domain/email-utm.ts` | `c0f66d61d6765458c332d3097cce21978387a829a2cf6563a2e794e81444976c` |
+| `src/domain/email.ts` | `5eac9aaec4c2d4c018a52a4f15fe4a47bcc63bc4decf14d4b2c53b6d1073328f` |
+| `src/domain/html-fragment-projection.ts` | `bfcd3fba26115566a385d39724d17db0f5c87277f866cca5bcd56fdc953119d6` |
+| `src/domain/preflight.ts` | `4ca88413dd14fae72fd62d3a65901477c0e845aebf689a60c3ba2606308eb693` |
+| `src/domain/raw-html-projection.ts` | `66de651f7079a06aff665c3d37c4c78d07e563babdb998fe5fd19b4fd4685bcb` |
+| `src/server/asset-output.ts` | `48a21deb9d6f3c003fce184d0cc7eca590b1ecef712cdd34716e2c63ee37a183` |
+| `src/server/derivation.ts` | `eed2a410ac51e1c15fbc9312fff130bd336dfd7c8ed339912538a9fa811f2479` |
+| `src/server/email-conversion.ts` | `b6abb10354307545d3380ad64eaa1605a949af423bf0d9ba1de1664810e1c8d9` |
+| `src/server/email-source-body.ts` | `2736c930ae92e169d20278680b2ac1a9381465a175a9de3e20edf6b5aa4f7c4a` |
+| `src/server/email-source-route.ts` | `054e1b0dd9c30f7d78159833cb7807a7a4b930bdf08cbfa1b195de1e23eb7189` |
+| `src/server/email-source.ts` | `e409b288353f438746d125cac2dce89adaf8ff67e4cf537185e8eb535057e042` |
+| `src/server/emails.ts` | `27985c2a02c1183d5e5927e03668df38a26017c6251b5a1f4e310660ac483239` |
+| `src/server/http.ts` | `1dab42acd72744f05c79d7d69a865da715f8969829409cb9f80e1147486e51d4` |
+| `src/ui/create.tsx` | `b084677b8a143cd32aff9b5b9a8d7996cf0f625b132e6334f7480d37cbda1238` |
+| `src/ui/derived-emails.tsx` | `d39222ad9dad6e79ee3ecafc2699cd249c9cda1682048e5bc361927984c8218c` |
+| `src/ui/editor.tsx` | `6d76aa4fdba9b8f887e3a04abeb6a6ba23518ae6767e8add295aae4af6741daa` |
+| `src/ui/email-conversion.tsx` | `119ea5c60fc4f9b0a52bc325bdd2f17be031de1684e72b3e540ea848d211eb04` |
+| `src/ui/source-recovery-store.ts` | `419a90d98f91f6fd53641deb2a2af92a99da98f5bd7294888e7b732be5348868` |
+| `src/ui/source-save-command.ts` | `e6a5514475258650713b1e63fdd58929afbb6ef58f8f26922be21e76525e6c6f` |
+| `tests/api-contract.test.ts` | `9a174195d645c86052c28809d9848fef976a1b98128bf5d919b2b0ea554916a0` |
+| `tests/api-key-scopes.test.ts` | `853e0e506e782df3c62c051c869c144646858f0fcc17f36e19ba8029b8836260` |
+| `tests/asset-email.test.ts` | `fe9a226275e9b8b9245b9ef33bf6b05ffddecd819585021f262262303ae81194` |
+| `tests/editor.test.ts` | `a34cfd35f2ccde789b84e4a8d6fb4c5bcdff3d2b25594d3cffe777f2c19443c5` |
+| `tests/email-conversion-db.test.ts` | `aef7b2627ddce2e8d9b9585cca3492b73a16415e559e0b64403ba2aa63c6386b` |
+| `tests/email-conversion.test.ts` | `3609e7780cf7a13699f3be0a5b0fb3404a30c87c4475ad53e311805473a67cb8` |
+| `tests/email-source-admission.test.ts` | `0e3c93b200bbba0139ffe5d3f67795c3b1e07e089638c5e6571839005393d47d` |
+| `tests/email-source-authority-db.test.ts` | `bddf77babf6d2193d77525870008375b448b4c2b1ec74dcbaf950d3e6e0833a0` |
+| `tests/email-source-command-db.test.ts` | `0ebe9b1213186407d66aad865a708fcf8f02dcab8dd59d0d5d948cde026fdb7b` |
+| `tests/email-source-compiler.test.ts` | `22205cb3be4ac04d8505333829bc4bcb2cfb73f953645eacd89073562af5cc06` |
+| `tests/email-source-db.test.ts` | `47917497229bf47bbd55efd2e7f5ce7ed6668d723af2c1b6d13481e646c181c8` |
+| `tests/email-source-http.test.ts` | `13fb1e3e3b21a3c9f7b30a99ecb2483b7725e214c28ba1f3a12707fb305235de` |
+| `tests/fixtures/raw-source/exact-utf8.html.txt` | `17df8f0540032fa4649cd68365dd3199d1b5f5b24d2ee3c6a64eff4568312e83` |
+| `tests/http-methods.test.ts` | `31c5c6051322e952433f0f4d98bf59d45735d246936d1dfca0010410b1674944` |
+| `tests/raw-html-projection.test.ts` | `9668bfd5648c1a76b6318ed8de871468f080bb8a3c828a265ef9a8e840cae86b` |
+| `tests/raw-source-contract.test.ts` | `8df531b4d1331c81fcc0480bf98590c9b281267620947e8bf70e5bcc014d8b24` |
+| `tests/sdk-generation.test.ts` | `0c18edd0204bf9b44a5394b44631cfd8ea65fae6a7f2362c5200f8ceb618920d` |
+| `tests/source-recovery-store.test.ts` | `edaff9fa944e38b643a173a427d525f2d59ff9ed5c32db793cf674c709f3266b` |
+| `tests/source-save-command.test.ts` | `2d0e7e2ad1f6a4432bd449a8ac8a0cd8fae6cc57ee9203eff4dcf7f156a58bc6` |
+| `tests/utm-compiler.test.ts` | `4ac2e53b437ed790e70f963631f080e27c710f9c2b16ee898012f8a356310656` |
+
+### Retained author evidence
+
+| Evidence path | SHA256 |
+| --- | --- |
+| `/tmp/lettercape-source-integration-suite6.log` | `312252d1a42c4f956c57d8cf4f1548fc890dea8c312916a6acd52566d5f9b96e` |
+| `/tmp/lettercape-source-api-final.log` | `6c8f0936de4b67928019aaedba31e013d1ce37c6515f3817a0859cb9ad6041f0` |
+| `/tmp/lettercape-source-build-final2.log` | `969073772ea5f1bc2a0bafb4270323894771d2473eef2e63ff342727237972db` |
+| `/tmp/lettercape-source-editor-native10.log` | `f018c118ec7df1ad739b5b899fedbd6105a2b71f7c1ae732df88694f50932c3b` |
+| `/tmp/lettercape-source-fragment-browser2.log` | `3306e52a1d9b7e19f811b9e60ec64f95b401da618580253a4982f679d180e6d6` |
+| `/tmp/lettercape-source-media-native2.log` | `affaf8674d6e6d0d2c80d2af49c55c6743665bfdceb7007dd5735ceea2aabe57` |
+| `/tmp/lettercape-source-media-ui-native1.log` | `32867df6cd0d3e615133bd8e59815b2523dc95807ebfea227956205fe0300b43` |
+| `/tmp/lettercape-source-baseline-final-all.log` | `5167b49ce56f7521c4e4a8fc657dcc396db961882ba758aa9ecd958e4f3bac19` |
+| `/tmp/lettercape-source-preflight-green1.log` | `e12274faffd2d4a73235806251b438b39c8091504db9af1ec3bce5a652f73c7a` |
+| `/tmp/lettercape-source-fragment-node-budget-green.log` | `13e409e87d0c7fe9663102917a97e02bb2425f1a508964a41a07a760454e4602` |
+| `/tmp/lettercape-source-type-final6.log` | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-source-lint-final5.log` | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-source-linux-build-candidate.log` | `4f2cbc2de7dc62837005e94b50ad131528f8b10d21e3fc3107c0fa177b790aa9` |
+| `/tmp/lettercape-source-linux-assets-candidate.log` | `89af8f3786ff4be11b3ff492a4f129f36d358795b016be18dcfd93352cca0790` |
+| `/tmp/lettercape-source-linux-startup-candidate.log` | `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754` |
+| `/tmp/lettercape-source-release-check.log` | `d6c4847babc66b1181116511fdf4cd4cbb4289a60dd88260b4bdfc26835a042b` |
+| `/tmp/lettercape-source-recovery-store-native-final.log` | `cac29df702155b68fa62f98b1a540e4b9515fc51f1d4454efd311dcf1868b9df` |
+| `/tmp/lettercape-source-truth-owned-final.log` | `321f8976d9e8ca53073c167298f38666c36c6411fecfd1d07264987b45b4b884` |
+| `/tmp/lettercape-source-truth-domain-green.log` | `33c1f42fc4db1d598fd9f5f0934743372f96e7e740eb7647937ddcf93fe4ce14` |
+| `/tmp/lettercape-source-truth-client-green-1.log` | `38b466c7b764298e749585cdf848eff4581549ca762efc96efa23d1aad45a77a` |
+| `/tmp/lettercape-source-truth-storage-smoke.log` | `a014737aba53c75dd126a8db1ca1425def3d1788feaae9a2277152cf84016bef` |
+| `/tmp/lettercape-source-main-db-preflight.json` | `434b83e126d5b097c2a3dce927abc02d2014d142027ed33e869d790b0c024e53` |
+
+## Final ruling
+
+Request corrections for I1 and I2 within the parent's ONE native Important pass. M1 and the six inherited MEDIA Minors are deferred with their stated costs and limits. Preserve this full report verbatim; later author qualification must name its new HEAD and must not imply this frozen review reviewed the correction. No rereview is authorized or performed here. Zero complete GA acceptance/public-launch certification.
+
+
+
+## Root ONE native Important correction pass
+
+Root accepts I1/I2 and the complete local-versus-GA evidence limits. M1 is deferred: manual image replacement can place stale task/pending/error/busy UI state in a newer lifecycle during asynchronous work. Strict storage/receipt scope guards prevent established cross-actor source adoption, but recovery/UI availability still has a cost. Later correction requires owning scope/lifecycle after each async boundary and fenced catch/finally/current-head effects. Six inherited media Minors remain deferred; none is silently accepted.
+
+I1 replaces both failed-match regex prepasses with one shared linear scanner. Every `<` counts, including incomplete starts and starts inside quotes/comments/text; source is unchanged and its projection becomes unavailable on conservative limit. This may refuse otherwise representable markup more conservatively than completed-tag counting. The raw and aggregate fragment paths use the same bound; actual authored-node/depth/output/diagnostic limits remain. Conversion stops before further sanitizer/parse work when projection is already unavailable. No independent process deadline/production load capacity is implied.
+
+Native old-code RED: two2MiB malformed tag/comment cases exceeded the controlled five-second child deadline, and confirmed child exit after termination; a200k malformed fragment took4.268seconds and returned blocked instead of bounded unavailable. Conversion continued to a different refusal after unavailable projection. Current meaningful6checks pass: source/hash retained, explicit unavailable, conversion stopped, ordinary2MiB source remains eligible and byte-exact, effective raw/fragment status never loses explicit failure. Child process/module overhead is included; these are local owned checks rather than a production latency promise.
+
+I2 shares an effective projection status boundary between server and browser, considers both raw and fragment profiles, and refuses unavailable or blocked generated forks before desired-draft/command capture. Server independently enforces the same rule after freezing/verifying the actual artifact inside the transaction. Unsupported authored fragments must be repaired before switching modes; a separate sanitizer replacement proposal is not introduced. Eligible original-action/key/base/artifact replay remains supported.
+
+Actual restrictedDB old-code RED: blocked and unavailable fragment forks succeeded when rejection was required. Current5command checks pass, including no mode/version/source/profile/history/provenance/idempotency mutation on rejection and existing eligible fork/compact replay behavior. Actual HTTP/Chromium repeated blocked/unavailable clicks capture no recovery command and dispatch no fork; direct HTTP bypassing UI independently returns409 with exact structured source/current version/checkpoint counts retained. Full root qualification and new HEAD will be appended after checks complete. This is author correction/qualification, not a reviewer rereview.
+
+Pre-migration main preservation snapshot:109emails/221revisions, one rawhead1260bytes, source033absent. First read-only hash attempts used unavailablepgcrypto and then the wrong historical plaintext column spelling; no mutation occurred. The final built-inSHA256 snapshot matches the actual schema and retains only counts/digests, no row or credential contents. Canonical/source synchronization remains pending.
+
+## Root corrected native qualification
+
+One native Important pass closes I1/I2; the frozen reviewer did not rereview these changes. M1 and six inherited media Minors remain disclosed. The corrected suite passes426/426 with zero failure/skip; lint, typecheck,114 API contracts, native production build, actual source and fragment HTTP/Chromium and the complete original editor/Monaco/conversion/UTM/preflight baseline pass. The original full Monaco smoke retains two unexplained404 diagnostics and zero uncaught errors.
+
+The corrected media integration passes real GIF scan/decode/fallback/static pixel, exact authored source without transient URLs, ZIP/PNG/PDF, immutable registry/remix/eligible fork/restore/CAS and held-Chromium committed-takedown409 with zero cache attachment. Owned generated database/application/worker/store cleanup completed. The first attempt was refused by the local network sandbox before fixture connection (EPERM); the authorized owned-local rerun passes.
+
+The corrected offline Linux image `lettercape-source-check:native-pass`, config SHA256 `cbcf05673cce20df425497e452cf72bffa0b11ff798fd5f55a779a564ecf1885`, runs as UID1001, retains editor asset base `/code-editor/0.57.0-3846dfd5f064/`, excludes the checked private artifacts, and actually refuses unconfigured production startup with exit1. No deployment/current-head remote CI/GA acceptance is implied. All65 requirements and13 gates remain binding, zero entire requirement/gate accepted.
+
+| Evidence | SHA256 |
+| --- | --- |
+| `/tmp/lettercape-source-i1-red.log` | `95589abba5366dccf036a435205984b762c144989b6973d1b94c72c56b8e2855` |
+| `/tmp/lettercape-source-i1-final-green.log` | `e35a0270fdace6139020137eb83abee8da3861bb113ab4c6da24e3b8163a8481` |
+| `/tmp/lettercape-source-i2-red.log` | `b71f44b3da9c75983a88e6986e07c932a529797781c45ea60a04d3b98e166579` |
+| `/tmp/lettercape-source-i2-green.log` | `325ca958e7aec90a1303fcdd98c48698b7ec02a1fe6bafe0486d7f3713993434` |
+| `/tmp/lettercape-source-native-pass-suite1.log` | `d423d505f9325d8e538753f99865e664a9111681d732871e9e2892021d98639c` |
+| `/tmp/lettercape-source-native-pass-type2.log` | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-source-native-pass-lint2.log` | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-source-native-pass-api.log` | `6c8f0936de4b67928019aaedba31e013d1ce37c6515f3817a0859cb9ad6041f0` |
+| `/tmp/lettercape-source-native-pass-build.log` | `44112f823c15d32e1ec162682715ab0e8eef279b7772c6ac087bfd0902c843f5` |
+| `/tmp/lettercape-source-native-pass-editor.log` | `f018c118ec7df1ad739b5b899fedbd6105a2b71f7c1ae732df88694f50932c3b` |
+| `/tmp/lettercape-source-native-pass-fragment-browser.log` | `3a544c4f4397cafc21e46feaab8e9e67240f5c619518a0a47d927b3c26cfbf7f` |
+| `/tmp/lettercape-source-native-pass-baseline.log` | `0c30dd18d66d0f2617dd6cc625f64fee011bb8bd147176e88f77cafa34ad4de2` |
+| `/tmp/lettercape-source-native-pass-media.log` | `affaf8674d6e6d0d2c80d2af49c55c6743665bfdceb7007dd5735ceea2aabe57` |
+| `/tmp/lettercape-source-linux-build-native-pass.log` | `1c751bcd7f2b4e4806c065c6193e44d15daa8db89bbe17ff011be6a76ca1d047` |
+| `/tmp/lettercape-source-linux-native-pass-assets.log` | `176e7c87f61973817744331befe34ddd894882141e4dd7398bed04cd3a00bf1e` |
+| `/tmp/lettercape-source-linux-native-pass-startup.log` | `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754` |
