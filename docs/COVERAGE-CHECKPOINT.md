@@ -1,5 +1,7 @@
 # Verified coverage checkpoint — 2026-10-02
 
+Delivery planning: [DELIVERY-CHECKPOINT.md](DELIVERY-CHECKPOINT.md) records implemented-and-verified development paths, every partial/not-started requirement, overlapping external blockers, next-session scope and the current audience-only estimate. No completion percentage or full-production date is inferred.
+
 Current UTM reviewed/fixed development checkpoint: all204tests/lint/typecheck/API93/build, owned real API/Chromium and PNG/PDF/remix/preflight checks pass. Five Important findings were fixed in ONE native RED→GREEN pass; no Minor or rereview. Actual editor link correction/persistence/reload/frozen export and invalid/unapplied scoped recovery are tested. Exhaustive rulings and limits: UTM-FROZEN-CONTENT-CHECKPOINT.md. Reviewed source31c45fe matches353canonical tracked hashes and passes complete canonical key/UTM browser flows. [Exact-head CI36988823751](https://github.com/PrabalParihar/mailtrain/actions/runs/36988823751) completed SUCCESS in both verify and renderer. Earlier CI36984321270 failed before UTM and is retained with assertion-preserving diagnostic evidence; its original timing cause remains unestablished. No production claim or gate closure follows.
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.

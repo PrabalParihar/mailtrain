@@ -1,5 +1,7 @@
 # Production release evidence
 
+Delivery planning: [DELIVERY-CHECKPOINT.md](DELIVERY-CHECKPOINT.md) records implemented-and-verified development paths, every partial/not-started requirement, overlapping external blockers, next-session scope and the current audience-only estimate. No completion percentage or full-production date is inferred.
+
 Full Baseline A remains required. Public deployment has not occurred. No paid account or resource has been activated. Current optional UTM development checks pass204tests/API93/full build and owned browser/export regressions; reviewed source31c45fe is published/canonical353hashes with complete canonical key/UTM browser PASS and [exact CI36988823751](https://github.com/PrabalParihar/mailtrain/actions/runs/36988823751) SUCCESS in both jobs. Earlier navigation failure/probes are retained; its original timing cause remains unestablished. UTM-FROZEN-CONTENT-CHECKPOINT.md preserves all single-review rulings and five Important fixes. All13gates remain open.
 
 | Gate | Current evidence | State |
