@@ -13,7 +13,7 @@ async (page) => {
   await page.getByRole('button',{name:'Edit raw HTML',exact:true}).click();
   await rawRequest;
   if(!await page.getByRole('textbox',{name:'Subject',exact:true}).evaluate(el=>el.readOnly))throw new Error('destructive transition accepts typing');
-  await page.getByRole('textbox',{name:'Raw HTML source',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Use basic editor',exact:true}).click();await page.getByRole('textbox',{name:'Raw HTML source',exact:true}).waitFor();
   if(!(await page.getByRole('textbox',{name:'Raw HTML source',exact:true}).inputValue()).includes('The exact newly acknowledged heading'))throw new Error('raw conversion used stale preview');
   await page.unroute(importPattern);
   // A checkpoint response arriving after a new local edit must not attach as current.

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import {EmailConversion}from'./email-conversion';
+import {HtmlCodeEditor}from'./html-code-editor';
 import{ConversionProposalSchema}from'@/domain/email-conversion-contracts';
 import{originalConversionRefusal}from'./conversion-recovery';
 import Link from 'next/link';
@@ -789,23 +790,14 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           ) : (
             <div className="panel code-panel">
               {doc.spec.editing_mode === 'raw_html' ? (
-                <label>
-                  Raw HTML source
-                  <textarea
-                    readOnly={!writable}
-                    className="raw-code"
-                    value={doc.spec.raw_html}
-                    onChange={(e) => update({ ...doc.spec, raw_html: e.target.value })}
-                    rows={24}
-                  />
-                </label>
+                <HtmlCodeEditor key="raw-source" label="Raw HTML source" readOnly={!writable} value={doc.spec.raw_html??''} onChange={raw_html=>update({...doc.spec,raw_html})}/>
               ) : (
                 <>
                   <p className="alert info">
                     Compiled HTML is read-only. Editing raw source creates a checkpoint and changes
                     the authoritative editing mode.
                   </p>
-                  <pre className="code-view">{html}</pre>
+                  <HtmlCodeEditor key="compiled-source" label="Compiled HTML source" readOnly value={html}/>
                   <button
                     disabled={!editRole || !!busy}
                     onClick={() =>
