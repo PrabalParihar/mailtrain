@@ -4,7 +4,7 @@ Authoritative PRDv2 BaselineA, all65/all13binding; no GA downgrade or fullaccept
 
 Root rulings: scanner/decoder process isolation and actual signatures are mandatory; unknown/missing/stale/error is non-clean. Local OSS container downloads/builds are authorized implementation without paidcommitment; no host software install/globalDockerconfiguration/account changes. Default public/CDN/AI/provider/send capability stays unavailable. Private ready variants and exactlocalZIP are genuine deliverables, not emulatedhosting. Approved onlydevelopmentallowance256MiB,2admissions/process,1active globalprocessingchain,1/workspace; productionallowance absent failsclosed. Missing scan cannot unlock editorselection/export. Preserve existing preview/renderer noegress; known bytes injected by bounded authenticatedimmutablemanifesttransport only.
 
-Parent exclusively owns shared files/index/API/UI/compiler integration and evidence; worker A/B exact ownership follows proposal. Reserve db/031-media-assets.sql. Final ONEimmutable whole-slice review and ONE native Important/Critical pass; deferMinors; retain every substantive ruling/cost and fullreport. Existing raw-source server sanitization/ack limitation remains declared and requires its separate source-truth continuation before fullREQ016/GA; do not silently broaden persistence claims while addingmedia.
+Parent exclusively owns the index/compiler/renderer and shared editor integration and evidence; workers A/B/C exact ownership follows proposal. Reserve db/031-media-assets.sql. Final ONEimmutable whole-slice review and ONE native Important/Critical pass; deferMinors; retain every substantive ruling/cost and fullreport. Existing raw-source server sanitization/ack limitation remains declared and requires its separate source-truth continuation before fullREQ016/GA; do not silently broaden persistence claims while addingmedia.
 
 ## Complete discovery/design proposal (all decisions/costs)
 
@@ -195,7 +195,10 @@ Bound a bundle to 200 distinct variants, 40 MiB total image bytes, 2 MiB HTML an
 
 ## 8. Parallel ownership and sequencing
 
-Two workers implement bounded, disjoint files. Parent owns integration seams and shared existing files, preventing competing editor/route/compiler/package edits.
+Worker C owns only new `src/ui/asset-picker.tsx`, `src/ui/asset-command.ts`, `tests/asset-client-recovery.test.ts`, `scripts/assets-browser.ts`; root mounts and performs final scope/source/version/authority CAS. Exact picker anchor is workspace, actor, email, nodeId, docVersion and opaque `JSON.stringify(full image block)` sourceRef. Worker D owns existing scope/HTTP-method/API-generator contracts and generated outputs; root retains the catch-all dispatch and binary output integration. Neither owns Git index or a commit slot. No upload completion applies an image automatically.
+
+
+Three implementation workers and a separate API contract implementer work in bounded, disjoint files. Parent owns integration seams and shared existing files, preventing competing editor/route/compiler/package edits.
 
 ### Worker A: durable tenant asset service
 
@@ -282,3 +285,15 @@ AI/GIF generated units stay separate from text credits. No automatic paid genera
 ## 11. Continuation to full REQ-020/021
 
 After the first increment, sequence public immutable publication/retention/erasure + real object/CDN account evidence, then generation/edit provider adapters with actual provider terms and bounded paid accounting, then additional image transforms/crop/optimization and animation generation. Connect resulting assets through exactly the same quarantine/scan/variant/provenance flow; failure retains the preceding node asset. Complete selected-frame/reduced-motion review across editor and all exports, qualified actual Outlook/client preflight, provider asset-upload/hosted-retention contracts, load/economics/takedown/disaster/accessibility/security evidence. Keep capability rows partial until each authoritative requirement and dependent gate has genuinely retained evidence.
+
+## Integration rulings made before qualification
+
+- Image nodes use exactly one `src` or `asset_ref:{asset_id,variant_id}`; `fallback_ref` is explicit and belongs to the same asset. Only schema1.1 accepts refs or raw `asset_registry:AssetVariantRef[]`; existing1.0 documents retain their behavior. New schema1.1 is a manual managed-image application, never upload completion.
+- Every upload attestation owns a separate asset/rights/variant identity. Only verified source object bytes may deduplicate within the workspace. Internal binding includes asset UUID, variant UUID and SHA256; content hash alone never conveys rights or ownership. Equal source uploads receive distinct private references and rights receipts.
+- Root application checks exact workspace/actor/email/node/version/opaque full-block source fingerprint, role, conflict, pending action and current metadata; it flushes first and uses acknowledged draft CAS. Selected current inspector alt/decorative values are preserved deliberately; users can edit them explicitly. Every supplied X-Actor-ID is checked centrally for session and bearer principals, including binary reads/PUT.
+- A tracked planned-object ledger accounts source/derivative writes under the existing reservation. Failed authority/settlement writes cannot release quota while their physical bytes remain unreferenced. Exact owned cleanup rechecks references; failed deletion retains accounting until the scheduler janitor proves removal. This is required for bounded storage, not a cosmetic cleanup step.
+- The existing pinned lock entries are preserved; only MIT `fflate@0.8.3` is added for deterministic ZIP creation. Files have generated asset/variant/hash names, sorted entries, fixed1980 timestamps and stored compression. The application never unpacks uploads or includes original/quarantined bytes.
+- Private preview transport is bounded at4MiB verified derivative bytes, with static fallbacks and sandboxed data-image display. The authoritative compiled source retains only immutable bindings. ZIP defaults to static `email.html` and provides explicitly animated `email-animated.html`; ordinary private-image HTML refuses until publication exists. ZIP raw derivatives40MiB/output48MiB limits are development transport limits.
+- Renderer profile2 carries signed exact byte bindings: at most200 entries,1MiB aggregate decoded static PNG/JPEG bytes and2MiB total JSON including base64. Protocol1 remains accepted for legacy documents. Every unbound request remains aborted; no assets-host network exception exists. Larger images give an actionable bundle/smaller-variant refusal rather than omission. Local and isolatedLinux red-pixel/PDF proofs cannot certify Outlook.
+- Actual DockerDesktop denied a Documents bind mount. The exact public renderer fixture is copied to an owned `/tmp` path for the same sandbox qualification. No global sharing/security setting changes.
+- The scanner is actual officialClamAV1.4.6 AMD64 under emulation on the nativeARM64Docker host, with a verified signed112791054byte snapshot. Resource measurements and image/dependency notices are retained. Public redistribution/corresponding-source/SBOM/legal gates remain open.
