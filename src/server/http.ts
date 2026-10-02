@@ -23,6 +23,11 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && ['rotate', 'revoke'].includes(command)) methods = ['POST'];
   }
   if (root === 'events' && (!id || (uuid.test(id) && !command))) methods = ['GET'];
+  if(root==='sender-identities'){
+    if(!id)methods=['GET','POST'];
+    else if(uuid.test(id)&&!command)methods=['GET'];
+    else if(uuid.test(id)&&['versions','dns-checks'].includes(command))methods=['GET','POST'];
+  }
   if (root === 'webhook-endpoints') {
     if (!id) methods = ['GET','POST'];
     else if (uuid.test(id) && !command) methods = ['GET'];

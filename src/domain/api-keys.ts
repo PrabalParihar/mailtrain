@@ -15,6 +15,8 @@ export const KEY_SCOPES = [
   'events:read',
   'webhooks:read',
   'webhooks:write',
+  'sender:read',
+  'sender:write',
 ] as const;
 export const KeyInput = z
   .object({
@@ -33,6 +35,7 @@ export function scopeForResource(
   command: string | undefined,
 ): string | undefined {
   const read = method === 'GET';
+  if(root==='sender-identities') return read?'sender:read':'sender:write';
   if (root === 'brands'||root==='brand-sources') return read||command==='memory-preview' ? 'brands:read' : 'brands:write';
   if (root === 'emails') return read ? 'emails:read' : 'emails:write';
   if (root === 'email-revisions')

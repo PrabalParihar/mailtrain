@@ -1,4 +1,5 @@
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
+import {SenderDraftInput,SenderVersionInput,SenderCheckInput,SenderView,SenderVersionView,DNSObservation,DNSCheckView} from '../src/domain/sender-domain';
 import{CampaignConfigurationInput,CampaignConfigurationSnapshot,CampaignConfigurationView}from'../src/domain/campaign-configuration';
 import { AudienceSnapshotMetadataSchema } from '../src/domain/audience-snapshots';
 import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
@@ -34,6 +35,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  SenderDraftInput:fromZod(SenderDraftInput),SenderVersionInput:fromZod(SenderVersionInput),SenderCheckInput:fromZod(SenderCheckInput),SenderView:fromZod(SenderView),SenderVersionView:fromZod(SenderVersionView),DNSObservation:fromZod(DNSObservation),DNSCheckView:fromZod(DNSCheckView),
   WorkspacePreferences:fromZod(WorkspacePreferences),WorkspaceTimezoneInput:fromZod(WorkspaceTimezoneInput),CalendarEntry:fromZod(CalendarEntry),
   CreationMetadata:fromZod(CreationMetadata),CreationAttempt:fromZod(CreationAttempt),CreationSummary:fromZod(CreationSummary),
   Membership:fromZod(Membership),MembershipChange:fromZod(MembershipChange),MembershipSummary:fromZod(MembershipSummary),RoleChangeInput:fromZod(RoleChangeInput),RemoveMemberInput:fromZod(RemoveMemberInput),TransferOwnerInput:fromZod(TransferOwnerInput),
@@ -211,6 +213,11 @@ const schemas: Record<string, Schema> = {
 schemas.WebhookDelivery=fromZod(WebhookDelivery);schemas.WebhookAttempt=fromZod(WebhookAttempt);schemas.WebhookReplayInput=fromZod(WebhookReplayInput);
 const envelope = (props: Record<string, unknown>, required = Object.keys(props)) =>
   object({ request_id: string, ...props }, ['request_id', ...required]);
+const senderEnvelope=(props:Record<string,unknown>)=>object({request_id:string,...props},undefined,false);
+schemas.SenderResponse=senderEnvelope({sender:ref('SenderView')});
+schemas.SenderVersionResponse=senderEnvelope({sender:ref('SenderView'),changed:{type:'boolean'}});
+schemas.DNSCheckResponse=senderEnvelope({check:ref('DNSCheckView')});
+for(const [name,item] of Object.entries({SenderIdentities:'SenderView',SenderVersions:'SenderVersionView',SenderDNSChecks:'DNSCheckView'}))schemas[name+'Page']=senderEnvelope({data:array(ref(item)),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0}});
 for (const [name, item] of Object.entries({
   Members:'Membership',MemberChanges:'MembershipChange',
   Emails: 'Email',
@@ -344,6 +351,9 @@ type Definition = {
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const examples: Record<string, unknown> = {
+  SenderDraftInput:{name:'Example sender draft',provider:'ses',account_label:'Example account label',region:'us-east-1',from_name:'Example brand',from_address:'news@example.test',reply_to:null},
+  SenderVersionInput:{name:'Updated sender draft',provider:'ses',account_label:'Example account label',region:'us-east-1',from_name:'Example brand',from_address:'news@example.test',reply_to:null,expected_version:1},
+  SenderCheckInput:{expected_version:1},
   RoleChangeInput:{role:'Viewer',expected_version:1},RemoveMemberInput:{expected_version:1,acknowledge:true},TransferOwnerInput:{expected_version:1,expected_owner_version:1,acknowledge:true},
   WebhookReplayInput:{expected_attempt:1,acknowledge_duplicate_effect:true},
   WebhookEndpointInput:{name:'Example paused receiver',url:'https://example.org/webhook',subscriptions:['contact.unsubscribed']},
@@ -491,6 +501,13 @@ function add(d: Definition) {
   };
 }
 const ID = '11111111-1111-4111-8111-111111111111';
+add({id:'listSenderIdentities',path:'/v1/sender-identities',method:'GET',response:'SenderIdentitiesPage',paged:true,scope:'sender:read',description:'Current Owner/Admin only. Provider-bound drafts have no credentials; connection and sending remain disabled.'});
+add({id:'createSenderIdentity',path:'/v1/sender-identities',method:'POST',body:'SenderDraftInput',response:'SenderResponse',status:201,keyed:true,scope:'sender:write'});
+add({id:'getSenderIdentity',path:'/v1/sender-identities/{id}',method:'GET',response:'SenderResponse',scope:'sender:read'});
+add({id:'listSenderVersions',path:'/v1/sender-identities/{id}/versions',method:'GET',response:'SenderVersionsPage',paged:true,scope:'sender:read'});
+add({id:'saveSenderVersion',path:'/v1/sender-identities/{id}/versions',method:'POST',body:'SenderVersionInput',response:'SenderVersionResponse',keyed:true,scope:'sender:write',description:'Exact acknowledged sender version. Provider/account/region/address changes never inherit old DNS evidence or activate sending.'});
+add({id:'listSenderDNSChecks',path:'/v1/sender-identities/{id}/dns-checks',method:'GET',response:'SenderDNSChecksPage',paged:true,scope:'sender:read'});
+add({id:'checkSenderDNS',path:'/v1/sender-identities/{id}/dns-checks',method:'POST',body:'SenderCheckInput',response:'DNSCheckResponse',keyed:true,scope:'sender:write',description:'Bounded read-only exact-domain SPF/DMARC TXT discovery;5second owned resolver deadline,10checks/minute/workspace excluding replay. No DKIM, full protocol evaluation, ownership, provider acceptance or aligned received-message authentication claim. Sending stays disabled.'});
 add({id:'listMemberships',path:'/v1/memberships',method:'GET',response:'MembersPage',paged:true,session:true,description:'Current Owner/Admin session; tenant-bound membership metadata only, no provider identity lookup.'});
 add({id:'listMembershipChanges',path:'/v1/membership-changes',method:'GET',response:'MemberChangesPage',paged:true,session:true,description:'Immutable local membership and editing-seat impact; no Stripe reconciliation claim.'});
 add({id:'getMembershipSummary',path:'/v1/memberships/summary',method:'GET',response:'MembershipSummaryResponse',session:true});

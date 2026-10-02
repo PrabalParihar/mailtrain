@@ -29,6 +29,8 @@ export function normalizeSender(input:unknown) {
  return {...parsed,from_address,reply_to:parsed.reply_to?.trim()?canonicalAddress(parsed.reply_to):null,domain:from_address.split('@')[1]};
 }
 const canonicalSender=SenderDraftInput.extend({domain:z.string().max(253),reply_to:z.email().max(254).nullable()});
+export const SenderVersionView=z.object({sender_id:z.uuid(),version:z.number().int().positive(),snapshot:canonicalSender.strict(),created_by:z.string(),created_at:z.iso.datetime()}).strict();
+export type SenderVersionData=z.infer<typeof SenderVersionView>;
 export const SenderView=canonicalSender.extend({id:z.string().uuid(),version:z.number().int().positive(),created_at:z.iso.datetime(),updated_at:z.iso.datetime(),connection_status:z.literal('not_connected'),sending_enabled:z.literal(false)}).strict();
 export type SenderData=z.infer<typeof SenderView>;
 export const TXTStatus=z.enum(['missing','single_record','multiple_records','unavailable']);

@@ -43,7 +43,10 @@ function responseBytes(records:string[][]) {
   for(const chunk of chunks) {
    if(typeof chunk!=='string'||(characters+=chunk.length)>4096)throw new Error('response_limit');
   }
-  bytes+=new TextEncoder().encode(chunks.join('')).byteLength;
+  const joined=chunks.join('');
+  // JSONB cannot retain NUL or unpaired UTF-16 surrogates; refuse the whole response safely.
+  if(joined.includes('\u0000')||!joined.isWellFormed())throw new Error('response_limit');
+  bytes+=new TextEncoder().encode(joined).byteLength;
   if(bytes>32768)throw new Error('response_limit');
  }
  return bytes;

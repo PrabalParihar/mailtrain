@@ -151,3 +151,12 @@ test('cancellation failures cannot prevent timeout observation completion',async
  const pending=observeSenderDNS(domain,()=>resolver);context.mock.timers.tick(5000);
  const observation=await pending;assert.equal(observation.spf.error,'timeout');assert.equal(observation.dmarc.error,'timeout');
 });
+
+test('refuses TXT strings that cannot be retained as PostgreSQL JSON evidence',async()=>{
+ for(const invalid of ['v=spf1 \u0000 -all','v=spf1 \ud800 -all']){
+  const source=port(async owner=>owner===domain?[[invalid]]:[['v=DMARC1; p=none']]);
+  const observed=await observeSenderDNS(domain,()=>source.resolver);
+  assert.equal(observed.spf.status,'unavailable');assert.equal(observed.spf.error,'response_limit');
+  assert.deepEqual(observed.spf.records,[]);assert.deepEqual(observed.dmarc.records,[]);
+ }
+});

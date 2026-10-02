@@ -31,6 +31,7 @@ import { DispatchPolicyInput } from '@/domain/dispatch-controls';
 import { deriveEmail } from '@/server/derivation';
 import{webhookHistoryRoute}from'@/server/webhook-history';
 import { webhookRoute } from '@/server/webhook-route';
+import {senderDomainRoute} from '@/server/sender-domain-route';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 type Context = { params: Promise<{ path: string[] }> };
@@ -62,6 +63,7 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if(root==='sender-identities')return json(await senderDomainRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if(root==='workspace-preferences')return json(await workspacePreferenceRoute(req,body,key));
     if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
     if(root==='brand-sources'||(root==='brands'&&command==='memory-preview'))return json(await brandMemoryRoute(req,path,body,key),root==='brand-sources'&&method==='POST'&&!id?201:200);
