@@ -1,11 +1,14 @@
 import { z } from 'zod';
-import { RequestedCampaignTiming } from './campaign-configuration';
+import { RequestedCampaignTiming, ResolvedCampaignTimingSchema } from './campaign-configuration';
 
 export const CalendarMonth = z.string().regex(/^(?!0000)\d{4}-(?:0[1-9]|1[0-2])$/);
 export const WorkspaceTimezoneInput = z.object({
  expected_version:z.number().int().min(1).max(2147483646),
  time_zone:RequestedCampaignTiming.shape.time_zone,
 }).strict();
+export const WorkspacePreferences=z.object({workspace_id:z.uuid(),time_zone:RequestedCampaignTiming.shape.time_zone,version:z.number().int().positive()}).strict();
+export const CalendarDisplay=z.object({local_date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/),local_time:z.string().regex(/^\d{2}:\d{2}$/),utc_offset:z.string().regex(/^[+-]\d{2}:\d{2}(?::\d{2})?$/),time_zone:RequestedCampaignTiming.shape.time_zone}).strict();
+export const CalendarEntry=z.object({id:z.uuid(),name:z.string(),state:z.string(),version:z.number().int().positive(),revision_id:z.uuid(),planned_timing:ResolvedCampaignTimingSchema,display:CalendarDisplay}).strict();
 export function validateDisplayTimeZone(provided:string):string {
  const zone=RequestedCampaignTiming.shape.time_zone.parse(provided);
  try { new Intl.DateTimeFormat('en-CA',{timeZone:zone}).format(0); }

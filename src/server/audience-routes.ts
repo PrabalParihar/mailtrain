@@ -1,3 +1,4 @@
+import {campaignCalendar} from './workspace-calendar';
 import{LINT_RULES_VERSION}from'../domain/preflight';
 import{campaignDetail,campaignConfigurations,configureCampaign}from'./campaign-configuration';
 import { z } from 'zod';
@@ -67,6 +68,7 @@ export async function audienceRoute(
           ? readImportErrors(tx, id, new URL(req.url).searchParams.get('cursor'))
           : importCommand(tx, p, id, cmd, body, key);
       if (root === 'campaigns') {
+        if(id==='calendar'&&req.method==='GET')return campaignCalendar(req,tx,p);
         if(id&&req.method==='GET'){
           if(!cmd)return campaignDetail(tx,id);
           if(cmd==='configurations')return campaignConfigurations(req,tx,p,id);

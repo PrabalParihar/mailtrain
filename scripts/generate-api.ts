@@ -1,3 +1,4 @@
+import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
 import{CampaignConfigurationInput,CampaignConfigurationSnapshot,CampaignConfigurationView}from'../src/domain/campaign-configuration';
 import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
 import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
@@ -32,6 +33,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  WorkspacePreferences:fromZod(WorkspacePreferences),WorkspaceTimezoneInput:fromZod(WorkspaceTimezoneInput),CalendarEntry:fromZod(CalendarEntry),
   CreationMetadata:fromZod(CreationMetadata),CreationAttempt:fromZod(CreationAttempt),CreationSummary:fromZod(CreationSummary),
   Membership:fromZod(Membership),MembershipChange:fromZod(MembershipChange),MembershipSummary:fromZod(MembershipSummary),RoleChangeInput:fromZod(RoleChangeInput),RemoveMemberInput:fromZod(RemoveMemberInput),TransferOwnerInput:fromZod(TransferOwnerInput),
   BrandSourceInput:fromZod(BrandSourceInput),BrandSource:fromZod(BrandSource),BrandMemoryChunk:fromZod(BrandMemoryChunk),BrandMemoryContext:fromZod(BrandMemoryContext),MemoryPreviewInput:fromZod(MemoryPreviewInput),
@@ -265,6 +267,9 @@ schemas.KeyResponse = envelope(
 );
 schemas.GenericResponse = envelope({}, []);
 schemas.CampaignResponse = envelope({ campaign: ref('Campaign') });
+schemas.WorkspacePreferencesResponse=envelope({preferences:ref('WorkspacePreferences')});
+schemas.WorkspaceTimezoneResponse=envelope({preferences:ref('WorkspacePreferences'),changed:{type:'boolean'},notice:string});
+schemas.CampaignCalendarResponse=envelope({data:array(ref('CalendarEntry')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},month:fromZod(CalendarMonth),time_zone:string,timezone_version:{type:'integer',minimum:1},notice:string});
 schemas.CampaignDetailResponse=envelope({campaign:ref('CampaignConfigurationView')});
 schemas.CampaignConfigurationResponse=envelope({campaign:ref('CampaignConfigurationView'),changed:{type:'boolean'},notice:string});
 schemas.Health = envelope({
@@ -829,6 +834,9 @@ add({
   keyed: true,
   scope: 'campaigns:write',
 });
+add({id:'getWorkspacePreferences',path:'/v1/workspace-preferences',method:'GET',response:'WorkspacePreferencesResponse',session:true,description:'Current content-role session; display preference only.'});
+add({id:'setWorkspaceTimezone',path:'/v1/workspace-preferences/timezone',method:'POST',body:'WorkspaceTimezoneInput',example:{expected_version:1,time_zone:'UTC'},response:'WorkspaceTimezoneResponse',keyed:true,session:true,description:'Current Owner/Admin session and exact preference version. Replay acknowledges the original command and returns current preference. Campaign intent, hashes and approval remain intact; this does not schedule delivery.'});
+add({id:'getCampaignCalendar',path:'/v1/campaigns/calendar',method:'GET',response:'CampaignCalendarResponse',paged:true,scope:'campaigns:read',query:[{name:'month',in:'query',required:true,schema:fromZod(CalendarMonth)}],description:'Complete valid planned timing displayed in saved workspace timezone. Signed cursor binds actor, tenant, month and timezone version. Redacted metadata only; no accepted delivery schedule or audience-performance measurement.'});
 add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignDetailResponse',scope:'campaigns:read'});
 add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
 add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS; exact owned revision/hash and explicit planned local minute/IANA zone/offset. Planned timing never accepts scheduling. Material changes clear review/approval and retain captured audience/provider/sender/tracking. Stale commands conflict; unchanged commands do not append history.'});

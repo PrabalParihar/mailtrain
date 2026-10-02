@@ -1,3 +1,4 @@
+import {workspacePreferenceRoute} from '@/server/workspace-calendar';
 import{creationPage,creationView,creationAttempts}from'@/server/creation-history';
 import { membershipRoute } from '@/server/membership-route';
 import { EventType } from '@/domain/events';
@@ -61,6 +62,7 @@ async function handle(req: Request, ctx: Context) {
     };
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if(root==='workspace-preferences')return json(await workspacePreferenceRoute(req,body,key));
     if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
     if(root==='brand-sources'||(root==='brands'&&command==='memory-preview'))return json(await brandMemoryRoute(req,path,body,key),root==='brand-sources'&&method==='POST'&&!id?201:200);
     if(root==='webhook-deliveries')return json(await webhookHistoryRoute(req,path,body,key));

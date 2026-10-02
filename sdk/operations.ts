@@ -608,6 +608,30 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "getWorkspacePreferences": {
+    "method": "GET",
+    "path": "/v1/workspace-preferences",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "setWorkspaceTimezone": {
+    "method": "POST",
+    "path": "/v1/workspace-preferences/timezone",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "getCampaignCalendar": {
+    "method": "GET",
+    "path": "/v1/campaigns/calendar",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
   "getCampaign": {
     "method": "GET",
     "path": "/v1/campaigns/{id}",

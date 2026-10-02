@@ -27,8 +27,8 @@ Files db/027-workspace-calendar.sql, tests/workspace-calendar-db.test.ts. Add ti
 
 ### Task 4: Scoped calendar/preference API
 Files src/server/workspace-calendar.ts, audience-routes/auth/http/API handler/generator and generated contracts. GET campaigns/calendar?month=YYYY-MM&limit; GET workspace-preferences; POST workspace-preferences/timezone current manager session CAS. Read campaigns:read; session-only preference writes.
-- [ ] Actual HTTP RED new routes; DST/month grouping, strict metadata/session/foreign/role/key/encoded, CAS/no-op/replay/current preference, unchanged campaign intent, timezone-changed cursor rejection. Expected new-route failure.
-- [ ] Implement signed month/zone/version metadata pages and strict DTOs. Expected full tests/lint/typecheck/API/build PASS; commit/task-done.
+- [x] Actual HTTP RED new routes; DST/month grouping, strict metadata/session/foreign/role/key/encoded, CAS/no-op/replay/current preference, unchanged campaign intent, timezone-changed cursor rejection. Expected new-route failure.
+- [x] Implement signed month/zone/version metadata pages and strict DTOs. Expected full tests/lint/typecheck/API/build PASS; commit/task-done.
 
 ### Task 5: Calendar/timezone UI and recovery
 Files src/ui/workspace-calendar.tsx, operations/app/css, scripts/smoke-workspace-calendar.ts, package/CI. Accessible month/events/display-zone preference, planned labels and disclosed unmeasured heuristic.

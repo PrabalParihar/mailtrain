@@ -14,7 +14,7 @@ const Cursor = z.object({
 });
 type Options = {
   resource:
-    'campaign-configurations' | 'creation-operations' | 'creation-attempts' | 'memberships' | 'membership-changes' | 'keys' | 'brand-sources' | 'brands' | 'emails' | 'revisions' | 'contacts' | 'campaigns' | 'segments' | 'audit' | 'derivatives' | 'events' | 'webhook-endpoints' | 'webhook-deliveries' | 'webhook-attempts';
+    'campaign-calendar' | 'campaign-configurations' | 'creation-operations' | 'creation-attempts' | 'memberships' | 'membership-changes' | 'keys' | 'brand-sources' | 'brands' | 'emails' | 'revisions' | 'contacts' | 'campaigns' | 'segments' | 'audit' | 'derivatives' | 'events' | 'webhook-endpoints' | 'webhook-deliveries' | 'webhook-attempts';
   from: string;
   fields: string;
   created?: string;
