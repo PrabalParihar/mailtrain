@@ -61,8 +61,9 @@ export function assertRouteMethod(path: string[], method: string) {
       else if (['preflight', 'export', 'remix', 'localize'].includes(command)) methods = ['POST'];
     }
   }
+  if(root==='operations'&&!id)methods=['GET'];
   if (root === 'operations' && id && uuid.test(id)) {
-    if (!command) methods = ['GET'];
+    if (!command||command==='attempts') methods = ['GET'];
     else if (command === 'cancel') methods = ['POST'];
   }
   if (root === 'contacts') {

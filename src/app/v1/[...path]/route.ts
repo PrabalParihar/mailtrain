@@ -1,3 +1,4 @@
+import{creationPage,creationView,creationAttempts}from'@/server/creation-history';
 import { membershipRoute } from '@/server/membership-route';
 import { EventType } from '@/domain/events';
 import { readEventBody } from '@/server/events';
@@ -388,13 +389,15 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'operations')
       return json(
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
+          if(!id)return creationPage(req,tx,p);
           const row = (await tx.query('SELECT * FROM operations WHERE id=$1', [id])).rows[0];
           if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');
           requireKeyScope(p, operationScope(row.type, command === 'cancel'));
           if (row.type === 'contacts.import' && !allowed(p.role, 'audience'))
             fail(403, 'INSUFFICIENT_SCOPE', 'Your role cannot access recipient import data.');
-          if (command === 'cancel') return { operation: await cancelOperation(tx, p, id) };
-          return { operation: row };
+          if(command==='attempts')return creationAttempts(req,tx,p,id,row.type);
+          if (command === 'cancel') {const cancelled=await cancelOperation(tx,p,id);return {operation:['brand.extract','email.generate'].includes(row.type)?await creationView(tx,cancelled):cancelled};}
+          return { operation: ['brand.extract','email.generate'].includes(row.type)?await creationView(tx,row):row };
         }),
       );
     if (

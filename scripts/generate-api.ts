@@ -1,3 +1,4 @@
+import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
 import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -30,6 +31,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  CreationMetadata:fromZod(CreationMetadata),CreationAttempt:fromZod(CreationAttempt),CreationSummary:fromZod(CreationSummary),
   Membership:fromZod(Membership),MembershipChange:fromZod(MembershipChange),MembershipSummary:fromZod(MembershipSummary),RoleChangeInput:fromZod(RoleChangeInput),RemoveMemberInput:fromZod(RemoveMemberInput),TransferOwnerInput:fromZod(TransferOwnerInput),
   BrandSourceInput:fromZod(BrandSourceInput),BrandSource:fromZod(BrandSource),BrandMemoryChunk:fromZod(BrandMemoryChunk),BrandMemoryContext:fromZod(BrandMemoryContext),MemoryPreviewInput:fromZod(MemoryPreviewInput),
   WebhookEndpoint: fromZod(WebhookEndpoint),
@@ -202,7 +204,7 @@ const schemas: Record<string, Schema> = {
     created_at: time,
   }),
   Operation: object(
-    { id: uuid, type: string, state: string, result: {}, error: {}, created_at: time },
+    { id: uuid, type: string, state: string, result: {}, error: {}, created_at: time,creation:nullable(ref('CreationMetadata')) },
     ['id', 'type', 'state'],
   ),
 };
@@ -687,6 +689,9 @@ for (const [id, command, blocked] of [
     blocked,
     scope: blocked ? 'emails:export' : 'emails:write',
   });
+for(const [name,item]of Object.entries({CreationOperations:'CreationSummary',CreationAttempts:'CreationAttempt'}))schemas[name+'Page']=envelope({data:array(ref(item)),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0}});
+add({id:'listCreationOperations',path:'/v1/operations',method:'GET',response:'CreationOperationsPage',paged:true,query:[{name:'type',in:'query',required:true,schema:fromZod(CreationType)}],description:'Signed bounded creation history; scope follows required type. No private input or lease token.'});
+add({id:'listCreationAttempts',path:'/v1/operations/{id}/attempts',method:'GET',response:'CreationAttemptsPage',paged:true,description:'Immutable redacted creation attempts; scope follows the selected operation.'});
 add({
   id: 'getOperation',
   path: '/v1/operations/{id}',

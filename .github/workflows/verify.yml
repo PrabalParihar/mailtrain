@@ -71,6 +71,7 @@ jobs:
           npm run smoke:brand-memory
           npm run smoke:authority
           npm run smoke:memberships
+          npm run smoke:creation
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

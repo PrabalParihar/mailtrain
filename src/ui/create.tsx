@@ -1,11 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Sparkles, ArrowUpRight, FilePenLine } from 'lucide-react';
 import { api, poll } from './api';
 import type { Brand } from '@/domain/brand';
-import type { EmailSpec } from '@/domain/email';
+import {EmailSpecSchema,type EmailSpec} from '@/domain/email';
+import{z}from'zod';
+import{CreationHistory}from'./creation-history';
 const localeNames: Record<string, string> = {
   'en-US': 'English (United States)',
   'en-GB': 'English (United Kingdom)',
@@ -46,7 +48,8 @@ export function CreatePanel({ workspace }: { workspace: string }) {
     [operationId, setOperationId] = useState(''),
     [series, setSeries] = useState(false),
     [count, setCount] = useState(2);
-  const router = useRouter();
+  const router = useRouter(),running=useRef(false),watch=useRef<AbortController|null>(null);
+  useEffect(()=>()=>{watch.current?.abort();},[]);
   useEffect(() => {
     void api<{ brand: (typeof brands)[number] | null }>(workspace, 'brands/current')
       .then((r) => {
@@ -103,11 +106,14 @@ export function CreatePanel({ workspace }: { workspace: string }) {
         </p>
       )}
       {brands[0] && <p className="muted small">Brand: {brands[0].data.name} · confirmed v{brands[0].version}</p>}
+      <CreationHistory workspace={workspace} type="email.generate" refreshToken={operationId+':'+busy} onProposal={value=>{const checked=z.object({proposals:z.array(z.object({spec:EmailSpecSchema,review_notes:z.array(z.string()),delay_hours:z.number()})).min(1).max(10)}).parse(value);setResult(checked);}}/>
       <div className="create-grid">
         <form
           className="panel brief-form"
           onSubmit={async (e) => {
             e.preventDefault();
+            if(running.current)return;running.current=true;
+            const controller=new AbortController();watch.current=controller;
             setBusy(true);
             setError('');
             setResult(null);
@@ -125,12 +131,12 @@ export function CreatePanel({ workspace }: { workspace: string }) {
                 },
               );
               setOperationId(r.operation.id);
-              const proposal = await poll<NonNullable<typeof result>>(workspace, r.operation.id);
-              setResult(proposal);
+              const proposal = await poll<NonNullable<typeof result>>(workspace, r.operation.id,controller.signal);
+              if(!controller.signal.aborted)setResult(proposal);
             } catch (e) {
               setError((e as Error).message);
             } finally {
-              setBusy(false);
+              running.current=false;setBusy(false);
             }
           }}
         >
@@ -220,8 +226,7 @@ export function CreatePanel({ workspace }: { workspace: string }) {
               onClick={async () => {
                 try {
                   await api(workspace, 'operations/' + operationId + '/cancel', 'POST', {});
-                  setBusy(false);
-                  setError('Generation cancelled. The brief is preserved.');
+                  setError('Cancellation requested. In-flight usage remains reserved until the outcome is accounted for.');
                 } catch (e) {
                   setError((e as Error).message);
                 }
@@ -230,6 +235,7 @@ export function CreatePanel({ workspace }: { workspace: string }) {
               Cancel operation
             </button>
           )}
+          {busy&&<button type="button"onClick={()=>watch.current?.abort()}>Stop waiting</button>}
           <p className="muted small">
             AI requires a configured provider and approved finite allowance. Generation creates a
             proposal; it never sends.

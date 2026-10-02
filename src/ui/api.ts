@@ -14,6 +14,7 @@ export async function api<T = Record<string, unknown>>(
   body?: unknown,
   version?: number,
   key?: string,
+  signal?: AbortSignal,
 ): Promise<T> {
   const serialized = body === undefined ? undefined : JSON.stringify(body);
   let pendingSlot: string | undefined,
@@ -36,6 +37,7 @@ export async function api<T = Record<string, unknown>>(
   }
   const res = await fetch('/v1/' + path, {
     method,
+    signal,
     headers: {
       'Content-Type': 'application/json',
       'X-Workspace-Id': workspace,
@@ -64,14 +66,15 @@ export async function poll<T>(workspace: string, id: string, signal?: AbortSigna
   let wait = 1000;
   for (;;) {
     if (signal?.aborted) throw new Error('View interrupted. Your operation remains available.');
-    const r = await api<{ operation: { state: string; result: T; error?: { message: string } } }>(
+    const r = await api<{ operation: { state: string; result: T; error?: { message: string; code?:string } } }>(
       workspace,
-      'operations/' + id,
+      'operations/' + id,'GET',undefined,undefined,undefined,signal,
     );
+    if(signal?.aborted)throw new Error('View interrupted. Your operation remains available.');
     if (r.operation.state === 'succeeded') return r.operation.result;
     if (r.operation.state === 'failed' || r.operation.state === 'cancelled')
-      throw new Error(r.operation.error?.message ?? 'Operation cancelled');
-    await new Promise((resolve) => setTimeout(resolve, wait));
+      throw new ApiError(r.operation.error?.code??'OPERATION_ENDED',r.operation.error?.message ?? 'Operation cancelled',409);
+    await new Promise<void>((resolve,reject)=>{const timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve();},wait);const abort=()=>{clearTimeout(timer);reject(new Error('View interrupted. Your operation remains available.'));};signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)abort();});
     wait = Math.min(5000, Math.round(wait * 1.4));
   }
 }

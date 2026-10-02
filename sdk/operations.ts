@@ -440,6 +440,22 @@ export const operationRegistry = {
     "binary": false,
     "blocked": true
   },
+  "listCreationOperations": {
+    "method": "GET",
+    "path": "/v1/operations",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
+  "listCreationAttempts": {
+    "method": "GET",
+    "path": "/v1/operations/{id}/attempts",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
   "getOperation": {
     "method": "GET",
     "path": "/v1/operations/{id}",

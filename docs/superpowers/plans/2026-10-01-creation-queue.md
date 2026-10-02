@@ -47,8 +47,8 @@ Consumes Task2 store functions. Engine runCreation(claim,adapters,signal):Promis
 ### Task4: Truthful operation recovery UI/API
 Files modify operation route/schema generator/sdk, src/ui/api.ts and creation status controls; create scripts/smoke-creation-queue.ts.
 Consumes store/engine evidence. Return redacted attempt/accounting metadata, never private context/token/credential in API/audit/logs. Existing polling terminates on compatible failed/cancelled with precise AI_RECONCILIATION_REQUIRED message.
-- [ ] RED actual HTTP/Chromium missing metadata/unknown accounting; implement bounded signed history and explicit recovery state, no automatic retry/empty success/draft overwrite.
-- [ ] Verify interruption/repeated click/lost response/reload/workspace navigation/mobile, configured-provider absent, queue/idempotency/accounting; existing membership/authority/key/contract smokes; full tests/lint/typecheck/API/build. Expected PASS. Commit.
+- [x] RED actual HTTP/Chromium missing metadata/unknown accounting; implement bounded signed history and explicit recovery state, no automatic retry/empty success/draft overwrite.
+- [x] Verify interruption/repeated click/lost response/reload/workspace navigation/mobile, configured-provider absent, queue/idempotency/accounting; existing membership/authority/key/contract smokes; full tests/lint/typecheck/API/build. Expected PASS. Commit.
 
 ### Task5: Single review/publication
 - [ ] One fresh Astrahigh reviewer of complete BASE..HEAD/plan/spec/ledger and all five review focuses. Regrade by effect; one Important/Critical RED→GREEN pass, Minors deferred and all declined judgments ruled.

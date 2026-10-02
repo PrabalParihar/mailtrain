@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Globe, Palette, ArrowUpRight } from 'lucide-react';
 import { api, poll } from './api';
-import type { Brand } from '@/domain/brand';
+import {BrandSchema,type Brand} from '@/domain/brand';
+import{CreationHistory}from'./creation-history';
 import{BrandMemoryHistory}from'./brand-memory-history';
 const initial: Brand = {
   name: '',
@@ -24,7 +25,8 @@ export function BrandPanel({ workspace }: { workspace: string }) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(''),
-    [url, setUrl] = useState('');
+    [url, setUrl] = useState(''),[operationId,setOperationId]=useState('');
+  const running=useRef(false),watch=useRef<AbortController|null>(null);useEffect(()=>()=>{watch.current?.abort();},[]);
   useEffect(() => {
     void api<{ brand: { id:string;version: number; data: Brand } | null }>(workspace, 'brands/current')
       .then((r) => {
@@ -77,6 +79,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
         <form
           onSubmit={async (e) => {
             e.preventDefault();
+            if(running.current)return;running.current=true;const controller=new AbortController();watch.current=controller;
             setBusy('extract');
             setError('');
             try {
@@ -86,14 +89,15 @@ export function BrandPanel({ workspace }: { workspace: string }) {
                 'POST',
                 { url },
               );
+              setOperationId(r.operation.id);
               setNotice('Extraction queued. Your confirmed kit remains unchanged.');
-              const result = await poll<{ proposal: Brand }>(workspace, r.operation.id);
-              setBrand(result.proposal);
+              const result = await poll<{ proposal: Brand }>(workspace, r.operation.id,controller.signal);
+              if(controller.signal.aborted)return;setBrand(result.proposal);
               setNotice('Extraction proposal ready. Review all fields before confirming.');
             } catch (e) {
               setError((e as Error).message);
             } finally {
-              setBusy('');
+              running.current=false;setBusy('');
             }
           }}
         >
@@ -112,7 +116,9 @@ export function BrandPanel({ workspace }: { workspace: string }) {
             {busy === 'extract' ? 'Extracting…' : 'Review website'} <ArrowUpRight size={16} />
           </button>
         </form>
+        {busy==='extract'&&<button onClick={()=>watch.current?.abort()}>Stop waiting</button>}
       </section>
+      <CreationHistory workspace={workspace}type="brand.extract"refreshToken={operationId+':'+busy}onProposal={value=>{const proposal=BrandSchema.parse((value as{proposal:unknown}).proposal);setBrand(proposal);setNotice('Extraction proposal ready. Review all fields before confirming.');}}/>
       <div className="brand-grid">
         <form
           className="panel brand-form"
