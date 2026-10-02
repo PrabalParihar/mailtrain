@@ -90,8 +90,8 @@ export async function runMediaJob(
       console.error(
         JSON.stringify({ media_failure: (error as Error).message, detail: (error as Error).cause }),
       );
-    await cleanupStagedMediaObjects(workerPool, store, job);
     const code = (error as { code?: string; message?: string }).code ?? (error as Error).message;
+    if(code!=='MEDIA_REAP_UNCONFIRMED')await cleanupStagedMediaObjects(workerPool,store,job);
     await settleMediaJob(workerPool, job, {
       status: 'failed',
       failure_code: /^[A-Z_]{1,80}$/.test(code ?? '') ? code : 'MEDIA_RUNTIME_UNAVAILABLE',

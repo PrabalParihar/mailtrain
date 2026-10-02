@@ -5,13 +5,16 @@ import { fail } from './errors';
 import { audit } from './audit';
 import { withRenderSlot } from './render-admission';
 import type{AssetManifest}from'../domain/assets';
-import{readAssetVariantsVerified}from'./assets';
+import{readAssetVariantsVerified,assertAssetManifestCurrent}from'./assets';
 import{renderAssetBundle}from'./asset-output';
 export async function frozenRenderDownload(
   req: Request,
   revision: { id: string; html: string; artifact_hash: string;manifest?:{assets?:AssetManifest} },
   format: 'png' | 'pdf',
 ) {
+  return withRenderSlot(req.signal,()=>renderWithinAdmission(req,revision,format));
+}
+async function renderWithinAdmission(req:Request,revision:{id:string;html:string;artifact_hash:string;manifest?:{assets?:AssetManifest}},format:'png'|'pdf'){
   const rendererVersion = localMode() && !process.env.RENDER_WORKER_URL
     ? `lettercape-local-browser-assets-export-2-${process.platform}`
     : RENDERER_VERSION;
@@ -19,7 +22,8 @@ export async function frozenRenderDownload(
   const media=revision.manifest?.assets;
   const principal=await withPrincipal(req,'edit',async(_tx,p)=>p);
   const assets=media?.entries.length?renderAssetBundle(media,await readAssetVariantsVerified(principal,media,undefined,1024*1024)):[];
-  const cached = await withPrincipal(req, 'edit', async (tx) => {
+  const cached = await withPrincipal(req, 'edit', async (tx,p) => {
+    if(media?.entries.length)await assertAssetManifestCurrent(tx,p,media,1024*1024);
     const existing = (
       await tx.query(
         'SELECT * FROM render_downloads WHERE revision_id=$1 AND format=$2 AND renderer_version=$3',
@@ -41,12 +45,13 @@ export async function frozenRenderDownload(
     return null;
   });
   if (cached) return cached;
-  return withRenderSlot(req.signal, () => withPrincipal(req, 'edit', async (tx, p) => {
+  return withPrincipal(req, 'edit', async (tx, p) => {
     if (req.signal.aborted) fail(499, 'RENDER_CANCELLED', 'The export request was cancelled.');
     const locked = (await tx.query('SELECT pg_try_advisory_xact_lock(hashtext($1)) AS acquired', [p.workspace + ':render-cache'])).rows[0].acquired;
     if (!locked) fail(429, 'RENDER_BUSY', 'Another frozen export is rendering. Retry later.', { retry_after: 2 });
     const existing = (await tx.query('SELECT * FROM render_downloads WHERE revision_id=$1 AND format=$2 AND renderer_version=$3', [revision.id, format, rendererVersion])).rows[0];
     if (existing) {
+      if(media?.entries.length)await assertAssetManifestCurrent(tx,p,media,1024*1024);
       if (existing.artifact_hash !== revision.artifact_hash || bytesDigest(existing.body) !== existing.body_hash)
         fail(503, 'RENDER_CACHE_INVALID', 'Stored export integrity failed; no bytes were returned.');
       return existing.body as Buffer;
@@ -100,6 +105,7 @@ export async function frozenRenderDownload(
       );
     }
     if (req.signal.aborted) fail(499, 'RENDER_CANCELLED', 'The export request was cancelled.');
+    if(media?.entries.length)await assertAssetManifestCurrent(tx,p,media,1024*1024);
     await tx.query(
       'INSERT INTO render_downloads(workspace_id,revision_id,format,renderer_version,artifact_hash,body,body_hash,byte_size)VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
       [
@@ -115,5 +121,5 @@ export async function frozenRenderDownload(
     );
     await audit(tx, p.workspace, p.user, 'email.browser_export_cached', revision.id);
     return bytes;
-  }));
+  });
 }

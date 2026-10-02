@@ -1,8 +1,7 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, chmod, lstat, realpath, rm } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, chmod, lstat, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, isAbsolute } from 'node:path';
-import { randomUUID } from 'node:crypto';
 import {
   MEDIA_PROFILE,
   SCAN_PROFILE,
@@ -210,6 +209,14 @@ export type VerifiedMediaResult = {
   scans: MediaScanReceipt[];
   outputs: Array<{ output: MediaProcessReceipt['outputs'][number]; bytes: Uint8Array }>;
 };
+// The SQL-committed operation/lease token identifies all planned resources
+// before launch. Blocked rows retain this identity across process death.
+export function mediaRuntimeIdentity(job:Pick<MediaJob,'operation_id'|'token'>){
+ const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+ if(!uuid.test(job.operation_id)||!uuid.test(job.token))throw new Error('MEDIA_RUNTIME_IDENTITY_INVALID');
+ const stem='lettercape-media-'+job.operation_id+'-'+job.token;
+ return {root:join(tmpdir(),stem),containers:[stem+'-0',stem+'-1',stem+'-2'] as const};
+}
 export async function processMediaIsolated(
   job: MediaJob,
   store: AssetStore,
@@ -217,7 +224,9 @@ export async function processMediaIsolated(
   recheck: () => Promise<void>,
   config = mediaSupervisorConfig(),
 ): Promise<VerifiedMediaResult> {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'lettercape-media-'))),
+  const identity=mediaRuntimeIdentity(job);
+  try{await mkdir(identity.root,{mode:0o700});}catch(error){throw new Error('MEDIA_REAP_UNCONFIRMED',{cause:error});}
+  const root = await realpath(identity.root),
     inputRoot = join(root, 'input'),
     outputRoot = join(root, 'output');
   const deadline = Date.now() + 175000;
@@ -242,7 +251,7 @@ export async function processMediaIsolated(
     const scan = async (files: MediaScanInput['files'], scanRoot: string) => {
       await recheck();
       const started = Date.now(),
-        name = 'lettercape-media-' + randomUUID();
+        name = identity.containers[scanUsed===0?1:2];
       const scanInput: MediaScanInput = {
         version: 1,
         profile: SCAN_PROFILE,
@@ -272,7 +281,7 @@ export async function processMediaIsolated(
       inputRoot,
     );
     await recheck();
-    const name = 'lettercape-media-' + randomUUID(),
+    const name = identity.containers[0],
       input: MediaProcessInput = {
         version: 1,
         source_sha256: job.source_sha256,

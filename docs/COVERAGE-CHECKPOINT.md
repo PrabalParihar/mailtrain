@@ -1,5 +1,7 @@
 # Verified coverage checkpoint — 2026-10-02
 
+Current media development checkpoint: actual private upload/official scan/isolated native reencode and fallback/immutable revisions/static previews/ZIP/PNG/PDF are qualified locally. Whole immutable review (0 Critical,3 Important,6 Minor) and ONE native correction preserve crash barriers, current-takedown settlement and output admission.354 tests pass with no skips, lint/type/API112/build pass; real owner-crash and held-Chromium lifecycle proofs pass. REQ-021 advances to Partial only; REQ-020 AI imagery remains undelivered. [MEDIA-ASSETS-CHECKPOINT.md](MEDIA-ASSETS-CHECKPOINT.md) retains full handoffs/review/ledger/costs. Current Linux image packaging and actual closed production startup pass. Canonical qualification pending; publication blocked pending direct native approval. No GA gate/entire requirement acceptance; all65/all13 binding.
+
 Current local Monaco development checkpoint:309tests/lint0/typecheck/API104/build and complete actual editor/conversion/UTM/keyboard/mobilebrowser checks PASS. ONE immutable whole-slice review and ONE native Important pass e41e882 preserve focused basic typing/selection/composition through automatic enhancement; threeMinors deferred. Local ESM assets/workers/fonts, basic/mobile fallback and immutable compiledsource are tested. REQ-016 remainsPartial for arbitrarysource/VML persistence/universalconversion/client acceptance. [MONACO-EDITOR-CHECKPOINT.md](MONACO-EDITOR-CHECKPOINT.md) preserves both handoffs, fullledger and complete reviewer report/costs. FinalnativeLinuximage/assets/closedstartup andcanonical8cc62da/426trackedhashes/privatepreservation/fullactualbrowser qualification PASS; no remote push/current-headCI/deployment or entire-GA acceptance. All65/all13 remain binding.
 
 Current code-conversion development checkpoint:296tests/lint0/typecheck/API104/build and complete owned conversion HTTP/Chromium plus affected editor checks PASS. ONE immutable review/ONE native fix pass at4ac77de closes confirmed source-refusal recovery and full pointer/keyboard preview review; uncertain commands retain exact body/key/If-Match. Atomic original/accepted checkpoints, current truth and actor fences are tested. REQ016 remainsPartial; Monaco/VML/full round-trip/client gates remain required. [CODE-CONVERSION-CHECKPOINT.md](CODE-CONVERSION-CHECKPOINT.md) preserves both implementer handoffs, every ledger ruling and all31 reviewer judgments/costs. Canonical035a4e7 is clean with413trackedSHA256matches/private metadata unchanged; complete canonical conversion/editor/keyboard-navigation HTTP-Chromium PASS; source push/current-head CI need fresh direct trusted approval. All65requirements/all13gates remain binding, zero entire-GA acceptance.
@@ -19,13 +21,13 @@ Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is p
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (40)
+## Partial local implementation with acceptance still required (41)
 
-REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (20)
+## Required capability not delivered; implementation and/or configuration missing (19)
 
-REQ-005, REQ-012, REQ-018, REQ-020, REQ-021, REQ-022, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-005, REQ-012, REQ-018, REQ-020, REQ-022, REQ-033, REQ-034, REQ-036, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 

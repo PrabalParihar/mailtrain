@@ -5,6 +5,11 @@ import pg from 'pg';
 import env from '@next/env';
 import { unzipSync, strFromU8 } from 'fflate';
 import { chromium } from 'playwright';
+import {createServer}from'node:http';
+import {renderDownload}from'../src/server/render-download';
+import {frozenRenderDownload}from'../src/server/render-cache';
+import {closeDb}from'../src/server/db';
+import {verifyRenderRequest,validateRenderInput,renderResponseHeaders}from'../renderer/protocol.mjs';
 import { blankSpec, type EmailSpec } from '../src/domain/email';
 import { MEDIA_LIMITS, privateAssetBinding, type AssetMetadata } from '../src/domain/assets';
 import { FileAssetStore } from '../src/server/asset-store';
@@ -52,6 +57,24 @@ try {
   const files = unzipSync(zip), image = Object.keys(files).find(name => name.startsWith('assets/') && name.includes(entry.variant_id))!; assert.deepEqual(Buffer.from(files[image]), actual); assert.ok(strFromU8(files[gif ? 'email-animated.html' : 'email.html']).includes(image)); assert.equal(strFromU8(files['email.html']).includes('mailcraft-assets.invalid'), false);
   if (fallback) { const staticImage = Object.keys(files).find(name => name.startsWith('assets/') && name.includes(fallback.variant_id))!; assert.ok(strFromU8(files['email.html']).includes(staticImage)); assert.equal(strFromU8(files['email.html']).includes(image), false); assert.equal(hash(files[staticImage]), fallback.sha256); }
   const preflight = (await successful(await call('email-revisions/' + revision.id + '/preflight', 'POST', {}))).report; assert.equal(preflight.rule_set_version, 'static-assets-4'); assert.ok(preflight.findings.some((f: { code: string }) => f.code === 'ASSET_PRIVATE_DELIVERY_UNAVAILABLE'));
+  if(process.argv.includes('--settlement')){
+    const issued=await successful(await call('api-keys','POST',{name:'Owned output lifecycle',scopes:['emails:export','assets:read'],expires_in_days:1}),201);
+    const secret=randomBytes(32).toString('hex'),priorUrl=process.env.RENDER_WORKER_URL,priorSecret=process.env.RENDER_WORKER_SECRET;
+    let release!:()=>void,entered!:()=>void;const held=new Promise<void>(r=>release=r),started=new Promise<void>(r=>entered=r);let realRenderBytes=0;
+    const renderer=createServer(async(req,res)=>{try{const chunks:Buffer[]=[];for await(const chunk of req)chunks.push(Buffer.from(chunk));const raw=Buffer.concat(chunks),requestId=verifyRenderRequest(raw,new Headers(Object.fromEntries(Object.entries(req.headers).map(([k,v])=>[k,Array.isArray(v)?v.join(','):v??'']))),secret),input=validateRenderInput(JSON.parse(raw.toString('utf8')));const rendered=await renderDownload(input.html,input.format,undefined,input.assets);realRenderBytes=rendered.length;entered();await held;res.writeHead(200,{'Content-Type':input.format==='png'?'image/png':'application/pdf','Content-Length':String(rendered.length),...renderResponseHeaders(rendered,input,secret,requestId)});res.end(rendered);}catch(error){res.writeHead(500);res.end('Owned fixture refused: '+(error as Error).message);}});
+    await new Promise<void>(r=>renderer.listen(0,'127.0.0.1',r));process.env.RENDER_WORKER_URL='http://127.0.0.1:'+(renderer.address()as{port:number}).port;process.env.RENDER_WORKER_SECRET=secret;
+    try{
+      const request=new Request(origin+'/v1/email-revisions/'+revision.id+'/download?format=png',{headers:{Authorization:'Bearer '+issued.secret,'X-Workspace-Id':workspace,'X-Actor-Id':'api-key:'+issued.key.id}});
+      const outcome=frozenRenderDownload(request,revision,'png').then(value=>({value}),error=>({error}));
+      await Promise.race([started,outcome.then(result=>{if('error'in result)throw result.error;throw Error('Renderer completed without the lifecycle hold.');}),new Promise<never>((_,reject)=>{const timer=setTimeout(()=>reject(Error('Owned render entry deadline')),15000);timer.unref();})]);
+      assert.ok(realRenderBytes>0,'The held output must come from actual Chromium rendering.');
+      await db.query("UPDATE assets SET state='deleting'WHERE workspace_id=$1 AND id=$2",[workspace,asset.id]);release();
+      const result=await outcome;assert.ok('error'in result,'A real render completing after committed takedown must be refused.');assert.equal((result.error as{code:string}).code,'ASSET_NOT_READY');
+      assert.equal((await db.query('SELECT count(*)::int n FROM render_downloads WHERE workspace_id=$1 AND revision_id=$2',[workspace,revision.id])).rows[0].n,0,'Refused late render must not attach a cache row.');
+      assert.equal((await db.query('SELECT artifact_hash FROM revisions WHERE id=$1',[revision.id])).rows[0].artifact_hash,revision.artifact_hash);
+      note('Actual Chromium bytes held during committed asset takedown: final409 ASSET_NOT_READY, zero cache attachment, frozen revision preserved PASS.');
+    }finally{release();await new Promise<void>(r=>renderer.close(()=>r()));if(priorUrl===undefined)delete process.env.RENDER_WORKER_URL;else process.env.RENDER_WORKER_URL=priorUrl;if(priorSecret===undefined)delete process.env.RENDER_WORKER_SECRET;else process.env.RENDER_WORKER_SECRET=priorSecret;await db.query("UPDATE assets SET state='ready_private'WHERE workspace_id=$1 AND id=$2",[workspace,asset.id]);}
+  }
   const pngResponse = await call('email-revisions/' + revision.id + '/download?format=png'); assert.equal(pngResponse.status, 200, await pngResponse.clone().text()); const png = Buffer.from(await pngResponse.arrayBuffer());
   assert.deepEqual(png, Buffer.from(await (await call('email-revisions/' + revision.id + '/download?format=png')).arrayBuffer()));
   const pdfResponse = await call('email-revisions/' + revision.id + '/download?format=pdf'); assert.equal(pdfResponse.status, 200); assert.equal(Buffer.from(await pdfResponse.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
@@ -74,6 +97,6 @@ try {
   await browser?.close();
   const objects = (await db.query('SELECT source_key key FROM assets WHERE workspace_id=ANY($1::uuid[]) UNION SELECT object_key FROM asset_variants WHERE workspace_id=ANY($1::uuid[]) UNION SELECT object_key FROM asset_object_staging WHERE workspace_id=ANY($1::uuid[])', [workspaces])).rows, store = new FileAssetStore(process.env.ASSET_STORE_ROOT!);
   for (const object of objects) if (object.key) await store.removeAuthorized(object.key);
-  const tx = await db.connect(); try { await tx.query('BEGIN'); for (const table of ['asset_revision_references', 'asset_draft_references', 'asset_variants', 'asset_scans', 'media_jobs', 'asset_object_staging', 'asset_rights', 'asset_uploads', 'assets', 'asset_quotas', 'email_lineage', 'render_downloads', 'preflights', 'idempotency', 'audit_events', 'operations', 'revisions', 'emails', 'brands', 'memberships']) await tx.query('DELETE FROM ' + table + ' WHERE workspace_id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM workspaces WHERE id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1 AND user_id=$2', [token, user]); await tx.query('COMMIT'); } catch (error) { await tx.query('ROLLBACK'); throw error; } finally { tx.release(); await db.end(); }
+  const tx = await db.connect(); try { await tx.query('BEGIN'); for (const table of ['api_rate_events','api_keys','asset_revision_references', 'asset_draft_references', 'asset_variants', 'asset_scans', 'media_jobs', 'asset_object_staging', 'asset_rights', 'asset_uploads', 'assets', 'asset_quotas', 'email_lineage', 'render_downloads', 'preflights', 'idempotency', 'audit_events', 'operations', 'revisions', 'emails', 'brands', 'memberships']) await tx.query('DELETE FROM ' + table + ' WHERE workspace_id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM workspaces WHERE id=ANY($1::uuid[])', [workspaces]); await tx.query('DELETE FROM auth_sessions WHERE token_hash=$1 AND user_id=$2', [token, user]); await tx.query('COMMIT'); } catch (error) { await tx.query('ROLLBACK'); throw error; } finally { tx.release(); await db.end();await closeDb(); }
   note('Exact owned export workspace/session/object cleanup PASS.'); await writeFile('/tmp/lettercape-media-export-evidence.log', evidence.join('\n') + '\n');
 }

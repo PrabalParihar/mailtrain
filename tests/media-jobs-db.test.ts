@@ -5,7 +5,7 @@ import pg from 'pg';
 import env from '@next/env';
 import { withCreationDatabase } from './fixtures/creation-database';
 env.loadEnvConfig(process.cwd());
-test('actual SQL global lease, crash recovery, cancellation and quota settle exactly once', async () =>
+test('actual SQL expiry blocks unproven writers; live cancellation and quota settle exactly once', async () =>
   withCreationDatabase(async (connection) => {
     const db = new pg.Pool({ connectionString: connection }),
       scheduler = new pg.Pool({
@@ -100,8 +100,17 @@ test('actual SQL global lease, crash recovery, cancellation and quota settle exa
         "UPDATE media_jobs SET lease_until=clock_timestamp()-interval '1 second'WHERE workspace_id=$1",
         [w],
       );
-      const b = await claim();
-      assert.notEqual(b.token, a.token);
+      assert.equal(await claim(),null,'expired ownership must not admit another physical chain');
+      assert.equal((await db.query('SELECT phase FROM media_jobs WHERE workspace_id=$1',[w])).rows[0].phase,'blocked');
+      assert.equal((await scheduler.query('SELECT mailcraft_media_object_cleanup_candidates() objects')).rows[0].objects.length,0,'unproven old writer cannot be cleaned by expiry');
+      assert.equal((await worker.query('SELECT mailcraft_forget_media_object($1,$2,$3,$4) ok',[w,op,orphan,a.token])).rows[0].ok,false);
+      assert.equal((await db.query('SELECT reserved FROM asset_quotas WHERE workspace_id=$1',[w])).rows[0].reserved,'41943040');
+      // This fixture has never launched a native child. The fixture owner installs
+      // a fresh live lease only to exercise the distinct handled-cancellation path.
+      // No production recovery endpoint or expiry-based reap is implied.
+      const b={...a,token:randomUUID()};
+      await db.query("UPDATE media_jobs SET phase='leased',lease_token=$2,lease_until=clock_timestamp()+interval '30 seconds' WHERE workspace_id=$1",[w,b.token]);
+      await db.query("UPDATE operations SET state='running',error=NULL,completed_at=NULL WHERE workspace_id=$1",[w]);
       await cleanupStagedMediaObjects(worker, store, b);
       await assert.rejects(readFile(join(store.root, orphan)), { code: 'ENOENT' });
       await rm(files, { recursive: true, force: true });

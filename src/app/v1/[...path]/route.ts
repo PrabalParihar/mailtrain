@@ -34,7 +34,7 @@ import{webhookHistoryRoute}from'@/server/webhook-history';
 import { webhookRoute } from '@/server/webhook-route';
 import{assetRoute}from'@/server/asset-route';
 import{assetReferences,resolveAssetManifest,readAssetVariantsVerified}from'@/server/assets';
-import{privatePreviewHtml,privateImageBundle}from'@/server/asset-output';
+import{privatePreviewHtml,frozenPrivateImageBundle}from'@/server/asset-output';
 import type{AssetManifest}from'@/domain/assets';
 import {senderDomainRoute} from '@/server/sender-domain-route';
 export const runtime = 'nodejs';
@@ -335,7 +335,7 @@ async function handle(req: Request, ctx: Context) {
         if(format==='html'&&frozenAssets?.entries.length)fail(409,'ASSET_PUBLICATION_NOT_CONFIGURED','Private images cannot be delivered as hosted HTML. Download the image ZIP bundle.');
         let data: Buffer | string = format === 'txt' ? row.plaintext : row.html;
         let mime = format === 'txt' ? 'text/plain' : 'text/html';
-        if(format==='zip'){const p=await withPrincipal(req,'edit',async(_tx,p)=>p);const assets=frozenAssets??{version:'asset-manifest-1' as const,entries:[]};const values=assets.entries.length?await readAssetVariantsVerified(p,assets):[];data=privateImageBundle(row,assets,values);mime='application/zip';}
+        if(format==='zip'){data=await frozenPrivateImageBundle(req,row,frozenAssets??{version:'asset-manifest-1',entries:[]});mime='application/zip';}
         if (format === 'png' || format === 'pdf') {
           const { frozenRenderDownload } = await import('@/server/render-cache');
           data = await frozenRenderDownload(req, row, format);

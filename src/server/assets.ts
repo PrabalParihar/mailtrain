@@ -149,15 +149,10 @@ export async function resolveAssetManifest(
   );
   return { version: 'asset-manifest-1', entries };
 }
-export async function readAssetVariantsVerified(
-  p: Principal,
-  manifest: AssetManifest,
-  store: AssetStore = configuredAssetStore(),
-  maxBytes = MEDIA_LIMITS.derivatives,
-) {
-  if (manifest.version !== 'asset-manifest-1' || manifest.entries.length > MEDIA_LIMITS.entries)
-    fail(400, 'ASSET_MANIFEST_INVALID', 'Invalid private image manifest.');
-  const admitted = await tenant(p.workspace, p.user, async (tx) => {
+// Pure current-evidence fence: retain asset SHARE locks in the caller's output
+// settlement transaction. File reads stay outside database transactions.
+export async function assertAssetManifestCurrent(tx:Tx,p:Principal,manifest:AssetManifest,maxBytes=MEDIA_LIMITS.derivatives){
+  if(manifest.version!=='asset-manifest-1'||manifest.entries.length>MEDIA_LIMITS.entries)fail(400,'ASSET_MANIFEST_INVALID','Invalid private image manifest.');
     await assertCurrentAuthority(tx, p, 'read', 'assets:read');
     const list = [];
     let total = 0;
@@ -206,7 +201,16 @@ export async function readAssetVariantsVerified(
       list.push({ entry: current, key });
     }
     return list;
-  });
+}
+export async function readAssetVariantsVerified(
+  p: Principal,
+  manifest: AssetManifest,
+  store: AssetStore = configuredAssetStore(),
+  maxBytes = MEDIA_LIMITS.derivatives,
+) {
+  if (manifest.version !== 'asset-manifest-1' || manifest.entries.length > MEDIA_LIMITS.entries)
+    fail(400, 'ASSET_MANIFEST_INVALID', 'Invalid private image manifest.');
+  const admitted=await tenant(p.workspace,p.user,tx=>assertAssetManifestCurrent(tx,p,manifest,maxBytes));
   const bytes = [];
   for (const item of admitted)
     bytes.push({
