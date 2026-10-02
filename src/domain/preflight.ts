@@ -58,12 +58,20 @@ export function staticLint(
   const findings: Finding[] = [],configuredTone=ToneRules.parse(toneRules??{});
   const add = (code: string, severity: Finding['severity'], location: string, message: string) =>
     findings.push({ code, severity, location, message });
-  const voice = (text: string, location: string) => {
-    findings.push(...toneFindings(text,location,configuredTone));
+  const forbiddenCopy = (text: string, location: string) => {
     const content = text.toLowerCase();
     for (const phrase of forbidden.filter((p) => p.trim()))
       if (content.includes(phrase.toLowerCase()))
         add('VOICE_FORBIDDEN', 'blocking', location, `Brand rule prohibits “${phrase}”.`);
+  };
+  const voice = (text: string, location: string) => {
+    findings.push(...toneFindings(text,location,configuredTone));
+    forbiddenCopy(text,location);
+  };
+  const fields = (values:Record<string,string>,location:string) => {
+    for(const [name,text]of Object.entries(values))findings.push(...toneFindings(text,location+'/'+name,configuredTone));
+    // Keep existing node-level literal blockers and their locations unchanged.
+    forbiddenCopy(Object.values(values).join('\n'),location);
   };
   const link = (href: string | undefined, location: string, image = false) => {
     if (!href?.trim())
@@ -99,7 +107,12 @@ export function staticLint(
     const $ = load(source);
     const emitted = load(sanitize(source));
     emitted('head,title,meta,script,style').remove();
-    voice(emitted.root().text(), location);
+    forbiddenCopy(emitted.root().text(), location);
+    // Only rendered block/line breaks delimit sentences. Inline formatting
+    // retains the original text adjacency, including deliberate split words.
+    emitted('br,hr').replaceWith('\n');
+    emitted('p,div,h1,h2,h3,h4,h5,h6,li,ul,ol,table,thead,tbody,tfoot,tr,td,th,caption,blockquote,pre,address').before('\n').after('\n');
+    findings.push(...toneFindings(emitted.root().text(),location,configuredTone));
     emitted('img').each((i, el) =>
       voice(emitted(el).attr('alt') ?? '', `${location}/image[${i + 1}]`),
     );
@@ -167,13 +180,13 @@ export function staticLint(
     for (const b of nodes) {
       switch (b.type) {
         case 'hero':
-          voice(b.heading + '\n' + b.text, b.id);
+          fields({heading:b.heading,text:b.text},b.id);
           break;
         case 'text':
           voice(b.text, b.id);
           break;
         case 'legal_footer':
-          voice(b.identity + '\n' + b.address, b.id);
+          fields({identity:b.identity,address:b.address},b.id);
           if (!b.identity.trim() || !b.address.trim())
             add(
               'SENDER_ADDRESS_REQUIRED',
@@ -200,7 +213,7 @@ export function staticLint(
           contrast('#ffffff', spec.theme.accent, b.id);
           break;
         case 'product_card':
-          voice(b.title + '\n' + b.description + '\n' + b.price, b.id);
+          fields({title:b.title,description:b.description,price:b.price},b.id);
           link(b.href, b.id);
           contrast(spec.theme.accent, '#ffffff', b.id);
           break;

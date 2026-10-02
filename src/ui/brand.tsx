@@ -121,7 +121,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
         </form>
         {busy==='extract'&&<button onClick={()=>watch.current?.abort()}>Stop waiting</button>}
       </section>
-      <CreationHistory workspace={workspace}type="brand.extract"refreshToken={operationId+':'+busy}onProposal={value=>{const proposal=BrandSchema.parse((value as{proposal:unknown}).proposal);setBrand(proposal);setNotice('Extraction proposal ready. Review all fields before confirming.');}}/>
+      <CreationHistory workspace={workspace}type="brand.extract"refreshToken={operationId+':'+busy}proposalDisabled={!brandReady||!!busy}onProposal={value=>{if(!brandReady||running.current)return;const proposal=BrandSchema.parse((value as{proposal:unknown}).proposal);setBrand(proposal);setNotice('Extraction proposal ready. Review all fields before confirming.');}}/>
       <div className="brand-grid">
         <form
           className="panel brand-form"
@@ -149,7 +149,7 @@ export function BrandPanel({ workspace }: { workspace: string }) {
             }
           }}
         >
-          <fieldset className="brand-fields" disabled={!brandReady}>
+          <fieldset className="brand-fields" disabled={!brandReady||!!busy}>
           <div className="section-heading">
             <h2>Brand kit</h2>
             <Palette size={20} />

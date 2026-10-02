@@ -1,0 +1,12 @@
+import test from'node:test';import assert from'node:assert/strict';import{blankSpec,lintEmail}from'../src/domain/email';
+function spec(){const s=blankSpec('11111111-1111-4111-8111-111111111111','Fixture');s.subject='Plain';s.preheader='Plain';s.sections=[];return s;}
+test('review: structured tone limits count hero footer and product fields separately while keeping literal blocker locations',()=>{
+ const s=spec();s.sections=[{id:'hero',type:'hero',heading:'Hello!',text:'Welcome!'},{id:'footer',type:'legal_footer',identity:'Fixture!',address:'Address!',unsubscribe_slot:true},{id:'product',type:'product_card',title:'Title!',description:'Description!',price:'Price!',href:'https://example.org/product'}];
+ assert.deepEqual(lintEmail(s,[],undefined,{max_exclamations:1}).filter(f=>f.code.startsWith('VOICE_')),[]);
+ const over=structuredClone(s);if(over.sections[0].type==='hero')over.sections[0].text='Welcome!!';if(over.sections[1].type==='legal_footer')over.sections[1].address='Address!!';if(over.sections[2].type==='product_card')over.sections[2].price='Price!!';
+ assert.deepEqual(lintEmail(over,['Welcome'],undefined,{max_exclamations:1}).filter(f=>f.code==='VOICE_EXCLAMATIONS').map(f=>f.location),['hero/text','footer/address','product/price']);assert.ok(lintEmail(over,['Welcome'],undefined,{max_exclamations:1}).some(f=>f.code==='VOICE_FORBIDDEN'&&f.location==='hero'));
+});
+test('review: raw/custom rendered line and paragraph boundaries split sentences without splitting ordinary inline words',()=>{
+ for(const mode of['raw_html','structured']as const)for(const html of['<p>One two<br>three four</p>','<p>One two</p><p>three four</p>','<div>One two</div><div>three four</div>','<table><tr><td>One two</td><td>three four</td></tr></table>']){const s=spec();s.editing_mode=mode;if(mode==='raw_html')s.raw_html=html;else s.sections=[{id:'opaque',type:'custom_html',html}];assert.deepEqual(lintEmail(s,[],undefined,{max_sentence_words:2}).filter(f=>f.code==='VOICE_SENTENCE_LENGTH'),[],mode+':'+html);}
+ for(const mode of['raw_html','structured']as const){const s=spec();s.editing_mode=mode;const html='<p>Risk<strong> free</strong> offer</p>';if(mode==='raw_html')s.raw_html=html;else s.sections=[{id:'opaque',type:'custom_html',html}];const findings=lintEmail(s,['risk free'],undefined,{max_sentence_words:2});assert.equal(findings.filter(f=>f.code==='VOICE_SENTENCE_LENGTH').length,1);assert.ok(findings.some(f=>f.code==='VOICE_FORBIDDEN'));}
+});

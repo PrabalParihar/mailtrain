@@ -27,5 +27,5 @@ Modify src/ui/brand.tsx; create scripts/smoke-voice-guard.ts/package/CI. Existin
 - [x] Verify immutable v1/v2 pins and reload, strict/foreign/role/key boundary, offline/repeated clicks/invalid limits/located findings/mobile/workspace interruption. Full tests/lint/typecheck/API/build + appropriate existing brand-memory/preflight/membership/key smokes expected PASS; commit.
 
 ### Task4 Whole-slice review/publication
-- [ ] One fresh Astra high reviewer of BASE..HEAD/spec/plan/ledger; regrade by effect, one Critical/Important RED→GREEN pass, defer Minors/rule all declined judgments.
+- [x] One fresh Astra high reviewer of BASE..HEAD/spec/plan/ledger; regrade by effect, one Critical/Important RED→GREEN pass, defer Minors/rule all declined judgments.
 - [ ] Final full checks/HTTP/browser; expected-head clean canonical tracked-only SHA256 sync, ordinary authorized main push, exact-head CI success readback. Copy exhaustive rulings/deferred Minors to public checkpoint then delete only this plan workspace. No public activation.
