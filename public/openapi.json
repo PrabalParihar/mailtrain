@@ -25311,7 +25311,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Frozen bytes; browser image/PDF simulations, not real-client evidence.",
+            "description": "Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.",
             "headers": {
               "X-Request-Id": {
                 "schema": {
@@ -25320,12 +25320,86 @@
               },
               "X-Artifact-Hash": {
                 "schema": {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "Destination artifact hash bound to source, mapping, API revision and both prepared formats."
+              },
+              "X-Source-Artifact-Hash": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "Exact frozen source artifact hash reviewed before download."
+              },
+              "X-Content-SHA256": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "SHA256 of the exact UTF-8 bytes for the selected format."
+              },
+              "X-Destination-Mapping": {
+                "schema": {
+                  "type": "string",
+                  "const": "klaviyo-html-1"
                 }
+              },
+              "X-Remote-Export-Enabled": {
+                "schema": {
+                  "type": "string",
+                  "const": "false"
+                },
+                "description": "Local preparation only; no provider export is enabled."
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "text/html; charset=utf-8",
+                    "text/plain; charset=utf-8"
+                  ]
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "attachment; filename=\"klaviyo-prepared-{revision_id}.{format}\""
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "const": "nosniff"
+                }
+              },
+              "Content-Security-Policy": {
+                "schema": {
+                  "type": "string",
+                  "const": "sandbox; default-src 'none'"
+                }
+              },
+              "X-Mailcraft-Notice": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Local preparation notice; remote export, live destination and real-client conformance remain unverified."
               }
             },
             "content": {
-              "application/octet-stream": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
                 "schema": {
                   "type": "string",
                   "format": "binary"

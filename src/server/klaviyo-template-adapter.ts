@@ -5,6 +5,7 @@ import{createHash}from'node:crypto';import{z}from'zod';
 import{KLAVIYO_API_REVISION,KLAVIYO_MAPPING_VERSION,type KlaviyoArtifact}from'../domain/esp-export';
 const ORIGIN='https://a.klaviyo.com',MAX_RESPONSE=5*1024*1024-1;
 const Id=z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
+const Attributes=z.object({name:z.string(),editor_type:z.string(),html:z.string(),text:z.string().nullable()});
 export type KlaviyoTemplateResult={state:'verified'|'needs_attention'|'outcome_unknown';code:string;remote_id:string|null;resource_url:string|null;destination_url:null;retry_after?:number};
 type Options={artifact:KlaviyoArtifact;name:string;accessToken:string;signal?:AbortSignal;markSubmission:()=>Promise<void>;persistRemoteId:(id:string)=>Promise<void>;fetcher?:typeof fetch};
 const result=(state:KlaviyoTemplateResult['state'],code:string,id:string|null=null,retry_after?:number):KlaviyoTemplateResult=>({state,code,remote_id:id,resource_url:id?ORIGIN+'/api/templates/'+encodeURIComponent(id):null,destination_url:null,...(retry_after===undefined?{}:{retry_after})});
@@ -18,7 +19,9 @@ async function boundedJson(response:Response,signal:AbortSignal):Promise<unknown
  finally{signal.removeEventListener('abort',onAbort);await reader.cancel().catch(()=>{});reader.releaseLock();}
 }
 function receipt(value:unknown,expectedId?:string){
- const r=z.object({data:z.object({type:z.literal('template'),id:Id,attributes:z.object({name:z.string(),editor_type:z.string(),html:z.string(),text:z.string().nullable()}).optional()}),links:z.object({self:z.string()}).optional()}).parse(value);
+ // Create acknowledgements need only a trustworthy identity. Incomplete or
+ // malformed attributes must not discard an ID that can be durably reconciled.
+ const r=z.object({data:z.object({type:z.literal('template'),id:Id,attributes:z.unknown().optional()}),links:z.object({self:z.string()}).optional()}).parse(value);
  if(expectedId&&r.data.id!==expectedId)throw new Error('binding');
  if(r.links&&r.links.self!==ORIGIN+'/api/templates/'+r.data.id&&r.links.self!==ORIGIN+'/api/templates/'+r.data.id+'/')throw new Error('binding');
  return r.data;
@@ -52,8 +55,8 @@ export async function createAndVerifyKlaviyoTemplate(o:Options):Promise<KlaviyoT
  try{
   const read=await fetcher(ORIGIN+'/api/templates/'+encodeURIComponent(id),{method:'GET',headers,redirect:'error',signal});
   if(read.status!==200||read.redirected||read.url&&new URL(read.url).origin!==ORIGIN){await discard(read);return result('needs_attention','EXPORT_READBACK_UNAVAILABLE',id);}
-  const object=receipt(await boundedJson(read,signal),id),attributes=object.attributes;
-  if(!attributes||attributes.name!==name||attributes.editor_type!=='CODE'||attributes.html!==o.artifact.html||attributes.text!==o.artifact.text)return result('needs_attention','EXPORT_READBACK_MISMATCH',id);
+  const object=receipt(await boundedJson(read,signal),id),attributes=Attributes.parse(object.attributes);
+  if(attributes.name!==name||attributes.editor_type!=='CODE'||attributes.html!==o.artifact.html||attributes.text!==o.artifact.text)return result('needs_attention','EXPORT_READBACK_MISMATCH',id);
   return result('verified','EXPORT_TEMPLATE_VERIFIED',id);
  }catch{return result('needs_attention','EXPORT_READBACK_UNAVAILABLE',id);}
 }

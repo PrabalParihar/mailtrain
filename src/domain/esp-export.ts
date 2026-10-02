@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {z} from 'zod';
-import {compileEmail,EmailSpecSchema,lintEmail,type EmailSpec} from './email';
+import {compileEmail,lintEmail,type EmailSpec} from './email';
 
 import{KLAVIYO_API_REVISION,KLAVIYO_MAPPING_VERSION,KlaviyoReview}from'./esp-export-contracts';
 export{KLAVIYO_API_REVISION,KLAVIYO_MAPPING_VERSION,KlaviyoReview}from'./esp-export-contracts';
@@ -21,7 +22,9 @@ export async function compileKlaviyoArtifact(r:FrozenExportRevision):Promise<Kla
  // the old hash by JSON.stringify(stored manifest). Older compiler artifacts
  // intentionally refuse until a new immutable checkpoint is explicitly selected.
  const compiled=await compileEmail(r.spec);
- if(compiled.hash!==r.artifact_hash||compiled.html!==r.html||compiled.text!==r.plaintext||JSON.stringify(EmailSpecSchema.parse(r.manifest.spec))!==JSON.stringify(EmailSpecSchema.parse(r.spec)))throw new Error('EXPORT_SOURCE_INTEGRITY');
+ // Deep comparison ignores object key order at every level, while preserving
+ // array order, values, and the presence of every stored manifest field.
+ if(compiled.hash!==r.artifact_hash||compiled.html!==r.html||compiled.text!==r.plaintext||!isDeepStrictEqual(r.manifest,compiled.manifest))throw new Error('EXPORT_SOURCE_INTEGRITY');
  if(lintEmail(r.spec,[],{html:r.html}).some(f=>f.severity==='blocking'))throw new Error('EXPORT_STATIC_BLOCKED');
  const withoutSlot=(r.html+'\n'+r.plaintext).replaceAll('{{UNSUBSCRIBE_URL}}','');
  if(/\{\{|\}\}|\{%|%\}/.test(withoutSlot))throw new Error('EXPORT_TOKEN_UNSUPPORTED');

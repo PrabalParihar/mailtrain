@@ -12,3 +12,33 @@ test('oversized success, foreign resource link, cancelled request fail conservat
 });
 
 test('HTTP408 and failed error-stream discard never become retryable verified outcomes',async()=>{const a=await artifact();for(const status of [408,503,403]){const body=new ReadableStream({cancel(){throw Error('remote secret');}});let n=0;const r=await createAndVerifyKlaviyoTemplate({artifact:a,name:'Fixture',accessToken:'fixture-token',markSubmission:async()=>{},persistRemoteId:async()=>{},fetcher:async()=>{n++;return new Response(body,{status});}});assert.equal(r.state,status===403?'needs_attention':'outcome_unknown');assert.equal(n,1);}});
+
+for(const attributes of [{name:'Fixture'},{name:42,editor_type:null,html:[],text:{}},null,'malformed']) {
+ test(`trusted create identity survives ${JSON.stringify(attributes)} attributes before exact readback`,async()=>{
+  const a=await artifact();
+  for(const readback of ['valid','partial','transport'] as const){
+   const order:string[]=[],requests:{url:string;method:string}[]=[];
+   const r=await createAndVerifyKlaviyoTemplate({artifact:a,name:'Fixture',accessToken:'fixture-token',markSubmission:async()=>{order.push('marker');},persistRemoteId:async id=>{assert.equal(id,'FIXTURE1');order.push('id');},fetcher:async(url,init)=>{
+    const method=String(init?.method);order.push(method);requests.push({url:String(url),method});
+    if(method==='POST')return new Response(JSON.stringify({data:{id:'FIXTURE1',type:'template',attributes},links:{self:'https://a.klaviyo.com/api/templates/FIXTURE1'}}),{status:201});
+    if(readback==='transport')throw new Error('private readback error');
+    return readback==='valid'?response(a):new Response(JSON.stringify({data:{id:'FIXTURE1',type:'template',attributes:{name:'Fixture'}}}),{status:200});
+   }});
+   assert.deepEqual(order,['marker','POST','id','GET']);
+   assert.equal(r.state,readback==='valid'?'verified':'needs_attention');assert.equal(r.remote_id,'FIXTURE1');
+   assert.equal(r.resource_url,'https://a.klaviyo.com/api/templates/FIXTURE1');assert.equal(r.destination_url,null);
+   assert.deepEqual(requests,[{url:'https://a.klaviyo.com/api/templates',method:'POST'},{url:'https://a.klaviyo.com/api/templates/FIXTURE1',method:'GET'}]);
+  }
+ });
+}
+test('create attributes cannot relax trusted origin, type, ID or self-link admission',async()=>{
+ const a=await artifact();
+ for(const kind of ['origin','type','id','self'] as const){
+  let calls=0;
+  const r=await createAndVerifyKlaviyoTemplate({artifact:a,name:'Fixture',accessToken:'fixture-token',markSubmission:async()=>{},persistRemoteId:async()=>assert.fail('untrusted identity'),fetcher:async()=>{
+   calls++;const read=new Response(JSON.stringify({data:{id:kind==='id'?'../evil':'FIXTURE1',type:kind==='type'?'campaign':'template',attributes:{name:'Fixture'}},links:{self:kind==='self'?'https://a.klaviyo.com/api/templates/OTHER':'https://a.klaviyo.com/api/templates/FIXTURE1'}}),{status:201});
+   if(kind==='origin')Object.defineProperty(read,'url',{value:'https://evil.test/api/templates'});return read;
+  }});
+  assert.equal(r.state,'outcome_unknown');assert.equal(r.remote_id,null);assert.equal(calls,1);
+ }
+});

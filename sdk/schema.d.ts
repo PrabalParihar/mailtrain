@@ -26892,15 +26892,32 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Frozen bytes; browser image/PDF simulations, not real-client evidence. */
+            /** @description Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled. */
             200: {
                 headers: {
                     "X-Request-Id"?: string;
+                    /** @description Destination artifact hash bound to source, mapping, API revision and both prepared formats. */
                     "X-Artifact-Hash"?: string;
+                    /** @description Exact frozen source artifact hash reviewed before download. */
+                    "X-Source-Artifact-Hash"?: string;
+                    /** @description SHA256 of the exact UTF-8 bytes for the selected format. */
+                    "X-Content-SHA256"?: string;
+                    "X-Destination-Mapping"?: "klaviyo-html-1";
+                    /** @description Local preparation only; no provider export is enabled. */
+                    "X-Remote-Export-Enabled"?: "false";
+                    "Content-Type"?: "text/html; charset=utf-8" | "text/plain; charset=utf-8";
+                    /** @description attachment; filename="klaviyo-prepared-{revision_id}.{format}" */
+                    "Content-Disposition"?: string;
+                    "Cache-Control"?: "no-store";
+                    "X-Content-Type-Options"?: "nosniff";
+                    "Content-Security-Policy"?: "sandbox; default-src 'none'";
+                    /** @description Local preparation notice; remote export, live destination and real-client conformance remain unverified. */
+                    "X-Mailcraft-Notice"?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/octet-stream": string;
+                    "text/html": string;
+                    "text/plain": string;
                 };
             };
             /** @description Safe error; preserve request ID. Business errors do not automatically retry. */

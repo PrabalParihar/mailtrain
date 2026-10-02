@@ -1,4 +1,4 @@
-import{KlaviyoReview}from'../src/domain/esp-export-contracts';
+import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import {RecipientAssessmentInput,RecipientAssessmentView,RecipientObservationView}from'../src/domain/recipient-assessments';
 import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
@@ -392,6 +392,7 @@ type Definition = {
   explicitKey?: boolean;
   sourceJson?: boolean;
   sourceDownload?: boolean;
+  destinationDownload?: boolean;
   binaryMediaTypes?: string[];
   description?: string;
 };
@@ -498,7 +499,26 @@ function add(d: Definition) {
   if (d.binaryBody) parameters.push({name:'X-Upload-Token',in:'header',required:true,schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Actor/workspace-bound upload token from the acknowledged intent. Preserve this token, upload ID and exact bytes for explicit transfer recovery.'});
   if (d.paged) parameters.push(...(d.pageParameters ?? pageParameters));
   if (d.query) parameters.push(...d.query);
-  const success = d.binary
+  const success = d.destinationDownload
+    ? {
+        description:'Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.',
+        headers:{
+          'X-Request-Id':{schema:string},
+          'X-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Destination artifact hash bound to source, mapping, API revision and both prepared formats.'},
+          'X-Source-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Exact frozen source artifact hash reviewed before download.'},
+          'X-Content-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'SHA256 of the exact UTF-8 bytes for the selected format.'},
+          'X-Destination-Mapping':{schema:{type:'string',const:KLAVIYO_MAPPING_VERSION}},
+          'X-Remote-Export-Enabled':{schema:{type:'string',const:'false'},description:'Local preparation only; no provider export is enabled.'},
+          'Content-Type':{schema:{type:'string',enum:['text/html; charset=utf-8','text/plain; charset=utf-8']}},
+          'Content-Disposition':{schema:string,description:'attachment; filename="klaviyo-prepared-{revision_id}.{format}"'},
+          'Cache-Control':{schema:{type:'string',const:'no-store'}},
+          'X-Content-Type-Options':{schema:{type:'string',const:'nosniff'}},
+          'Content-Security-Policy':{schema:{type:'string',const:"sandbox; default-src 'none'"}},
+          'X-Mailcraft-Notice':{schema:string,description:'Local preparation notice; remote export, live destination and real-client conformance remain unverified.'},
+        },
+        content:{'text/html':{schema:{type:'string',format:'binary'}},'text/plain':{schema:{type:'string',format:'binary'}}},
+      }
+    : d.binary
     ? {
         description: d.binaryMediaTypes ? 'Authorized immutable private derivative bytes. No public hosting or original-byte access.' : 'Frozen bytes; browser image/PDF simulations, not real-client evidence.',
         headers: { 'X-Request-Id': { schema: string }, ...(d.binaryMediaTypes ? {'Cache-Control':{schema:{const:'private, no-store'}}} : { 'X-Artifact-Hash': { schema: string } }),...(d.sourceDownload?{'X-Source-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Present for format=source; exact frozen UTF-8 source hash.'},'X-Source-Profile':{schema:ref('SourceProfile'),description:'Present for format=source; historical storage profile.'},'X-Content-Type-Options':{schema:{const:'nosniff'}},'Content-Disposition':{schema:string,description:'format=source uses attachment; filename="email-vN.source.html.txt".'},'Cache-Control':{schema:{const:'no-store'}}}:{}) },
@@ -783,7 +803,7 @@ add({
   ],
 });
 add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'KlaviyoReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}}]});
-add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,scope:'emails:export',description:'Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
+add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
 for (const [id, command, blocked] of [
   ['preflightRevision', 'preflight', false],
   ['exportRevision', 'export', true],
