@@ -17,6 +17,8 @@ import {
 } from '../domain/segments';
 import { EmailSpecSchema } from '../domain/email';
 import { eligibility } from '../domain/audience';
+import { assertCurrentAuthority } from './current-authority';
+import { audienceSnapshotPage, audienceSnapshotMetadata } from './audience-snapshots';
 async function fieldDefinitions(tx: Tx): Promise<Field[]> {
   return (await tx.query('SELECT key,type FROM contact_fields ORDER BY key')).rows;
 }
@@ -41,19 +43,20 @@ async function evaluate(tx: Tx, rule: Rule, fields: Field[]) {
   const query = compileRule(rule, fields);
   const rows = (
     await tx.query(
-      `SELECT c.id,c.email_original,c.preferred_locale,c.consent_version,c.subscription,c.deleted,EXISTS(SELECT 1 FROM suppressions s WHERE s.workspace_id=c.workspace_id AND s.contact_id=c.id) AS suppressed,now() AS evaluated_at FROM contacts c WHERE ${query.sql} ORDER BY c.id LIMIT 10001`,
+      `WITH evaluated AS MATERIALIZED (SELECT statement_timestamp() AS time), matches AS (SELECT c.id,c.preferred_locale,c.consent_version,c.subscription,c.deleted,EXISTS(SELECT 1 FROM suppressions s WHERE s.workspace_id=c.workspace_id AND s.contact_id=c.id) AS suppressed FROM contacts c WHERE ${query.sql} ORDER BY c.id LIMIT 10001) SELECT matches.*,evaluated.time AS evaluated_at FROM evaluated LEFT JOIN matches ON true ORDER BY matches.id`,
       query.params,
     )
   ).rows;
-  if (rows.length > 10000)
+  const matched = rows.filter((row) => row.id !== null);
+  if (matched.length > 10000)
     fail(
       413,
       'AUDIENCE_LIMIT',
       'This development snapshot supports up to 10,000 matched contacts.',
     );
   const evaluated_at =
-    rows[0]?.evaluated_at ?? (await tx.query('SELECT now() AS time')).rows[0].time;
-  const members = rows.map((c) => ({
+    rows[0].evaluated_at;
+  const members = matched.map((c) => ({
     id: c.id,
     locale: c.preferred_locale,
     consent_version: c.consent_version,
@@ -75,6 +78,7 @@ export async function organizationRoute(
 ) {
   const [root, id, command] = path;
   return withPrincipal(req, 'audience', async (tx, p) => {
+    const run = async () => {
     if (root === 'audience-schema')
       return {
         fields: [
@@ -180,6 +184,8 @@ export async function organizationRoute(
         };
       });
     if (root === 'audience-snapshots') {
+      if (!id) return audienceSnapshotPage(req, tx, p);
+      if (command === 'metadata') return audienceSnapshotMetadata(req, tx, id);
       const snapshot = (await tx.query('SELECT * FROM audience_snapshots WHERE id=$1', [id]))
         .rows[0];
       if (!snapshot) fail(404, 'RESOURCE_NOT_FOUND', 'Snapshot not found.');
@@ -210,6 +216,7 @@ export async function organizationRoute(
       const segment = (await tx.query('SELECT * FROM segments WHERE id=$1 FOR UPDATE', [id]))
         .rows[0];
       if (!segment) fail(404, 'RESOURCE_NOT_FOUND', 'Segment not found.');
+      await assertCurrentAuthority(tx, p, 'audience', p.api_key ? (req.method === 'GET' ? 'audience:read' : 'audience:write') : undefined);
       const saved = (
         await tx.query(
           'SELECT rule,schema_version FROM segment_versions WHERE segment_id=$1 AND version=$2',
@@ -279,7 +286,7 @@ export async function organizationRoute(
           const evaluated = await evaluate(tx, segment.rule, fields);
           const frozen = {
             schema_version: 1,
-            segment_id: id,
+            segment_id: segment.id,
             segment_version: segment.current_version,
             ...evaluated,
           };
@@ -308,5 +315,9 @@ export async function organizationRoute(
         });
     }
     fail(404, 'RESOURCE_NOT_FOUND', 'Audience command not found.');
+    };
+    const result = await run();
+    await assertCurrentAuthority(tx, p, 'audience', p.api_key ? (req.method === 'GET' ? 'audience:read' : 'audience:write') : undefined);
+    return result;
   });
 }

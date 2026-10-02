@@ -560,6 +560,22 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "listAudienceSnapshots": {
+    "method": "GET",
+    "path": "/v1/audience-snapshots",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
+  "getAudienceSnapshotMetadata": {
+    "method": "GET",
+    "path": "/v1/audience-snapshots/{id}/metadata",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
   "getAudienceSnapshot": {
     "method": "GET",
     "path": "/v1/audience-snapshots/{id}",

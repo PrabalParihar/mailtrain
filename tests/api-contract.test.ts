@@ -91,6 +91,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'suppress',
     'versions',
     'snapshots',
+    'metadata',
     'errors',
     'confirm',
     'submit-review',

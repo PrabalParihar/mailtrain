@@ -128,7 +128,7 @@ export function compileRule(input: Rule, fields: Field[]) {
       return `${node.op === 'not_in' ? 'NOT ' : ''}EXISTS(SELECT 1 FROM ${table} m WHERE m.workspace_id=c.workspace_id AND m.contact_id=c.id AND m.${key}=${bind(node.id)}::uuid)`;
     }
     if (node.kind === 'engagement')
-      return `${node.op === 'not_observed' ? 'NOT ' : ''}EXISTS(SELECT 1 FROM engagement_events e WHERE e.workspace_id=c.workspace_id AND e.contact_id=c.id AND e.event=${bind(node.event)} AND e.occurred_at<=now() AND e.occurred_at>=now()-(${bind(node.within_days)}::int*interval '1 day'))`;
+      return `${node.op === 'not_observed' ? 'NOT ' : ''}EXISTS(SELECT 1 FROM engagement_events e WHERE e.workspace_id=c.workspace_id AND e.contact_id=c.id AND e.event=${bind(node.event)} AND e.occurred_at<=statement_timestamp() AND e.occurred_at>=statement_timestamp()-(${bind(node.within_days)}::int*interval '1 day'))`;
     if (node.kind !== 'attribute') throw new Error('Unsupported rule.');
     const field = [...builtinFields, ...fields].find((f) => f.key === node.field)!;
     const key = bind(field.key),

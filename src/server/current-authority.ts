@@ -53,6 +53,12 @@ export async function assertCurrentAuthority(
       fail(403, 'INSUFFICIENT_SCOPE', 'This API key does not grant the required resource scope.');
     current = { ...current, api_key: { ...p.api_key, scopes: key.scopes } };
   }
+  if (p.local_session) {
+    const actor = (await tx.query<{ user_id: string | null }>(
+      'SELECT mailcraft_local_identity($1) AS user_id', [p.local_session.token_hash],
+    )).rows[0]?.user_id;
+    if (actor !== p.user) fail(401, 'AUTH_REQUIRED', 'This session is invalid, expired or revoked. Sign in again.');
+  }
   if (!allowed(member.role, action))
     fail(403, 'INSUFFICIENT_SCOPE', 'Your current role cannot perform this action.');
   return current;

@@ -14,6 +14,7 @@ export type Principal = {
   user: string;
   workspace: string;
   role: Role;
+  local_session?: { token_hash: string };
   api_key?: { id: string; scopes: string[]; delegator: string };
 };
 export function localMode() {
@@ -38,21 +39,25 @@ export function checkOrigin(request: Request) {
       fail(403, 'ORIGIN_DENIED', 'The request origin is not authorized.');
   }
 }
-export async function identity() {
+async function identityProof(): Promise<{ user: string | null; local_session?: { token_hash: string } }> {
   if (localMode()) {
     const value = (await cookies()).get('mailcraft_local_session')?.value;
-    if (!value) return null;
+    if (!value) return { user: null };
+    const token_hash = digest(value);
     const row = (
-      await sessionQuery('SELECT mailcraft_local_identity($1) AS user_id', [digest(value)])
+      await sessionQuery('SELECT mailcraft_local_identity($1) AS user_id', [token_hash])
     ).rows[0];
-    return row?.user_id ?? null;
+    return { user: row?.user_id ?? null, local_session: { token_hash } };
   }
-  if (!process.env.CLERK_SECRET_KEY || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) return null;
-  return (await auth()).userId;
+  if (!process.env.CLERK_SECRET_KEY || !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) return { user: null };
+  return { user: (await auth()).userId };
+}
+export async function identity() {
+  return (await identityProof()).user;
 }
 export async function principal(request: Request, action: Action): Promise<Principal> {
   if (request.headers.has('authorization')) return resolveApiKey(request, action);
-  const user = await identity();
+  const proof = await identityProof(), user = proof.user;
   if (!user) fail(401, 'AUTH_REQUIRED', 'Sign in to continue.');
   const workspace = request.headers.get('x-workspace-id');
   if (!workspace || !/^[-\da-f]{36}$/i.test(workspace))
@@ -78,7 +83,7 @@ export async function principal(request: Request, action: Action): Promise<Princ
   );
   if (active?.status !== 'active')
     fail(409, 'WORKSPACE_LOCKED', 'This workspace cannot accept new work.');
-  return { user, workspace, role: membership.role };
+  return { user, workspace, role: membership.role, ...(proof.local_session ? { local_session: proof.local_session } : {}) };
 }
 export async function withPrincipal<T>(
   request: Request,

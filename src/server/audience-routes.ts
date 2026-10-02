@@ -1,6 +1,6 @@
 import {campaignCalendar} from './workspace-calendar';
 import{LINT_RULES_VERSION}from'../domain/preflight';
-import{campaignDetail,campaignConfigurations,configureCampaign}from'./campaign-configuration';
+import{campaignDetail,campaignConfigurations,configureCampaign,configurationView,redactedCampaignResponse}from'./campaign-configuration';
 import { z } from 'zod';
 import { withPrincipal } from './auth';
 import { keyed } from './commands';
@@ -11,6 +11,8 @@ import { resourcePage } from './pagination';
 import { dispatchPolicyFence } from './dispatch-controls';
 import { DispatchProvider } from '../domain/dispatch-controls';
 import { eligibility } from '../domain/audience';
+import { assertCurrentAuthority } from './current-authority';
+import { scopeForResource } from '../domain/api-keys';
 export async function audienceRoute(
   req: Request,
   path: string[],
@@ -18,9 +20,7 @@ export async function audienceRoute(
   key: string | null,
 ) {
   const [root, id, cmd] = path;
-  return withPrincipal(
-    req,
-    root === 'campaigns'
+  const action = root === 'campaigns'
       ? cmd === 'approve'
         ? 'approve'
         : ['send', 'schedule', 'pause', 'resume', 'cancel'].includes(cmd)
@@ -28,8 +28,11 @@ export async function audienceRoute(
           : req.method === 'GET'
             ? 'read'
             : 'edit'
-      : 'audience',
+      : 'audience';
+  return withPrincipal(
+    req, action,
     async (tx, p) => {
+      const run = async () => {
       if (root === 'contacts') {
         if (req.method === 'GET')
           return resourcePage(req, tx, p, {
@@ -75,14 +78,16 @@ export async function audienceRoute(
           fail(404,'RESOURCE_NOT_FOUND','Campaign command not found.');
         }
         if(id&&cmd==='configuration')return configureCampaign(tx,p,id,body,key);
-        if (req.method === 'GET')
-          return resourcePage(req, tx, p, {
+        if (req.method === 'GET') {
+          const page = await resourcePage(req, tx, p, {
             resource: 'campaigns',
             from: 'campaigns',
             fields: '*',
           });
-        if (!id)
-          return keyed(tx, p, 'campaign.create', key, body, async () => {
+          return { ...page, data: page.data.map(configurationView) };
+        }
+        if (!id) {
+          const response = await keyed(tx, p, 'campaign.create', key, body, async () => {
             const name = z.string().min(1).max(160).parse(body.name),
               revision = z.string().uuid().parse(body.revision_id);
             const r = (
@@ -111,9 +116,11 @@ export async function audienceRoute(
               )
             ).rows[0];
             await audit(tx, p.workspace, p.user, 'campaign.created', c.id);
-            return { campaign: c };
+            return { campaign: configurationView(c) };
           });
-        return keyed(tx, p, 'campaign.' + cmd + ':' + id, key, body, async () => {
+          return redactedCampaignResponse(response);
+        }
+        const response = await keyed(tx, p, 'campaign.' + cmd + ':' + id, key, body, async () => {
           let dispatchProvider: string|null = null;
           if (['send','schedule','resume'].includes(cmd)) {
             const observed = (await tx.query('SELECT intent FROM campaigns WHERE id=$1',[id])).rows[0];
@@ -126,6 +133,7 @@ export async function audienceRoute(
           const c = (await tx.query('SELECT * FROM campaigns WHERE id=$1 FOR UPDATE', [id]))
             .rows[0];
           if (!c) fail(404, 'RESOURCE_NOT_FOUND', 'Campaign not found.');
+          await assertCurrentAuthority(tx, p, action, p.api_key ? scopeForResource(root, req.method, cmd) : undefined);
           if (cmd === 'submit-review') {
             if (c.state !== 'draft')
               fail(409, 'STATE_CONFLICT', 'Only a draft campaign can request review.');
@@ -139,7 +147,7 @@ export async function audienceRoute(
               fail(409, 'STATE_CONFLICT', 'The campaign state changed. Reload and try again.');
             await audit(tx, p.workspace, p.user, 'campaign.review_requested', id);
             return {
-              campaign: reviewed,
+              campaign: configurationView(reviewed),
               notice:
                 'Review requested. Sender, real-client preflight and delivery gates remain incomplete.',
             };
@@ -183,7 +191,7 @@ export async function audienceRoute(
             await tx.query('UPDATE campaigns SET state=$1 WHERE id=$2', [state, id]);
             await audit(tx, p.workspace, p.user, 'campaign.' + state, id);
             return {
-              campaign: { ...c, state },
+              campaign: configurationView({ ...c, state }),
               accepted: 0,
               uncertain: 0,
               notice: 'No provider submissions exist for this campaign.',
@@ -191,8 +199,13 @@ export async function audienceRoute(
           }
           fail(404, 'RESOURCE_NOT_FOUND', 'Campaign command not found.');
         });
+        return redactedCampaignResponse(response);
       }
       fail(404, 'RESOURCE_NOT_FOUND', 'Audience command not found.');
+      };
+      const result = await run();
+      await assertCurrentAuthority(tx, p, action, p.api_key ? scopeForResource(root, req.method, cmd) : undefined);
+      return result;
     },
   );
 }

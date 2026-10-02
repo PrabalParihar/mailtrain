@@ -13,6 +13,8 @@ import { useResourcePage } from './paged';
 import { api } from './api';
 import { CsvImport } from './csv-import';
 import { AudienceOrganization, type OrganizedContact } from './audience-organization';
+import type { z } from 'zod';
+import type { CampaignConfigurationView } from '../domain/campaign-configuration';
 type Contact = OrganizedContact & { subscription: string; suppressed: boolean };
 export function AudiencePanel({ workspace }: { workspace: string }) {
   const contactPage = useResourcePage<Contact>(workspace, 'contacts');
@@ -115,14 +117,7 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
     </>
   );
 }
-type Campaign = {
-  id: string;
-  version:number;
-  name: string;
-  state: string;
-  intent: { artifact_hash: string; audience: { eligible: boolean; reason: string }[] };
-  digest: string;
-};
+type Campaign = z.infer<typeof CampaignConfigurationView>;
 export function CampaignPanel({ workspace,role }: { workspace: string;role:string }) {
   const campaignPage = useResourcePage<Campaign>(workspace, 'campaigns');
   const revisionPage = useResourcePage<{ id: string; revision_no: number; subject: string }>(
@@ -216,13 +211,13 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
             </div>
             <div className="metric-row">
               <span>
-                Snapshot <strong>{c.intent.audience.length}</strong>
+                Snapshot <strong>{c.audience_count}</strong>
               </span>
               <span>
-                Eligible <strong>{c.intent.audience.filter((a) => a.eligible).length}</strong>
+                Eligible <strong>{c.eligible_count}</strong>
               </span>
               <span>
-                Excluded <strong>{c.intent.audience.filter((a) => !a.eligible).length}</strong>
+                Excluded <strong>{c.excluded_count}</strong>
               </span>
             </div>
             <p className="small muted break-word">Frozen artifact {c.intent.artifact_hash}</p>

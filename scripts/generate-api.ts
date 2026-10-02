@@ -1,5 +1,6 @@
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
 import{CampaignConfigurationInput,CampaignConfigurationSnapshot,CampaignConfigurationView}from'../src/domain/campaign-configuration';
+import { AudienceSnapshotMetadataSchema } from '../src/domain/audience-snapshots';
 import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
 import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
@@ -134,6 +135,7 @@ const schemas: Record<string, Schema> = {
   CampaignConfigurationInput:fromZod(CampaignConfigurationInput),
   CampaignConfigurationView:fromZod(CampaignConfigurationView),
   CampaignConfigurationSnapshot:fromZod(CampaignConfigurationSnapshot),
+  AudienceSnapshotMetadata: fromZod(AudienceSnapshotMetadataSchema),
   CampaignInput: object(
     { name: { type: 'string', minLength: 1, maxLength: 160 }, revision_id: uuid },
     undefined,
@@ -191,16 +193,7 @@ const schemas: Record<string, Schema> = {
     preferred_locale: string,
     created_at: time,
   }),
-  Campaign: object({
-    version:{type:'integer',minimum:1},
-    id: uuid,
-    name: string,
-    state: string,
-    revision_id: uuid,
-    intent: json,
-    digest: string,
-    created_at: time,
-  }),
+  Campaign: fromZod(CampaignConfigurationView),
   Segment: object({ id: uuid, name: string, current_version: integer, created_at: time }),
   Audit: object({
     id: uuid,
@@ -227,6 +220,7 @@ for (const [name, item] of Object.entries({
   Contacts: 'Contact',
   Campaigns: 'Campaign',
   CampaignConfigurations:'CampaignConfigurationSnapshot',
+  AudienceSnapshots: 'AudienceSnapshotMetadata',
   Segments: 'Segment',
   Audit: 'Audit',
   Derivatives: 'Email',
@@ -272,6 +266,7 @@ schemas.WorkspaceTimezoneResponse=envelope({preferences:ref('WorkspacePreference
 schemas.CampaignCalendarResponse=envelope({data:array(ref('CalendarEntry')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},month:fromZod(CalendarMonth),time_zone:string,timezone_version:{type:'integer',minimum:1},notice:string});
 schemas.CampaignDetailResponse=envelope({campaign:ref('CampaignConfigurationView')});
 schemas.CampaignConfigurationResponse=envelope({campaign:ref('CampaignConfigurationView'),changed:{type:'boolean'},notice:string});
+schemas.AudienceSnapshotMetadataResponse=envelope({snapshot:ref('AudienceSnapshotMetadata')});
 schemas.Health = envelope({
   status: { const: 'ok' },
   release: { const: 'development' },
@@ -794,6 +789,8 @@ for (const [id, command, body, keyed] of [
     keyed,
     scope: 'audience:write',
   });
+add({id:'listAudienceSnapshots',path:'/v1/audience-snapshots',method:'GET',response:'AudienceSnapshotsPage',paged:true,scope:'audience:read',query:[{name:'segment_id',in:'query',schema:uuid}],description:'Current audience authority; strict metadata without recipient members or addresses. Signed cursors bind actor, workspace and segment/time filters. No duplicate/unknown/empty query parameters.'});
+add({id:'getAudienceSnapshotMetadata',path:'/v1/audience-snapshots/{id}/metadata',method:'GET',response:'AudienceSnapshotMetadataResponse',scope:'audience:read',description:'Strict immutable selection metadata; recipient members remain restricted to the existing audience-authorized full snapshot detail.'});
 add({
   id: 'getAudienceSnapshot',
   path: '/v1/audience-snapshots/{id}',
@@ -839,7 +836,7 @@ add({id:'setWorkspaceTimezone',path:'/v1/workspace-preferences/timezone',method:
 add({id:'getCampaignCalendar',path:'/v1/campaigns/calendar',method:'GET',response:'CampaignCalendarResponse',paged:true,scope:'campaigns:read',query:[{name:'month',in:'query',required:true,schema:fromZod(CalendarMonth)}],description:'Complete valid planned timing displayed in saved workspace timezone. Signed cursor binds actor, tenant, month and timezone version. Redacted metadata only; no accepted delivery schedule or audience-performance measurement.'});
 add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignDetailResponse',scope:'campaigns:read'});
 add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
-add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS; exact owned revision/hash and explicit planned local minute/IANA zone/offset. Planned timing never accepts scheduling. Material changes clear review/approval and retain captured audience/provider/sender/tracking. Stale commands conflict; unchanged commands do not append history.'});
+add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS, exact owned content and explicit planned timing. Optional audience_snapshot_id requires current Owner/Admin audience authority and additional audience:read on a key; omission preserves the existing selection. Exact frozen members/source digest are verified and bound without live re-evaluation. Material changes clear review/approval; no-op does not append history. Original receipts require current authority and do not imply current lifecycle state or accepted delivery.'});
 for (const [id, command, blocked, scope] of [
   ['submitCampaignReview', 'submit-review', false, 'campaigns:write'],
   ['approveCampaign', 'approve', true, 'campaigns:approve'],
