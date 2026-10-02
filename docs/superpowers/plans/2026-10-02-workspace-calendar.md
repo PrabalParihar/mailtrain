@@ -17,8 +17,8 @@ Files src/ui/campaign-configuration.tsx, src/ui/operations.tsx, scripts/smoke-ca
 
 ### Task 2: Pure calendar contract
 Files src/domain/workspace-calendar.ts, tests/workspace-calendar.test.ts. Export WorkspaceTimezoneInput, CalendarMonth, validateDisplayTimeZone, moveCalendarMonth, calendarDayCells, formatCalendarInstant.
-- [ ] Missing module RED: strict version/fields/month/zone, numeric zone denied, UTC/NY fold/Kathmandu/month crossing, leap Monday-first cells/cross-year navigation. Expected missing module failures.
-- [ ] Implement no-machine-timezone helpers. Expected focused/full/lint/typecheck PASS; commit/task-done.
+- [x] Missing module RED: strict version/fields/month/zone, numeric zone denied, UTC/NY fold/Kathmandu/month crossing, leap Monday-first cells/cross-year navigation. Expected missing module failures.
+- [x] Implement no-machine-timezone helpers. Expected focused/full/lint/typecheck PASS; commit/task-done.
 
 ### Task 3: Observed index and preference storage
 Files db/027-workspace-calendar.sql, tests/workspace-calendar-db.test.ts. Add timezone_version and derived planned_at/index/trigger; runtime manager/version/context guard and index forgery guard; preserve026 history.
