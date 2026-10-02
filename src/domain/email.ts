@@ -1,149 +1,20 @@
 import {UTMParameters,UTM_POLICY_VERSION,UTMLinkError,decorateMarketingHref,type UTMParameterData}from'./utm';
 import {decorateHtmlMarketingLinks,htmlMarketingTargets}from'./utm-html';
 import type{ToneRuleData}from'./voice-guard';
-import { z } from 'zod';
 import { createElement as h } from 'react';
 import { render } from '@react-email/render';
 import sanitizeHtml from 'sanitize-html';
 import { createHash } from 'node:crypto';
 import { staticLint } from './preflight';
 
-const str = z.string().max(10000),
-  id = z.string().min(1).max(80);
-const safeHref = z
-  .string()
-  .max(2048)
-  .refine((v) => {
-    try {
-      const u = new URL(v);
-      return !u.username && !u.password && ['https:', 'mailto:', 'tel:'].includes(u.protocol);
-    } catch {
-      return false;
-    }
-  }, 'Use HTTPS, mailto or tel');
-const simple = z.discriminatedUnion('type', [
-  z.object({ id, type: z.literal('hero'), heading: str, text: str }).strict(),
-  z.object({ id, type: z.literal('text'), text: str }).strict(),
-  z
-    .object({
-      id,
-      type: z.literal('image'),
-      src: safeHref,
-      alt: z.string().max(500),
-      decorative: z.boolean().optional(),
-    })
-    .strict(),
-  z
-    .object({ id, type: z.literal('button'), label: z.string().min(1).max(200), href: safeHref })
-    .strict(),
-  z.object({ id, type: z.literal('divider') }).strict(),
-  z
-    .object({
-      id,
-      type: z.literal('social'),
-      links: z.array(z.object({ label: z.string().max(80), href: safeHref }).strict()).max(10),
-    })
-    .strict(),
-  z
-    .object({
-      id,
-      type: z.literal('legal_footer'),
-      identity: z.string().max(500),
-      address: z.string().max(1000),
-      unsubscribe_slot: z.literal(true),
-    })
-    .strict(),
-  z
-    .object({
-      id,
-      type: z.literal('product_card'),
-      title: str,
-      description: str,
-      price: z.string().max(100),
-      href: safeHref,
-    })
-    .strict(),
-  z.object({ id, type: z.literal('custom_html'), html: z.string().max(200000) }).strict(),
-]);
-export const BlockSchema = z.union([
-  simple,
-  z
-    .object({
-      id,
-      type: z.literal('columns'),
-      columns: z.array(z.array(simple).max(20)).min(1).max(2),
-    })
-    .strict(),
-]);
-export type Block = z.infer<typeof BlockSchema>;
-const locales = [
-  'en-US',
-  'en-GB',
-  'fr-FR',
-  'de-DE',
-  'es-ES',
-  'it-IT',
-  'pt-BR',
-  'nl-NL',
-  'sv-SE',
-  'da-DK',
-  'no-NO',
-  'fi-FI',
-  'pl-PL',
-  'cs-CZ',
-  'tr-TR',
-  'ja-JP',
-  'ko-KR',
-  'zh-CN',
-  'zh-TW',
-  'hi-IN',
-  'ar-SA',
-  'he-IL',
-] as const;
-export const LOCALES = locales;
-export const EmailSpecSchema = z
-  .object({
-    schema_version: z.literal('1.0'),
-    editing_mode: z.enum(['structured', 'raw_html']),
-    locale: z.enum(locales),
-    direction: z.enum(['ltr', 'rtl']),
-    subject: z.string().max(200),
-    preheader: z.string().max(250),
-    brand_kit_version_id: z.string().max(80),
-    theme: z
-      .object({
-        content_width_px: z.number().int().min(320).max(800),
-        background: z.string().regex(/^#[\da-fA-F]{6}$/),
-        accent: z.string().regex(/^#[\da-fA-F]{6}$/),
-        font_stack: z.enum(['Arial, sans-serif', 'Georgia, serif', 'Verdana, sans-serif']),
-      })
-      .strict(),
-    sections: z.array(BlockSchema).max(200),
-    raw_html: z.string().max(2000000).optional(),
-    tracking: UTMParameters.optional(),
-  })
-  .strict()
-  .superRefine((s, c) => {
-    let count = 0;
-    const ids = new Set<string>();
-    for (const b of s.sections) {
-      const nodes = b.type === 'columns' ? [b, ...b.columns.flat()] : [b];
-      for (const n of nodes) {
-        count++;
-        if (ids.has(n.id))
-          c.addIssue({ code: 'custom', message: 'Duplicate node ID', path: ['sections'] });
-        ids.add(n.id);
-      }
-    }
-    if (count > 200)
-      c.addIssue({ code: 'custom', message: 'Maximum 200 nodes', path: ['sections'] });
-    if (s.editing_mode === 'raw_html' && !s.raw_html)
-      c.addIssue({ code: 'custom', message: 'Raw HTML required', path: ['raw_html'] });
-    if(s.tracking&&UTMParameters.safeParse(s.tracking).success&&(s.editing_mode!=='raw_html'||!!s.raw_html)){try{trackedContent(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
-    if (JSON.stringify(s).length > 1048576 && s.editing_mode === 'structured')
-      c.addIssue({ code: 'custom', message: 'Maximum 1 MiB structured document' });
-  });
-export type EmailSpec = z.infer<typeof EmailSpecSchema>;
+import {EmailSpecSchema as SharedEmailSpecSchema,type EmailSpec,type Block} from './email-schema';
+export {BlockSchema,LOCALES} from './email-schema';
+export type {EmailSpec,Block} from './email-schema';
+export const EmailSpecSchema=SharedEmailSpecSchema.superRefine((s,c)=>{
+ if(s.tracking&&UTMParameters.safeParse(s.tracking).success&&(s.editing_mode!=='raw_html'||!!s.raw_html)){
+  try{trackedContent(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}
+ }
+});
 export function blankSpec(brand: string, name: string): EmailSpec {
   return {
     schema_version: '1.0',
