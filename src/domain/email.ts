@@ -6,6 +6,8 @@ import { render } from '@react-email/render';
 import sanitizeHtml from 'sanitize-html';
 import { createHash } from 'node:crypto';
 import { staticLint } from './preflight';
+import {load}from'cheerio';
+import{privateAssetBinding,AssetManifestSchema,type AssetManifest,type AssetManifestEntry}from'./assets';
 
 import {EmailSpecSchema as SharedEmailSpecSchema,type EmailSpec,type Block} from './email-schema';
 export {BlockSchema,LOCALES} from './email-schema';
@@ -124,13 +126,13 @@ export type Finding = {
 export function lintEmail(
   spec: EmailSpec,
   forbidden: string[] = [],
-  artifact?: { html: string },
+  artifact?: { html: string;assets?:AssetManifest },
   toneRules?:ToneRuleData,
 ): Finding[] {
   return staticLint(spec, forbidden, (source) => sanitizeRaw(source).html, artifact,toneRules);
 }
 
-function block(b: Block, accent: string): ReturnType<typeof h> {
+function block(b: Block, accent: string, assets:AssetManifestEntry[]): ReturnType<typeof h> {
   const props = { key: b.id };
   switch (b.type) {
     case 'hero':
@@ -145,7 +147,7 @@ function block(b: Block, accent: string): ReturnType<typeof h> {
     case 'image':
       return h('img', {
         ...props,
-        src: b.src,
+        src: b.asset_ref?privateAssetBinding(resolveImage(b.asset_ref,assets)):b.src,
         alt: b.decorative ? '' : b.alt,
         width: 600,
         style: { maxWidth: '100%', height: 'auto' },
@@ -228,7 +230,7 @@ function block(b: Block, accent: string): ReturnType<typeof h> {
                   width: `${100 / b.columns.length}%`,
                   style: { verticalAlign: 'top', padding: 8 },
                 },
-                ...col.map((n) => block(n, accent)),
+                ...col.map((n) => block(n, accent,assets)),
               ),
             ),
           ),
@@ -250,8 +252,17 @@ function trackedContent(s:{editing_mode:'structured'|'raw_html';sections:Block[]
  return{...s,sections:s.sections.map(b=>b.type==='columns'?{...b,columns:b.columns.map(col=>col.map(simple))}:simple(b))};
 }
 function trackedHtmlText(html:string){return sanitizeHtml(html,{allowedTags:[],allowedAttributes:{}})+'\n'+htmlMarketingTargets(html).join('\n');}
-export async function compileEmail(value: EmailSpec) {
+function resolveImage(ref:{asset_id:string;variant_id:string},entries:AssetManifestEntry[]){const entry=entries.find(e=>e.asset_id===ref.asset_id&&e.variant_id===ref.variant_id);if(!entry)throw new Error('ASSET_REFERENCE_UNRESOLVED');return entry;}
+export async function compileEmail(value: EmailSpec, options:{assets?:AssetManifest}={}) {
   const s = EmailSpecSchema.parse(value);
+  const nodes=s.sections.flatMap(b=>b.type==='columns'?b.columns.flat():[b]);
+  const refs=[...nodes.flatMap(b=>b.type==='image'&&b.asset_ref?[b.asset_ref,...(b.fallback_ref?[b.fallback_ref]:[])]:[]),...(s.asset_registry??[])];
+  if(refs.length&&!options.assets)throw new Error('ASSET_MANIFEST_REQUIRED');
+  if(options.assets)AssetManifestSchema.parse(options.assets);
+  const entries=options.assets?.entries??[];
+  if(new Set(entries.map(e=>e.asset_id+':'+e.variant_id)).size!==entries.length)throw new Error('ASSET_MANIFEST_DUPLICATE');
+  for(const ref of refs)resolveImage(ref,entries);
+  for(const node of nodes){if(node.type!=='image'||!node.asset_ref)continue;const entry=resolveImage(node.asset_ref,entries);if(entry.role==='animation'){if(!node.fallback_ref||!entry.fallback||node.fallback_ref.asset_id!==entry.fallback.asset_id||node.fallback_ref.variant_id!==entry.fallback.variant_id||resolveImage(node.fallback_ref,entries).role!=='fallback')throw new Error('ASSET_FALLBACK_REQUIRED');}else if(node.fallback_ref)throw new Error('ASSET_FALLBACK_INVALID');}
   const rendered=trackedContent(s);
   const manifest = {
     renderer: s.tracking?'mailcraft-react-email-utm-1':'mailcraft-react-email-1',
@@ -262,6 +273,7 @@ export async function compileEmail(value: EmailSpec) {
     locale: s.locale,
     mapping: 'html-slots-1',
     spec: s,
+    ...(entries.length?{assets:options.assets}:{}),
   };
   const inner = h(
     'table',
@@ -276,7 +288,7 @@ export async function compileEmail(value: EmailSpec) {
       h(
         'tr',
         {},
-        h('td', { style: { padding: 32 } }, ...rendered.sections.map((b) => block(b, s.theme.accent))),
+        h('td', { style: { padding: 32 } }, ...rendered.sections.map((b) => block(b, s.theme.accent,entries))),
       ),
     ),
   );
@@ -315,6 +327,9 @@ export async function compileEmail(value: EmailSpec) {
   );
   const html =
     s.editing_mode === 'raw_html' ? (s.tracking?rendered.raw_html!:sanitizeRaw(s.raw_html!).html) : await render(document);
+  const allowedBindings=new Set(refs.map(ref=>privateAssetBinding(resolveImage(ref,entries))));
+  const parsed=load(html);
+  parsed('img[src]').each((_,image)=>{const url=parsed(image).attr('src')!;let host:string;try{host=new URL(url).hostname;}catch{return;}if(host==='mailcraft-assets.invalid'&&!allowedBindings.has(url))throw new Error('ASSET_BINDING_UNREGISTERED');});
   const text =
     s.editing_mode === 'raw_html'
       ? (s.tracking?trackedHtmlText(html):sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }))

@@ -79,7 +79,7 @@ export async function cancelOperation(tx: Tx, p: Principal, id: string) {
     ...row,
     state,
     notice:
-      state === 'cancel_requested'
+      row.type.startsWith('asset.')? (state==='cancel_requested'?'Cancellation requested. Private media stays unavailable until the isolated job stops; the previous image is preserved.':'Queued private media operation cancelled before processing.') : state === 'cancel_requested'
         ? 'Cancellation requested. In-flight usage stays reserved until the provider attempt is accounted for.'
         : 'Queued operation cancelled before any external attempt.',
   };

@@ -4,6 +4,7 @@ import type { Tx } from './db';
 import { audit } from './audit';
 import { fail } from './errors';
 import { sourceStatus } from '../domain/derivation';
+import{assetReferences,resolveAssetManifest,syncDraftAssetReferences,pinRevisionAssetReferences}from'./assets';
 export async function emailLineage(tx: Tx, id: string) {
   const row = (await tx.query('SELECT l.*,r.email_id AS source_email_id,r.revision_no AS source_revision_no,e.title AS source_title,e.doc_version AS current_source_version FROM email_lineage l JOIN revisions r ON r.workspace_id=l.workspace_id AND r.id=l.source_revision_id JOIN emails e ON e.workspace_id=r.workspace_id AND e.id=r.email_id WHERE l.email_id=$1', [id])).rows[0];
   if (!row) return null;
@@ -38,12 +39,14 @@ export async function createEmail(tx: Tx, p: Principal, title: string, spec: Ema
       [p.workspace, title, JSON.stringify(s), p.user],
     )
   ).rows[0];
+  if(assetReferences(s).length)await syncDraftAssetReferences(tx,p,row.id,s);
   await audit(tx, p.workspace, p.user, 'email.created', row.id);
   return row;
 }
 export async function saveDraft(tx: Tx, p: Principal, id: string, version: number, value: unknown) {
   const spec = EmailSpecSchema.parse(value);
-  const lineage = await emailLineage(tx, id);
+  const previous=await getEmail(tx,id);
+  const lineage = previous.lineage;
   if (lineage?.kind === 'locale' && spec.locale !== lineage.target_locale)
     fail(409, 'LOCALE_IDENTITY_LOCKED', 'Create a separately linked locale draft to change its language.');
   await verifyBrand(tx, spec);
@@ -62,6 +65,7 @@ export async function saveDraft(tx: Tx, p: Principal, id: string, version: numbe
       'This draft changed. Compare, reload newer or keep your work as a copy.',
     );
   }
+  if(spec.schema_version==='1.1'||previous.spec.schema_version==='1.1')await syncDraftAssetReferences(tx,p,id,spec);
   await audit(tx, p.workspace, p.user, 'email.saved', id);
   return { ...row, lineage: await emailLineage(tx, id) };
 }
@@ -70,7 +74,8 @@ export async function checkpoint(tx: Tx, p: Principal, id: string, version: numb
   const email = await getEmail(tx, id);
   if (email.doc_version !== version)
     fail(412, 'VERSION_MISMATCH', 'Save or reload the latest draft before creating a checkpoint.');
-  const artifact = await compileEmail(email.spec);
+  const assets=assetReferences(email.spec).length?await resolveAssetManifest(tx,p,email.spec,'revision'):undefined;
+  const artifact = await compileEmail(email.spec,{assets});
   const no = (
     await tx.query('SELECT coalesce(max(revision_no),0)+1 AS no FROM revisions WHERE email_id=$1', [
       id,
@@ -93,6 +98,7 @@ export async function checkpoint(tx: Tx, p: Principal, id: string, version: numb
       ],
     )
   ).rows[0];
+  if(assets?.entries.length)await pinRevisionAssetReferences(tx,p,row.id,assets);
   await audit(tx, p.workspace, p.user, 'email.checkpoint', row.id);
   return row;
 }

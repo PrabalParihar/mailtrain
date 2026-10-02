@@ -1,0 +1,20 @@
+# Private media integration checkpoint — incomplete
+
+This local checkpoint preserves the current Lettercape media implementation at the user's request. It is not production acceptance. All 65 PRD requirements and 13 release gates remain binding; zero whole requirements or release gates are certified complete. The earlier development baseline remains 40 Partial, 20 undelivered and 5 roadmap requirements until the media increment receives its complete acceptance review.
+
+Implemented code includes actual bounded PNG/JPEG/GIF uploads, immutable private storage, per-upload rights records, official source and derivative scans, isolated native decoding, selected-frame GIF fallbacks, actor/workspace authority, tracked cleanup reservations, explicit schema 1.1 references, frozen image manifests, static private preview, deterministic image ZIP bundles, PNG/PDF transport, picker recovery and API/SDK contracts. Public hosted image delivery and production media activation refuse when unconfigured.
+
+Verification available at this checkpoint:
+
+- Isolated native runtime: 65 actual qualification probes; 10 focused tests without skips. Official signed ClamAV databases and actual EICAR refusal were used. Media dependency audit reports zero advisories, which does not certify native OS or overall application security.
+- Storage: 12 isolated HTTP/filesystem/database tests passed, including revoked authority, symlink cleanup refusal, failed cleanup retaining quota, lease recovery and removal of old managed references. Actual PNG and GIF processing chains passed with separate rights evidence for identical uploads.
+- Browser quarantine: actual lost acknowledgment, original-key/body recovery, actor changes, wrong-file refusal, repeated clicks, no premature preview/apply, cancellation, changed-node navigation, empty/cross-workspace/error states and exact fixture cleanup passed.
+- Actual HTTP export slice: real uploaded/scanned derivative bytes, revision idempotency and pinned manifest, exact preview pixel, repeat-identical ZIP and PNG, PDF, remix, cross-workspace and actor denial, legacy reference removal/restore, and current takedown blocking cached exports passed.
+- The first aggregate regression run retained a meaningful managed-reference cleanup failure: 349 passed, one failed, one optional decoder test skipped. The fix passed its focused regression; the new full run with the actual decoder enabled passed all 351 tests, with zero failures or skips.
+- Typecheck and lint passed. API generation matches 112 contracts. An earlier integrated build and isolated Linux renderer passed; the final whole-checkpoint build remains pending.
+
+The ready-image browser scenario is incomplete: its first actual run passed upload recovery but failed its library keyboard selection assertion. It has not received a successful final browser qualification. Whole-slice review, final build checks, canonical Desktop checkout synchronization and exact-head remote CI remain pending. Follow-up commits will record fixes and acceptance evidence without erasing retained failures.
+
+The decoder image tested is `sha256:1876508bae29976ac39dd935620beb9916761e04edcd0065984c6c03e86e81f5`; the scanner is `sha256:302480c2034682cac1c4f33243d4ca65598a66d8f5219d49eeeeb243394ca099`. Migration 031 is frozen at SHA256 `2332a5656a55ec2464c617faf87b39c475d834783e1d734b5da530764367814d` and applied to the owned local development database. Runtime images, private uploads, scanner database files, credentials and generated editor bundles are excluded from Git.
+
+Production destination and costs, approved private object storage/CDN/region/retention/rights language, AI provider funding, Clerk/MFA/KMS, billing, ESP consent/sending, integration accounts, real email-client captures, load/security/legal and all applicable release gates remain open. The existing application audit retains the previously documented low Monaco/DOMPurify advisory. Native redistribution source/notices/legal obligations require completion before public binary distribution. No paid account commitment, campaign sending or production launch is represented by this checkpoint or a source push.

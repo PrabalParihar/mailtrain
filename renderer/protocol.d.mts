@@ -2,13 +2,14 @@ export const RENDERER_VERSION: string;
 export const MAX_RENDER_INPUT: number;
 export const MAX_RENDER_OUTPUT: number;
 export type RenderInput = {
-  schema_version: 1;
+  schema_version: 1|2;
   workspace_id: string;
   revision_id: string;
   artifact_hash: string;
   renderer_version: string;
   format: 'png' | 'pdf';
   html: string;
+  assets?:RenderAsset[];
 };
 export class RenderProtocolError extends Error {
   code: string;
@@ -43,3 +44,6 @@ export function verifyRenderResponse(
   id: string,
   now?: number,
 ): string;
+
+export type RenderAsset={url:string;mime:'image/png'|'image/jpeg';sha256:string;base64:string};
+export function validateRenderAssets(value:unknown):RenderAsset[];

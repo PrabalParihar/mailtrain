@@ -55,8 +55,9 @@ async function identityProof(): Promise<{ user: string | null; local_session?: {
 export async function identity() {
   return (await identityProof()).user;
 }
+function actorBound(request:Request,p:Principal){const expected=request.headers.get('x-actor-id');if(expected!==null&&expected!==p.user)fail(409,'ACTOR_CHANGED','Your signed-in account changed. Reload before recovering this command.');return p;}
 export async function principal(request: Request, action: Action): Promise<Principal> {
-  if (request.headers.has('authorization')) return resolveApiKey(request, action);
+  if (request.headers.has('authorization')) return actorBound(request,await resolveApiKey(request, action));
   const proof = await identityProof(), user = proof.user;
   if (!user) fail(401, 'AUTH_REQUIRED', 'Sign in to continue.');
   const workspace = request.headers.get('x-workspace-id');
@@ -83,7 +84,7 @@ export async function principal(request: Request, action: Action): Promise<Princ
   );
   if (active?.status !== 'active')
     fail(409, 'WORKSPACE_LOCKED', 'This workspace cannot accept new work.');
-  return { user, workspace, role: membership.role, ...(proof.local_session ? { local_session: proof.local_session } : {}) };
+  return actorBound(request,{ user, workspace, role: membership.role, ...(proof.local_session ? { local_session: proof.local_session } : {}) });
 }
 export async function withPrincipal<T>(
   request: Request,

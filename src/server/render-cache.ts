@@ -4,15 +4,21 @@ import { callRenderWorker } from './render-client';
 import { fail } from './errors';
 import { audit } from './audit';
 import { withRenderSlot } from './render-admission';
+import type{AssetManifest}from'../domain/assets';
+import{readAssetVariantsVerified}from'./assets';
+import{renderAssetBundle}from'./asset-output';
 export async function frozenRenderDownload(
   req: Request,
-  revision: { id: string; html: string; artifact_hash: string },
+  revision: { id: string; html: string; artifact_hash: string;manifest?:{assets?:AssetManifest} },
   format: 'png' | 'pdf',
 ) {
   const rendererVersion = localMode() && !process.env.RENDER_WORKER_URL
-    ? `lettercape-local-browser-export-1-${process.platform}`
+    ? `lettercape-local-browser-assets-export-2-${process.platform}`
     : RENDERER_VERSION;
   if (req.signal.aborted) fail(499, 'RENDER_CANCELLED', 'The export request was cancelled.');
+  const media=revision.manifest?.assets;
+  const principal=await withPrincipal(req,'edit',async(_tx,p)=>p);
+  const assets=media?.entries.length?renderAssetBundle(media,await readAssetVariantsVerified(principal,media,undefined,1024*1024)):[];
   const cached = await withPrincipal(req, 'edit', async (tx) => {
     const existing = (
       await tx.query(
@@ -67,7 +73,7 @@ export async function frozenRenderDownload(
     let bytes: Buffer;
     if (localMode() && !process.env.RENDER_WORKER_URL) {
       const { renderDownload } = await import('./render-download');
-      bytes = await renderDownload(revision.html, format, req.signal);
+      bytes = await renderDownload(revision.html, format, req.signal,assets);
     } else {
       if (!process.env.RENDER_WORKER_URL || !process.env.RENDER_WORKER_SECRET)
         fail(
@@ -77,7 +83,8 @@ export async function frozenRenderDownload(
         );
       bytes = await callRenderWorker(
         {
-          schema_version: 1,
+          schema_version:assets.length?2:1,
+          ...(assets.length?{assets}:{}),
           workspace_id: p.workspace,
           revision_id: revision.id,
           artifact_hash: revision.artifact_hash,

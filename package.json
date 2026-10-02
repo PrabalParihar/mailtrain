@@ -48,7 +48,10 @@
     "code-editor:assets": "node --import tsx scripts/build-code-editor.ts",
     "predev": "npm run code-editor:assets",
     "prebuild": "npm run code-editor:assets",
-    "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts"
+    "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts",
+    "worker:media:local": "node --import tsx scripts/media-worker.ts",
+    "smoke:media": "node scripts/smoke-media.mjs --scan",
+    "smoke:assets": "node --import tsx scripts/smoke-assets.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",
@@ -59,6 +62,7 @@
     "cheerio": "1.2.0",
     "csv-parse": "7.0.3",
     "drizzle-orm": "0.45.3",
+    "fflate": "0.8.3",
     "ioredis": "6.0.0",
     "jose": "6.2.12",
     "lucide-react": "1.49.0",

@@ -1,9 +1,10 @@
+import{privateAssetBinding,type AssetManifest}from'./assets';
 import{ToneRules,toneFindings,type ToneRuleData}from'./voice-guard';
 import { load } from 'cheerio';
 import { z } from 'zod';
 import type { EmailSpec, Finding } from './email';
 // A safety-rule change creates a new version even when compilation bytes are unchanged.
-export const LINT_RULES_VERSION = 'static-3';
+export const LINT_RULES_VERSION = 'static-assets-4';
 export const HTML_WARNING_BYTES = 100 * 1024;
 function luminance(hex: string) {
   const rgb = hex
@@ -52,12 +53,13 @@ export function staticLint(
   spec: EmailSpec,
   forbidden: string[],
   sanitize: (source: string) => string,
-  artifact?: { html: string },
+  artifact?: { html: string;assets?:AssetManifest },
   toneRules?:ToneRuleData,
 ): Finding[] {
   const findings: Finding[] = [],configuredTone=ToneRules.parse(toneRules??{});
   const add = (code: string, severity: Finding['severity'], location: string, message: string) =>
     findings.push({ code, severity, location, message });
+  const measured=(ref:{asset_id:string;variant_id:string},location:string)=>{const entry=artifact?.assets?.entries.find(e=>e.asset_id===ref.asset_id&&e.variant_id===ref.variant_id);if(!entry){add('ASSET_EVIDENCE_MISSING','blocking',location,'Image evidence is missing from this frozen revision.');return;}if(entry.bytes>200*1024)add('IMAGE_WEIGHT_ADVISORY','warning',location,`Measured immutable image is ${entry.bytes} bytes, above the proposed 200 KiB advisory.`);if(entry.role==='animation'&&!entry.fallback)add('ASSET_FALLBACK_REQUIRED','blocking',location,'Choose an immutable static fallback.');add('ASSET_PRIVATE_DELIVERY_UNAVAILABLE','warning',location,'Private preview and ZIP bundle are available. Public image delivery is not configured.');};
   const forbiddenCopy = (text: string, location: string) => {
     const content = text.toLowerCase();
     for (const phrase of forbidden.filter((p) => p.trim()))
@@ -131,7 +133,8 @@ export function staticLint(
           loc,
           'Provide alt text or explicit empty alt with presentation role.',
         );
-      add(
+      const binding=artifact?.assets?.entries.find(e=>privateAssetBinding(e)===image.attr('src'));
+      if(binding)measured(binding,loc);else add(
         'ASSET_NOT_SNAPSHOTTED',
         'warning',
         loc,
@@ -197,10 +200,10 @@ export function staticLint(
           break;
         case 'image':
           voice(b.decorative ? '' : b.alt, b.id);
-          link(b.src, b.id, true);
+          if(b.src)link(b.src, b.id, true);
           if (!b.alt.trim() && !b.decorative)
             add('ALT_REQUIRED', 'blocking', b.id, 'Provide alt text or mark decorative.');
-          add(
+          if(b.asset_ref)measured(b.asset_ref,b.id);else add(
             'ASSET_NOT_SNAPSHOTTED',
             'warning',
             b.id,
@@ -274,16 +277,17 @@ export function staticLint(
       'artifact.html',
       'Exact frozen HTML byte measurement is unavailable.',
     );
-  if (
+  const parsedArtifact=artifact?load(artifact.html):null,imageSources=parsedArtifact?parsedArtifact('img').map((_,img)=>parsedArtifact(img).attr('src')??'').get():[],knownBindings=new Set(artifact?.assets?.entries.map(privateAssetBinding)??[]),allImagesMeasured=imageSources.length>0&&imageSources.every(src=>knownBindings.has(src));
+  if (!allImagesMeasured&&(
     (spec.editing_mode === 'structured' &&
       nodes.some((b) => b.type === 'image' || b.type === 'custom_html')) ||
     spec.editing_mode === 'raw_html'
-  )
+  ))
     add(
       'IMAGE_WEIGHT_UNAVAILABLE',
       'info',
       'assets',
-      'Image bytes/dimensions have not been measured from immutable assets; no remote image was fetched.',
+      knownBindings.size?'Some image bytes/dimensions remain unavailable; verified private variants are recorded separately and no remote image was fetched.':'Image bytes/dimensions have not been measured from immutable assets; no remote image was fetched.',
     );
   add(
     'LINK_CHECK_UNAVAILABLE',

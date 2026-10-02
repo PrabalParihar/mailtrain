@@ -95,7 +95,7 @@ const server = createServer(async (req, res) => {
     seen.set(requestId, Date.now() + 330000);
     active++;
     admitted = true;
-    const bytes = await renderBinary(input.html, input.format, controller.signal);
+    const bytes = await renderBinary(input.html, input.format, controller.signal,input.assets??[]);
     if (controller.signal.aborted) throw new RenderProtocolError('RENDER_TIMEOUT', 504);
     res
       .writeHead(200, {

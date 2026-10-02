@@ -32,6 +32,10 @@ import { DispatchPolicyInput } from '@/domain/dispatch-controls';
 import { deriveEmail } from '@/server/derivation';
 import{webhookHistoryRoute}from'@/server/webhook-history';
 import { webhookRoute } from '@/server/webhook-route';
+import{assetRoute}from'@/server/asset-route';
+import{assetReferences,resolveAssetManifest,readAssetVariantsVerified}from'@/server/assets';
+import{privatePreviewHtml,privateImageBundle}from'@/server/asset-output';
+import type{AssetManifest}from'@/domain/assets';
 import {senderDomainRoute} from '@/server/sender-domain-route';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,6 +69,8 @@ async function handle(req: Request, ctx: Context) {
     if(root==='emails'&&id&&['conversion-proposal','convert-to-blocks'].includes(command))return json(await emailConversionRoute(req,id,command,body,key));
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
+    if(root==='assets'){const result=await assetRoute(req,path,body,key);if(result instanceof Response){result.headers.set('X-Request-Id',request_id);return result;}return json(result,method==='POST'&&(id==='uploads'||command==='fallback')?202:200);}
+    if(root==='emails'&&command==='preview'){const prepared=await withPrincipal(req,'read',async(tx,p)=>{const spec=EmailSpecSchema.parse(body.spec),assets=assetReferences(spec).length?await resolveAssetManifest(tx,p,spec,'preview'):undefined;return{p,artifact:await compileEmail(spec,{assets}),assets};});if(prepared.assets?.entries.length){const values=await readAssetVariantsVerified(prepared.p,prepared.assets,undefined,4*1024*1024);return json({artifact:{...prepared.artifact,preview_html:privatePreviewHtml(prepared.artifact.html,prepared.assets,values)}});}return json({artifact:prepared.artifact});}
     if(root==='sender-identities')return json(await senderDomainRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if(root==='workspace-preferences')return json(await workspacePreferenceRoute(req,body,key));
     if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
@@ -285,6 +291,7 @@ async function handle(req: Request, ctx: Context) {
               ...e.spec,
               editing_mode: 'raw_html',
               raw_html: sanitized.html,
+              ...(e.spec.schema_version==='1.1'?{asset_registry:assetReferences(e.spec).map(({asset_id,variant_id})=>({asset_id,variant_id}))}:{}),
             });
             return { email: updated, warnings: sanitized.warnings };
           }
@@ -322,10 +329,13 @@ async function handle(req: Request, ctx: Context) {
           return r;
         });
         const format = new URL(req.url).searchParams.get('format') ?? 'html';
-        if (!['html', 'txt', 'png', 'pdf'].includes(format))
-          fail(422, 'VALIDATION_FAILED', 'Choose HTML, plaintext, PNG or PDF.');
+        if (!['html', 'txt', 'png', 'pdf','zip'].includes(format))
+          fail(422, 'VALIDATION_FAILED', 'Choose HTML, plaintext, PNG, PDF or an image ZIP bundle.');
+        const frozenAssets=row.manifest?.assets as AssetManifest|undefined;
+        if(format==='html'&&frozenAssets?.entries.length)fail(409,'ASSET_PUBLICATION_NOT_CONFIGURED','Private images cannot be delivered as hosted HTML. Download the image ZIP bundle.');
         let data: Buffer | string = format === 'txt' ? row.plaintext : row.html;
         let mime = format === 'txt' ? 'text/plain' : 'text/html';
+        if(format==='zip'){const p=await withPrincipal(req,'edit',async(_tx,p)=>p);const assets=frozenAssets??{version:'asset-manifest-1' as const,entries:[]};const values=assets.entries.length?await readAssetVariantsVerified(p,assets):[];data=privateImageBundle(row,assets,values);mime='application/zip';}
         if (format === 'png' || format === 'pdf') {
           const { frozenRenderDownload } = await import('@/server/render-cache');
           data = await frozenRenderDownload(req, row, format);
@@ -353,7 +363,7 @@ async function handle(req: Request, ctx: Context) {
                 await tx.query('SELECT data FROM brands WHERE id=$1', [r.spec.brand_kit_version_id])
               ).rows[0];
               const findings = lintEmail(r.spec, brand?.data.forbidden_phrases ?? [], {
-                html: r.html,
+                html: r.html,assets:r.manifest?.assets,
               },brand?.data.tone_rules);
               const state = findings.some((x) => x.severity === 'blocking')
                 ? 'blocked'

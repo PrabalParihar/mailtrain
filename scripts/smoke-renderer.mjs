@@ -68,9 +68,16 @@ try {
   const concurrent = await Promise.all([post(input), post(input), post(input)]);
   assert.deepEqual(concurrent.map((x) => x.response.status).sort(), [200, 200, 429]);
   await Promise.all(concurrent.map((x) => x.response.arrayBuffer()));
+  const image=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAYAAACddGYaAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAFElEQVQImWP4z8DwH4YZ4AwGBgYAloMJ96/bNGoAAAAASUVORK5CYII=','base64'),url=`https://mailcraft-assets.invalid/${randomUUID()}/${randomUUID()}/${bytesDigest(image)}`;
+  const mediaInput={...input,schema_version:2,html:`<html><body style="margin:0"><img src="${url}" width="3" height="2" style="display:block"><img src="http://127.0.0.1:3089/media-unbound"></body></html>`,assets:[{url,mime:'image/png',sha256:bytesDigest(image),base64:image.toString('base64')}]};
+  const mediaResult=await post(mediaInput);assert.equal(mediaResult.response.status,200);const mediaPng=Buffer.from(await mediaResult.response.arrayBuffer());verifyRenderResponse(mediaPng,mediaResult.response.headers,mediaInput,secret,mediaResult.id);writeFileSync('/evidence/renderer-private-assets.png',mediaPng);
+  const {chromium}=await import('/app/node_modules/playwright/index.mjs');const inspector=await chromium.launch({headless:true,chromiumSandbox:true});try{const page=await inspector.newPage();await page.setContent(`<img src="data:image/png;base64,${mediaPng.toString('base64')}">`);await page.locator('img').evaluate(img=>img.decode());assert.deepEqual(await page.locator('img').evaluate(img=>{const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const context=canvas.getContext('2d');context.drawImage(img,0,0);return Array.from(context.getImageData(0,0,1,1).data);}),[255,0,0,255]);}finally{await inspector.close();}
+  const mediaPdfInput={...mediaInput,format:'pdf'},mediaPdfResult=await post(mediaPdfInput);assert.equal(mediaPdfResult.response.status,200);const mediaPdf=Buffer.from(await mediaPdfResult.response.arrayBuffer());verifyRenderResponse(mediaPdf,mediaPdfResult.response.headers,mediaPdfInput,secret,mediaPdfResult.id);writeFileSync('/evidence/renderer-private-assets.pdf',mediaPdf);
+  assert.equal((await post({...mediaInput,assets:[{...mediaInput.assets[0],sha256:'b'.repeat(64)}]})).response.status,422);
+  assert.equal((await post({...mediaInput,assets:[{...mediaInput.assets[0],url:'https://example.com/fake.png'}]})).response.status,422);
   assert.equal(outbound, 0);
   console.log(JSON.stringify({ uid: process.getuid(), version: RENDERER_VERSION, png: png.length, pdf: pdf.length,
-    checks: 'sandbox enabled; Docker network none; signed real PNG/PDF; replay/tamper/shape/size/dimensions/capacity denied; image/font/script/frame tripwire zero', outbound }));
+    checks: 'sandbox enabled; Docker network none; signed real PNG/PDF; replay/tamper/shape/size/dimensions/capacity denied; image/font/script/frame tripwire zero; signed exact private PNG pixel and PDF; wrong private hash/URL denied', outbound }));
 } finally {
   child.kill('SIGTERM');
   trap.close();

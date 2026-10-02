@@ -1,7 +1,9 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect,useRef, useState } from 'react';
 import {EmailConversion}from'./email-conversion';
 import {HtmlCodeEditor}from'./html-code-editor';
+import{AssetPicker,type AssetPickerAnchor}from'./asset-picker';
+import type{AssetVariantRef,AssetMetadata}from'@/domain/assets';
 import{ConversionProposalSchema}from'@/domain/email-conversion-contracts';
 import{originalConversionRefusal}from'./conversion-recovery';
 import Link from 'next/link';
@@ -53,6 +55,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [error, setError] = useState(''),
     [selected, setSelected] = useState(''),
     [html, setHtml] = useState(''),
+    [previewHtml,setPreviewHtml]=useState(''),
+    [showAssets,setShowAssets]=useState(false),
     [text, setText] = useState(''),
     [view, setView] = useState<'canvas' | 'code' | 'text'>('canvas'),
     [mobile, setMobile] = useState(false),
@@ -71,13 +75,14 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [addType, setAddType] = useState<Block['type']>('text'),
     [undoCount, setUndoCount] = useState(0),
     [renderEpoch, setRenderEpoch] = useState(0);
+  const selectedRef=useRef(selected),roleRef=useRef(editRole);useLayoutEffect(()=>{selectedRef.current=selected;roleRef.current=editRole;});
   const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id);
   const history = historyPage.data;
   const epoch = useRef(0),
     busyRef = useRef(''),
     editorActive = useRef(false),
     exportController = useRef<AbortController | null>(null);
-  const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert'].includes(busy);
+  const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert','asset'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
     dirtyAt = useRef(0),
@@ -172,7 +177,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           'emails/' + id + '/draft',
           'PATCH',
           { spec: snapshot.spec },
-          snapshot.doc_version,
+          snapshot.doc_version,undefined,undefined,actor,
         );
         ack.current = JSON.stringify(snapshot.spec);
         if (live.current) {
@@ -252,7 +257,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if (!doc) return;
     let active = true;
     const timer = setTimeout(() => {
-      void api<{ artifact: { html: string; text: string } }>(
+      void api<{ artifact: { html: string; text: string;preview_html?:string } }>(
         workspace,
         'emails/' + id + '/preview',
         'POST',
@@ -261,11 +266,12 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         .then((r) => {
           if (active) {
             setHtml(r.artifact.html);
+            setPreviewHtml(r.artifact.preview_html??r.artifact.html);
             setText(r.artifact.text);
           }
         })
         .catch((e) => {
-          if (active) setError(e.message);
+          if (active){setError(e.message);setPreviewHtml('');}
         });
     }, 450);
     return () => {
@@ -277,7 +283,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if (
       !editRole ||
       !live.current ||
-      ['raw', 'restore', 'reload', 'fork','convert'].includes(busyRef.current)
+      ['raw', 'restore', 'reload', 'fork','convert','asset'].includes(busyRef.current)
     )
       return;
     epoch.current++;
@@ -309,6 +315,16 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         sections: doc.spec.sections.map((b) => (b.id === value.id ? value : b)),
       });
   };
+  async function applyAsset(ref:AssetVariantRef,a:AssetPickerAnchor){
+    const check=()=>{const current=live.current,block=current?.spec.sections.find(b=>b.id===a.nodeId);if(!editorActive.current||!roleRef.current||workspace!==a.workspace||actor!==a.actor||id!==a.email||selectedRef.current!==a.nodeId||!current||current.doc_version!==a.docVersion||block?.type!=='image'||JSON.stringify(block)!==a.sourceRef||conflictRef.current)throw Error('The selected image or account changed. Reopen uploaded media; your current image is preserved.');return{current,block};};
+    if(busyRef.current)throw Error('Finish the current editor action first.');check();busyRef.current='asset';setBusy('asset');setError('');
+    try{if(!(await flush())||dirtyAt.current)throw Error('Save or resolve the current draft before applying this image.');const baseline=check(),origin=anchor();const result=await api<{asset:AssetMetadata}>(workspace,'assets/'+ref.asset_id,'GET',undefined,undefined,undefined,undefined,actor);check();if(!matches(origin))throw Error('The draft changed while resolving the image.');const variant=result.asset.variants.find(v=>v.variant_id===ref.variant_id);if(!variant||!['ready_private','published'].includes(result.asset.state))throw Error('This private variant is not ready.');if(variant.role==='animation'&&!variant.fallback)throw Error('Choose a static fallback before applying this animation.');const image={...baseline.block,asset_ref:ref,...(variant.role==='animation'?{fallback_ref:variant.fallback}:{} )};delete image.src;if(variant.role!=='animation')delete image.fallback_ref;
+      const spec:EmailSpec={...baseline.current.spec,schema_version:'1.1',sections:baseline.current.spec.sections.map(b=>b.id===a.nodeId?image:b)};
+      const response=await api<{email:Doc}>(workspace,'emails/'+id+'/draft','PATCH',{spec},baseline.current.doc_version,undefined,undefined,actor);
+      if(!matches(origin)){setError('An image save was acknowledged after local work changed. Reload the current server version before continuing.');conflictRef.current=true;setConflict(response.email);throw Error('Current local image preserved after an interrupted acknowledgment.');}
+      undo.current=[...undo.current.slice(-49),structuredClone(baseline.current.spec)];setUndoCount(undo.current.length);install(response.email);localStorage.removeItem(storage);setReport(null);setRevision(null);
+    }catch(error){if(error instanceof ApiError&&error.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(workspace,'emails/'+id);setConflict(server.email);}setError(error instanceof Error?error.message:String(error));throw error;}finally{busyRef.current='';setBusy('');}
+  }
   async function freeze() {
     if (!(await flush())) {
       return null;
@@ -781,8 +797,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               referrerPolicy="no-referrer"
               className={`email-preview ${mobile ? 'mobile' : ''}`}
               srcDoc={
-                "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'\">" +
-                html
+                "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'\">" +
+                previewHtml
               }
             />
           ) : view === 'text' ? (
@@ -844,7 +860,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           <fieldset className="inspector-fields" disabled={!writable}>
             <h2>{block ? block.type.replaceAll('_', ' ') + ' settings' : 'Document settings'}</h2>
             {block && doc.spec.editing_mode === 'structured' && (
-              <BlockFields block={block} onChange={changeBlock} />
+              <BlockFields block={block} onChange={changeBlock}/>
             )}
             <div className="divider" />
             <div className="ai-panel">
@@ -929,6 +945,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               )}
             </div>
           </fieldset>
+          {block?.type==='image'&&doc.spec.editing_mode==='structured'&&<><button type="button" disabled={!!busy||!!conflict} onClick={()=>setShowAssets(v=>!v)}>Choose uploaded image</button>{showAssets&&<AssetPicker workspace={workspace} actor={actor} email={id} nodeId={block.id} docVersion={doc.doc_version} sourceRef={JSON.stringify(block)} canEdit={editRole} blocked={!!busy||!!conflict} onApply={applyAsset}/>}</>}
         </aside>
       </div>
       {report && (
@@ -973,7 +990,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </p>
         </div>
         <div className="toolbar">
-          {['html', 'txt', 'png', 'pdf'].map((format) => (
+          {['html', 'txt', 'png', 'pdf','zip'].map((format) => (
             <button
               disabled={!editRole || !!busy || !!conflict}
               key={format}
@@ -1095,7 +1112,7 @@ function BlockFields({ block: b, onChange }: { block: Block; onChange: (b: Block
   if (b.type === 'image')
     return (
       <>
-        {field('src', 'Public image URL')}
+        {b.asset_ref?<><p className="small">Private immutable variant selected. Public delivery is unavailable; use an image ZIP bundle.</p><button type="button" onClick={()=>{const image={...b,src:'https://example.com/image.png'};delete image.asset_ref;delete image.fallback_ref;onChange(image);}}>Use a public image URL</button></>:field('src','Public image URL')}
         {field('alt', 'Alternative text')}
         <label className="checkbox-label">
           <input
@@ -1106,8 +1123,7 @@ function BlockFields({ block: b, onChange }: { block: Block; onChange: (b: Block
           Decorative image
         </label>
         <p className="small muted">
-          Remote images are blocked in local simulations. Immutable asset processing is a production
-          gate.
+          Remote images are blocked in local simulations. Verified private derivatives are available after real processing; public hosting remains a production gate.
         </p>
       </>
     );

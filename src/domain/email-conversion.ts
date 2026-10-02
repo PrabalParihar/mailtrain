@@ -1,3 +1,4 @@
+import{privateAssetBinding,type AssetManifest}from'./assets';
 import {createHash} from 'node:crypto';
 import {parseFragment,type DefaultTreeAdapterTypes} from 'parse5';
 import {EmailSpecSchema,compileEmail,sanitizeRaw,type EmailSpec,type Block} from './email';
@@ -66,7 +67,7 @@ function intact(tree:DefaultTreeAdapterTypes.DocumentFragment,html:string) {
 }
 
 /** Produces a review proposal only; it never replaces or decorates the supplied source. */
-export async function conversionProposal(spec:EmailSpec,version:number):Promise<ConversionProposal> {
+export async function conversionProposal(spec:EmailSpec,version:number,assets?:AssetManifest):Promise<ConversionProposal> {
  const source=EmailSpecSchema.parse(spec),sourceVersion=ConversionProposalInput.parse({expected_version:version}).expected_version;
  const original=source.raw_html??'',sourceHash=digest({source_doc_version:sourceVersion,spec:source});
  function finish(status:'available'|'unsupported',proposed:EmailSpec|null,preview:string|null,converted:number,opaque:number,notes:Note[]) {
@@ -87,7 +88,7 @@ export async function conversionProposal(spec:EmailSpec,version:number):Promise<
  let converted=0,opaque=0;
  for(const [index,node] of nodes.entries()) {
   const id='conversion-'+(index+1),block=recognized(node,id);
-  if(block){sections.push(block);converted++;continue;}
+  if(block){if(block.type==='image'&&assets){const entry=assets.entries.find(e=>privateAssetBinding(e)===block.src);if(entry){delete block.src;block.asset_ref={asset_id:entry.asset_id,variant_id:entry.variant_id};if(entry.fallback)block.fallback_ref=entry.fallback;}}sections.push(block);converted++;continue;}
   const location=node.sourceCodeLocation!,html=original.slice(location.startOffset,location.endOffset);
   if(html.length>200000)return refuse('limit','An opaque source fragment exceeds200000characters. Nothing was truncated or changed.');
   sections.push({id,type:'custom_html',html});opaque++;
@@ -97,7 +98,7 @@ export async function conversionProposal(spec:EmailSpec,version:number):Promise<
  if(Buffer.byteLength(JSON.stringify(proposed),'utf8')>1048576)return refuse('limit','The proposed structured document exceeds1MiB. Nothing was truncated or changed.');
  const admitted=EmailSpecSchema.safeParse(proposed);
  if(!admitted.success)return refuse('unsupported_source','The proposed blocks do not satisfy the structured document contract. Keep the original in raw mode.');
- const compiled=await compileEmail(admitted.data);
+ const compiled=await compileEmail(admitted.data,{assets});
  if(compiled.html.length>2000000)return refuse('limit','The proposed preview exceeds2000000characters. Nothing was truncated or changed.');
  return finish('available',admitted.data,compiled.html,converted,opaque,notes);
 }

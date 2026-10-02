@@ -1,3 +1,4 @@
+import{assetReferences,resolveAssetManifest}from'./assets';
 import {z}from'zod';
 import {ConversionProposalInput,ConversionAcceptInput,conversionProposal}from'../domain/email-conversion';
 import {EmailSpecSchema,type EmailSpec}from'../domain/email';
@@ -20,7 +21,7 @@ export async function prepareEmailConversion(tx:Tx,p:Principal,id:string,value:u
  const input=ConversionProposalInput.parse(value);await authority(tx,p);const email=await lockedEmail(tx,p,id,'SHARE');
  if(email.doc_version!==input.expected_version)fail(412,'VERSION_MISMATCH','Save or reload the current raw draft before reviewing conversion.');
  if(email.spec.editing_mode!=='raw_html')fail(409,'RAW_MODE_REQUIRED','Only a raw HTML draft can create a block conversion proposal.');
- const proposal=await conversionProposal(email.spec,email.doc_version);await authority(tx,p);return proposal;
+ const proposal=await conversionProposal(email.spec,email.doc_version,assetReferences(email.spec).length?await resolveAssetManifest(tx,p,email.spec,'revision'):undefined);await authority(tx,p);return proposal;
 }
 export async function acceptEmailConversion(tx:Tx,p:Principal,id:string,value:unknown,key:string|null){
  const input=ConversionAcceptInput.parse(value);await authority(tx,p);
@@ -28,7 +29,7 @@ export async function acceptEmailConversion(tx:Tx,p:Principal,id:string,value:un
   await authority(tx,p);const email=await lockedEmail(tx,p,id,'UPDATE');
   if(email.doc_version!==input.expected_version)fail(412,'VERSION_MISMATCH','The raw draft changed. Review a new proposal; your source remains intact.');
   if(email.spec.editing_mode!=='raw_html')fail(409,'RAW_MODE_REQUIRED','The draft is already in structured mode. Reload its current saved head.');
-  const proposal=await conversionProposal(email.spec,email.doc_version);await authority(tx,p);
+  const proposal=await conversionProposal(email.spec,email.doc_version,assetReferences(email.spec).length?await resolveAssetManifest(tx,p,email.spec,'revision'):undefined);await authority(tx,p);
   if(proposal.source_hash!==input.source_hash||proposal.proposal_hash!==input.proposal_hash)fail(409,'CONVERSION_SOURCE_CHANGED','The conversion source or policy changed. Review the current raw draft before accepting.');
   if(proposal.status!=='available'||!proposal.spec)fail(409,'CONVERSION_UNSUPPORTED','This source cannot be converted safely. Keep editing the original raw HTML.');
   await checkpoint(tx,p,id,email.doc_version);await authority(tx,p);

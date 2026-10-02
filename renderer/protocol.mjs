@@ -1,5 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
-export const RENDERER_VERSION = 'lettercape-linux-pw1.63-chromium153-export-1';
+export const RENDERER_VERSION = 'lettercape-linux-pw1.63-chromium153-assets-export-2';
 export const MAX_RENDER_INPUT = 2 * 1024 * 1024;
 export const MAX_RENDER_OUTPUT = 20 * 1024 * 1024;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -60,6 +60,19 @@ export function verifyRenderRequest(raw, headers, secret, now = Math.floor(Date.
     reject('RENDER_AUTH_INVALID', 401);
   return id;
 }
+export function validateRenderAssets(value){
+ if(!Array.isArray(value)||value.length>200)reject('RENDER_ASSET_INVALID');
+ const urls=new Set();let total=0;
+ for(const item of value){
+  if(!item||typeof item!=='object'||Array.isArray(item)||Object.keys(item).length!==4||Object.keys(item).some(k=>!['url','mime','sha256','base64'].includes(k))||typeof item.url!=='string'||!/^https:\/\/mailcraft-assets\.invalid\/[a-f0-9-]{36}\/[a-f0-9-]{36}\/[a-f0-9]{64}$/.test(item.url)||!uuid.test(item.url.split('/')[3])||!uuid.test(item.url.split('/')[4])||urls.has(item.url)||!['image/png','image/jpeg'].includes(item.mime)||!/^[a-f0-9]{64}$/.test(item.sha256??'')||typeof item.base64!=='string'||item.base64.length>Math.ceil(1048576/3)*4||!item.base64.length)reject('RENDER_ASSET_INVALID');
+  const bytes=Buffer.from(item.base64,'base64');
+  if(bytes.toString('base64')!==item.base64||bytesDigest(bytes)!==item.sha256)reject('RENDER_ASSET_INVALID');
+  const magic=item.mime==='image/png'?Buffer.from([137,80,78,71,13,10,26,10]):Buffer.from([255,216,255]);
+  if(!bytes.subarray(0,magic.length).equals(magic))reject('RENDER_ASSET_INVALID');
+  total+=bytes.length;if(total>1048576)reject('RENDER_ASSET_TOO_LARGE',413);urls.add(item.url);
+ }
+ return value;
+}
 export function validateRenderInput(value) {
   const keys = [
     'schema_version',
@@ -70,6 +83,7 @@ export function validateRenderInput(value) {
     'format',
     'html',
   ];
+  if(value?.schema_version===2)keys.push('assets');
   if (
     !value ||
     typeof value !== 'object' ||
@@ -79,7 +93,7 @@ export function validateRenderInput(value) {
   )
     reject('RENDER_INPUT_INVALID');
   if (
-    value.schema_version !== 1 ||
+    ![1,2].includes(value.schema_version) ||
     !uuid.test(value.workspace_id ?? '') ||
     !uuid.test(value.revision_id ?? '') ||
     !/^[0-9a-f]{64}$/.test(value.artifact_hash ?? '') ||
@@ -91,6 +105,8 @@ export function validateRenderInput(value) {
     reject('RENDER_INPUT_INVALID');
   if (Buffer.byteLength(value.html, 'utf8') > MAX_RENDER_INPUT)
     reject('RENDER_INPUT_TOO_LARGE', 413);
+  if(value.schema_version===2)validateRenderAssets(value.assets);
+  if(Buffer.byteLength(JSON.stringify(value),'utf8')>MAX_RENDER_INPUT)reject('RENDER_INPUT_TOO_LARGE',413);
   return value;
 }
 export function renderResponseHeaders(

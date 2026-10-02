@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {UTMParameters,UTMLinkError} from './utm';
 import {assertEmailUTMTargets} from './email-utm';
+const assetRef=z.object({asset_id:z.uuid(),variant_id:z.uuid()}).strict();
 
 // Browser-safe document shape. Server compiler adds sanitized-render validation.
 const str = z.string().max(10000),
@@ -23,7 +24,9 @@ const simple = z.discriminatedUnion('type', [
     .object({
       id,
       type: z.literal('image'),
-      src: safeHref,
+      src: safeHref.optional(),
+      asset_ref:assetRef.optional(),
+      fallback_ref:assetRef.optional(),
       alt: z.string().max(500),
       decorative: z.boolean().optional(),
     })
@@ -98,7 +101,7 @@ const locales = [
 export const LOCALES = locales;
 export const EmailSpecSchema = z
   .object({
-    schema_version: z.literal('1.0'),
+    schema_version: z.enum(['1.0','1.1']),
     editing_mode: z.enum(['structured', 'raw_html']),
     locale: z.enum(locales),
     direction: z.enum(['ltr', 'rtl']),
@@ -116,15 +119,23 @@ export const EmailSpecSchema = z
     sections: z.array(BlockSchema).max(200),
     raw_html: z.string().max(2000000).optional(),
     tracking: UTMParameters.optional(),
+    asset_registry:z.array(assetRef).max(200).optional(),
   })
   .strict()
   .superRefine((s, c) => {
+    if(s.schema_version==='1.0'&&s.asset_registry!==undefined)c.addIssue({code:'custom',message:'An asset registry requires explicit schema 1.1',path:['schema_version']});
     let count = 0;
     const ids = new Set<string>();
     for (const b of s.sections) {
       const nodes = b.type === 'columns' ? [b, ...b.columns.flat()] : [b];
       for (const n of nodes) {
         count++;
+        if(n.type==='image'){
+          if((n.src!==undefined)===(n.asset_ref!==undefined))c.addIssue({code:'custom',message:'Choose exactly one remote URL or immutable asset reference',path:['sections']});
+          if(n.fallback_ref&&!n.asset_ref)c.addIssue({code:'custom',message:'A static fallback requires a managed image',path:['sections']});
+          if(s.schema_version==='1.0'&&(n.asset_ref||n.fallback_ref))c.addIssue({code:'custom',message:'Managed images require explicit schema 1.1',path:['schema_version']});
+          if(n.fallback_ref&&n.fallback_ref.asset_id!==n.asset_ref?.asset_id)c.addIssue({code:'custom',message:'Fallback must belong to the same image',path:['sections']});
+        }
         if (ids.has(n.id))
           c.addIssue({ code: 'custom', message: 'Duplicate node ID', path: ['sections'] });
         ids.add(n.id);
