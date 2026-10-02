@@ -36,3 +36,13 @@ test('persistent recovery keeps the exact old command after current source has a
  try{assert.equal(m.rememberConversionRecovery(scope,pending),true);assert.deepEqual(m.readConversionRecovery(scope).pending,pending);assert.equal(m.conversionContextMatches(context,8,{...source,editing_mode:'structured'}),false);assert.equal(m.rememberConversionRecovery({...scope,actor:'other'},pending),false);assert.equal(m.readConversionRecovery({...scope,actor:'other'}).pending,null);m.clearConversionRecovery(scope);assert.equal(m.readConversionRecovery(scope).pending,null);
  }finally{if(previous)Object.defineProperty(globalThis,'localStorage',previous);else Reflect.deleteProperty(globalThis,'localStorage');}
 });
+test('only authoritative original POST source refusals become discardable; authority/read/transport uncertainty stays pending',async()=>{
+ const m=module(),{ApiError}=await import('../src/ui/api');assert.ok('originalConversionRefusal' in m,'Original POST refusal distinction must exist.');
+ const classify=m.originalConversionRefusal as (error:unknown)=>Error|null;
+ for(const [code,status]of [['VERSION_MISMATCH',412],['RAW_MODE_REQUIRED',409],['CONVERSION_SOURCE_CHANGED',409],['CONVERSION_UNSUPPORTED',409]] as const)assert.ok(classify(new ApiError(code,'Owned refusal',status)));
+ for(const error of[new ApiError('VERSION_MISMATCH','Wrong provenance/status',500),new ApiError('ACTOR_CHANGED','Actor changed',409),new ApiError('FORBIDDEN','Permission',403),new ApiError('UNAUTHORIZED','Session',401),new ApiError('IDEMPOTENCY_CONFLICT','Changed body',409),new Error('Lost response'),{code:'VERSION_MISMATCH',status:412,message:'untyped'}])assert.equal(classify(error),null);
+});
+test('confirmed source refusal persists without changing the original command and rejects arbitrary refusal codes',()=>{
+ const m=module(),refused={...pending,refusal:{code:'VERSION_MISMATCH',message:'Raw source advanced before acceptance.'}};
+ assert.deepEqual(m.parseConversionRecovery(JSON.stringify(refused),scope),refused);assert.equal(m.parseConversionRecovery(JSON.stringify({...refused,refusal:{code:'ACTOR_CHANGED',message:'Authority uncertainty'}}),scope),null);
+});

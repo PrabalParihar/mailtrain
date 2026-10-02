@@ -44,7 +44,7 @@
     "smoke:audience-selection": "node --import tsx scripts/smoke-audience-selection.ts && node --import tsx scripts/smoke-audience-selection.ts --probe-cutoff && node --import tsx scripts/audience-selection-browser.ts && node --import tsx scripts/audience-campaign-browser.ts && node --import tsx scripts/audience-campaign-browser.ts --probe-verification && node --import tsx scripts/audience-selection-browser.ts --probe-large-recovery && node --import tsx scripts/audience-campaign-browser.ts --probe-long-revision",
     "smoke:editor": "node --import tsx scripts/smoke-editor.ts",
     "smoke:sender-domain": "node --import tsx scripts/smoke-sender-domain.ts && node --import tsx scripts/sender-domain-browser.ts && node --import tsx scripts/sender-actor-browser.ts",
-    "smoke:conversion": "node --import tsx scripts/smoke-conversion-api.ts && node --import tsx scripts/smoke-conversion.ts"
+    "smoke:conversion": "node --import tsx scripts/smoke-conversion-api.ts && node --import tsx scripts/smoke-conversion.ts && node --import tsx scripts/conversion-review-browser.ts && node --import tsx scripts/conversion-review-browser.ts --preview"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

@@ -2,12 +2,26 @@ import {z} from 'zod';
 import type {EmailSpec} from '../domain/email';
 import {EmailSpecSchema} from '../domain/email-schema';
 import {ConversionAcceptInput} from '../domain/email-conversion-contracts';
+import {ApiError} from './api';
+
+const refusalSchema=z.object({code:z.enum(['VERSION_MISMATCH','RAW_MODE_REQUIRED','CONVERSION_SOURCE_CHANGED','CONVERSION_UNSUPPORTED']),message:z.string().max(1000)}).strict();
+export class ConversionRefused extends Error {
+ constructor(public refusal:z.infer<typeof refusalSchema>){super(refusal.message);}
+}
+// Call only around the original acceptance POST, never a current-truth GET.
+// These codes are emitted after receipt lookup and prove that command did not commit.
+export function originalConversionRefusal(error:unknown):ConversionRefused|null {
+ if(!(error instanceof ApiError))return null;
+ const parsed=refusalSchema.safeParse({code:error.code,message:error.message.slice(0,1000)});
+ if(!parsed.success||error.status!==(error.code==='VERSION_MISMATCH'?412:409))return null;
+ return new ConversionRefused(parsed.data);
+}
 
 const scopeSchema=z.object({workspace:z.string().min(1).max(200),email:z.uuid(),actor:z.string().min(1).max(500)}).strict();
 export type ConversionScope=z.infer<typeof scopeSchema>;
 export const ConversionContextSchema=z.object({version:z.number().int().positive(),spec:z.string().max(16000000)}).strict();
 export type ConversionContext=z.infer<typeof ConversionContextSchema>;
-const schema=scopeSchema.extend({schema_version:z.literal(1),context:ConversionContextSchema,command:z.object({body:ConversionAcceptInput,key:z.uuid()}).strict()}).strict();
+const schema=scopeSchema.extend({schema_version:z.literal(1),context:ConversionContextSchema,command:z.object({body:ConversionAcceptInput,key:z.uuid()}).strict(),refusal:refusalSchema.optional()}).strict();
 export type ConversionRecovery=z.infer<typeof schema>;
 export function conversionContextMatches(context:ConversionContext,version:number,spec:EmailSpec){return context.version===version&&context.spec===JSON.stringify(spec);}
 export function parseConversionRecovery(raw:string,scope:ConversionScope):ConversionRecovery|null {

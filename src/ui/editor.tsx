@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {EmailConversion}from'./email-conversion';
 import{ConversionProposalSchema}from'@/domain/email-conversion-contracts';
+import{originalConversionRefusal}from'./conversion-recovery';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -584,11 +585,22 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           busyRef.current='convert';setBusy('convert');setError('');const origin=anchor();
           try{
             if(command.body.expected_version!==context.version)throw Error('The original conversion context is inconsistent.');
-            const response=await api<{email:Doc}>(workspace,'emails/'+id+'/convert-to-blocks','POST',command.body,command.body.expected_version,command.key,undefined,actor);
+            const response=await api<{email:Doc}>(workspace,'emails/'+id+'/convert-to-blocks','POST',command.body,command.body.expected_version,command.key,undefined,actor).catch(caught=>{throw originalConversionRefusal(caught)??caught;});
             const current=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
             if(current.email.id!==id||response.email.id!==id||current.email.doc_version<response.email.doc_version)throw Error('The conversion receipt does not match current saved truth. Keep the original command and retry.');
             if(matches(origin)&&!dirtyAt.current){install(current.email);localStorage.removeItem(storage);setReport(null);setRevision(null);setSelected(current.email.spec.sections[0]?.id??'');}
             else if(editorActive.current)setError('Conversion was acknowledged; newer local edits are preserved. Compare or reload the current saved head before continuing.');
+          }finally{busyRef.current='';setBusy('');}
+        }}
+        onDiscardRefused={async()=>{
+          if(busyRef.current||!editRole||!actor)throw Error('Wait for the current draft action before checking saved source.');
+          busyRef.current='conversion-refresh';setBusy('conversion-refresh');const origin=anchor();
+          try{
+            const current=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
+            if(current.email.id!==id)throw Error('Current saved source does not match this document.');
+            if(!matches(origin))throw Error('The editor changed while checking saved source. Your local work is preserved; try again.');
+            if(!dirtyAt.current){install(current.email);setConflict(null);conflictRef.current=false;setReport(null);setRevision(null);}
+            else if(current.email.doc_version!==live.current!.doc_version||JSON.stringify(current.email.spec)!==ack.current){setConflict(current.email);conflictRef.current=true;setError('The refused conversion was not saved. Local edits are preserved; compare the newer saved source before reviewing again.');}
           }finally{busyRef.current='';setBusy('');}
         }}/>
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
