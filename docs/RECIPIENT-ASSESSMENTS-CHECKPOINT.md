@@ -602,3 +602,27 @@ Whole report SHA256 `75baf607947797085c719b1dbb3ca02ee6c390f4358ce8aaddce3e34147
 - /tmp/lettercape-recipient-type-minor.log SHA256 `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
 - /tmp/lettercape-recipient-lint-minor.log SHA256 `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
 - /tmp/lettercape-recipient-build-minor.log SHA256 `a68f434d4da9ef7579c10fc41c25dbe36d1c7a54d14bba9db79711b6c8f2e928`
+
+
+## Canonical and runtime closeout — 2026-10-02
+
+Qualified executable head `d04b2d2d123fcd37ccbf077c2a95026fdd2721df` fast-forwarded locally to the real home-derived `/Users/prabalpratapsingh/Desktop/mail`: 550 tracked SHA256 matches, both tracked trees clean, private environment/authoritative PRD metadata unchanged and readable. No private contents were copied, printed or hashed; trusted normal application configuration loading was used. Original 109 emails and 221 revisions have identical aggregate hashes across migration and synchronization. Only additive migration 034 applied to the original loopback database. Canonical lint/type/API120/build and actual recipient HTTP/Chromium four-group smoke passed. Full configured executable qualification is 471/471 zero fail/cancel/skip; later two Minor corrections only changed capability documentation and required-scope metadata.
+
+Both development apps were restored on loopback ports 3002 (Desktop) and 3003 (mirror), with the existing private media store path. Health reports development and dispatch_enabled:false. Existing media worker and unrelated Desktop/proof app remained running. A development-only recipient worker was started against the single verified current local Owner/workspace, with no assessment jobs created in the user workspace by qualification. This is local preparation operation, not a production service identity or delivery worker.
+
+Final amd64 image probe ran with network:none and verified UID1001, five recipient operations each advertising mandatory audience:read, local Monaco assets and absence of private environment/PRD artifacts. Production startup exited1 with 'Production startup refused: full GA release evidence is incomplete for this build.' Image ID/manifest-list `sha256:341aea24a6e91a8b82c78ef2edf0663babf27e8d24af590353baa86a5bdc7466`; OCI config from build `sha256:e3677f3430242b95ab123afe4d73b29d92ff148c8b12315e61d0677efa6c187b`. No resources, paid commitments, provider activity, campaign sends, remote push or public deployment. All65 requirements/all13 gates remain binding; zero accepted. REQ036 remains Partial preparation/logs. Independent submission/adapter/analytics code and all external acceptance obligations remain open.
+
+Closeout is controller-qualified, after the frozen whole review; that reviewer did not independently qualify canonical/container closeout. Evidence-only closeout commits do not change qualified executable bytes.
+
+- `/tmp/lettercape-recipient-main-migration.log` SHA256 `519fe03e7449d06c7ce235762dcb6d54e2daab13c3506b4f556322f469f6093e`
+- `/tmp/lettercape-recipient-canonical-sync-proof.json` SHA256 `81414d4f807b6c8a7de2a00f9c54ca60e3d1fb0767aba2a6f3bb05c171edf3df`
+- `/tmp/lettercape-recipient-main-final-preservation.json` SHA256 `6ff0f0a58b38f1ccb56af1e038a5f7f47764dfc991520c22ffa1433ac6e0f91f`
+- `/tmp/lettercape-recipient-canonical-lint.log` SHA256 `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
+- `/tmp/lettercape-recipient-canonical-type.log` SHA256 `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
+- `/tmp/lettercape-recipient-canonical-api.log` SHA256 `b048d81cd471be3a534381d99ef93436089b220314cb02d517e71a4bf6904719`
+- `/tmp/lettercape-recipient-canonical-build.log` SHA256 `7bf5ff3c5340c4e85ce7e593d216e0bae20a68b62f342cb6fa904d7b77101351`
+- `/tmp/lettercape-recipient-canonical-browser.log` SHA256 `7d548a026481d06b590ebbc48e5a2de190584d5344364c456b9340b121af01d3`
+- `/tmp/lettercape-recipient-linux-build-closeout.log` SHA256 `565a49923dd601a81295f49c6b1ec8175a59f3de82a74c7bd7a8875087fbbe3a`
+- `/tmp/lettercape-recipient-linux-assets-closeout.log` SHA256 `2add44d2b084675158866421c51a69ccd9bfbd9c1fcbb00a14625bab5e861977`
+- `/tmp/lettercape-recipient-linux-startup-closeout.log` SHA256 `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754`
+- `/tmp/lettercape-recipient-linux-closeout-proof.json` SHA256 `60217a9f95636246e6be5c645979348b03bd1ffdf2073d3a954c09570293dd06`
