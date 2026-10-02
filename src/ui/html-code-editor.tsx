@@ -1,50 +1,59 @@
 'use client';
 
 import {useEffect,useLayoutEffect,useId,useRef,useState} from 'react';
-import type {CodeEditorHandle} from './code-editor-contracts';
+import type {CodeEditorHandle,CodeEditorModule} from './code-editor-contracts';
 import {loadCodeEditor} from './code-editor-loader';
 import {applyBasicInput} from '../code-editor/source';
 
 export function HtmlCodeEditor({value,readOnly,label,onChange}:{value:string;readOnly:boolean;label:string;onChange?:(value:string)=>void}){
- const id=useId(),container=useRef<HTMLDivElement>(null),handle=useRef<CodeEditorHandle|null>(null),switchControl=useRef<HTMLButtonElement>(null);
+ const id=useId(),container=useRef<HTMLDivElement>(null),handle=useRef<CodeEditorHandle|null>(null),switchControl=useRef<HTMLButtonElement>(null),basicField=useRef<HTMLTextAreaElement>(null),composing=useRef(false);
  const latest=useRef({value,readOnly,label,onChange});
  useLayoutEffect(()=>{latest.current={value,readOnly,label,onChange};},[value,readOnly,label,onChange]);
- const [mode,setMode]=useState<'basic'|'enhanced'>('basic'),[ready,setReady]=useState(false),[error,setError]=useState(false);
+ const [mode,setMode]=useState<'basic'|'enhanced'>('basic'),[ready,setReady]=useState(false),[error,setError]=useState(false),[waiting,setWaiting]=useState(false);
  useEffect(()=>{let active=true;queueMicrotask(()=>{if(active&&!window.matchMedia('(max-width: 640px)').matches)setMode('enhanced');});return()=>{active=false;};},[]);
  useEffect(()=>{
   if(mode!=='enhanced')return;
-  let cancelled=false;const node=container.current!;
+  let cancelled=false,mounted=false,loaded:CodeEditorModule|undefined;const node=container.current!,basic=basicField.current;
   function fallback(){
    if(cancelled)return;
    const active=latest.current,source=handle.current?.getValue();
    if(!active.readOnly&&source!==undefined&&source!==active.value){latest.current={...active,value:source};active.onChange?.(source);}
-   cancelled=true;clearTimeout(timer);handle.current?.dispose();handle.current=null;setReady(false);setError(true);setMode('basic');
+   cancelled=true;clearTimeout(timer);handle.current?.dispose();handle.current=null;setReady(false);setWaiting(false);setError(true);setMode('basic');
   }
   node.addEventListener('code-editor-error',fallback);
   const timer=setTimeout(fallback,20000);
-  void loadCodeEditor().then(module=>{
-   if(cancelled)return;
-   const current=latest.current;
-   const editor=module.create(node,{value:current.value,readOnly:current.readOnly,label:current.label},next=>{
-    if(cancelled)return;
-    const active=latest.current;
-    if(active.readOnly){handle.current?.setValue(active.value);return;}
-    if(next!==active.value){latest.current={...active,value:next};active.onChange?.(next);}
-   });
-   if(cancelled){editor.dispose();return;}
-   handle.current=editor;clearTimeout(timer);setReady(true);
-  }).catch(fallback);
-  return()=>{cancelled=true;clearTimeout(timer);node.removeEventListener('code-editor-error',fallback);handle.current?.dispose();handle.current=null;setReady(false);};
+  function activate(){
+   if(cancelled||mounted||!loaded)return;
+   // Keep the user's focused field, selection and composition intact. Automatic
+   // enhancement waits for blur; an explicit mode action can cancel this wait.
+   if(document.activeElement===basicField.current||composing.current){setWaiting(true);return;}
+   mounted=true;
+   try{
+    const current=latest.current;
+    const editor=loaded.create(node,{value:current.value,readOnly:current.readOnly,label:current.label},next=>{
+     if(cancelled)return;
+     const active=latest.current;
+     if(active.readOnly){handle.current?.setValue(active.value);return;}
+     if(next!==active.value){latest.current={...active,value:next};active.onChange?.(next);}
+    });
+    if(cancelled){editor.dispose();return;}
+    handle.current=editor;setWaiting(false);setReady(true);
+   }catch{fallback();}
+  }
+  const blurred=()=>queueMicrotask(activate),compositionStarted=()=>{composing.current=true;},compositionEnded=()=>{composing.current=false;queueMicrotask(activate);};
+  basic?.addEventListener('blur',blurred);basic?.addEventListener('compositionstart',compositionStarted);basic?.addEventListener('compositionend',compositionEnded);
+  void loadCodeEditor().then(module=>{if(cancelled)return;loaded=module;clearTimeout(timer);activate();}).catch(fallback);
+  return()=>{cancelled=true;clearTimeout(timer);basic?.removeEventListener('blur',blurred);basic?.removeEventListener('compositionstart',compositionStarted);basic?.removeEventListener('compositionend',compositionEnded);composing.current=false;node.removeEventListener('code-editor-error',fallback);handle.current?.dispose();handle.current=null;setReady(false);};
  },[mode]);
  useEffect(()=>{handle.current?.setReadOnly(readOnly);if(handle.current&&handle.current.getValue()!==value)handle.current.setValue(value);},[value,readOnly]);
- function switchMode(){setError(false);setMode(mode==='enhanced'?'basic':'enhanced');}
+ function switchMode(){setError(false);setWaiting(false);setMode(mode==='enhanced'?'basic':'enhanced');}
  return <div className="html-code-editor" style={{minWidth:0,maxWidth:'100%'}}>
   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
    <span id={id+'-label'}>{label}</span>
    <button ref={switchControl} type="button" onClick={switchMode}>{mode==='enhanced'?'Use basic editor':'Use enhanced editor'}</button>
   </div>
-  <p id={id+'-help'} style={{fontSize:12}}>{error?'Enhanced editor unavailable. Basic editor preserves your source.':mode==='enhanced'&&!ready?'Loading enhanced editor. You can edit the basic source now.':ready?'Enhanced editor. Press Escape to reach the editor switch.':'Basic editor.'}</p>
-  {!ready&&<textarea aria-label={label} aria-describedby={id+'-help'} readOnly={readOnly} className="raw-code" rows={24} value={value} onChange={event=>{
+  <p id={id+'-help'} style={{fontSize:12}}>{error?'Enhanced editor unavailable. Basic editor preserves your source.':waiting?'Enhanced editor ready. Finish basic editing or move focus to switch.':mode==='enhanced'&&!ready?'Loading enhanced editor. You can edit the basic source now.':ready?'Enhanced editor. Press Escape to reach the editor switch.':'Basic editor.'}</p>
+  {!ready&&<textarea ref={basicField} aria-label={label} aria-describedby={id+'-help'} readOnly={readOnly} className="raw-code" rows={24} value={value} onChange={event=>{
    const active=latest.current;if(active.readOnly)return;
    const next=applyBasicInput(active.value,event.currentTarget.value);latest.current={...active,value:next};active.onChange?.(next);
   }} style={{width:'100%',boxSizing:'border-box'}}/>}
