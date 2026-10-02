@@ -33,6 +33,7 @@ export function generationMessages(input:GenerationBrief,brand:Brand,context:Mem
               name: brand.name,
               description: brand.description,
               voice: brand.voice,
+              ...(brand.tone_rules?{tone_rules:brand.tone_rules}:{}),
               approved_claims: brand.approved_claims,
               forbidden_phrases: brand.forbidden_phrases,
             },

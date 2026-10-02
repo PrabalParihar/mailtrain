@@ -1966,6 +1966,10 @@ export interface components {
             website: string;
             description: string;
             voice: string;
+            tone_rules?: {
+                max_sentence_words?: number;
+                max_exclamations?: number;
+            };
             accent: string;
             background: string;
             /** @enum {string} */

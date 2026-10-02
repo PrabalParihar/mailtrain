@@ -1,3 +1,4 @@
+import{LINT_RULES_VERSION}from'../domain/preflight';
 import { z } from 'zod';
 import { withPrincipal } from './auth';
 import { keyed } from './commands';
@@ -137,14 +138,15 @@ export async function audienceRoute(
           if (cmd === 'approve') {
             const preflight = (
               await tx.query(
-                'SELECT state,artifact_hash FROM preflights WHERE revision_id=$1 ORDER BY created_at DESC LIMIT 1',
+                'SELECT state,artifact_hash,rule_set_version FROM preflights WHERE revision_id=$1 ORDER BY created_at DESC LIMIT 1',
                 [c.revision_id],
               )
             ).rows[0];
             if (
               !preflight ||
               preflight.state !== 'passed' ||
-              preflight.artifact_hash !== c.intent.artifact_hash
+              preflight.artifact_hash !== c.intent.artifact_hash ||
+              preflight.rule_set_version !== LINT_RULES_VERSION
             )
               fail(
                 422,

@@ -18,8 +18,8 @@ Create src/domain/voice-guard.ts, tests/voice-guard.test.ts. Modify src/domain/p
 
 ### Task2 Versioned brand persistence/API/approval fences
 Modify src/domain/brand.ts optional tone_rules, src/server/ai.ts data-only prompt, preflight/approval route, scripts/generate-api.ts/generated SDK. Existing brand rows immutable JSON need no destructive migration.
-- [ ] RED owned tests that a pinned old kit remains unchanged, new rules parse/persist/validate scopes, current report receives pinned rules; old passing rule version fails campaign approval with PREFLIGHT_BLOCKED.
-- [ ] Integrate optional field and bounded documented API; approval checks current rules version in addition to existing artifact/provider/gates. Run focused/full suite/API/lint/typecheck expected PASS; commit.
+- [x] RED owned tests that a pinned old kit remains unchanged, new rules parse/persist/validate scopes, current report receives pinned rules; old passing rule version fails campaign approval with PREFLIGHT_BLOCKED.
+- [x] Integrate optional field and bounded documented API; approval checks current rules version in addition to existing artifact/provider/gates. Run focused/full suite/API/lint/typecheck expected PASS; commit.
 
 ### Task3 Brand controls and actual browser/HTTP acceptance
 Modify src/ui/brand.tsx; create scripts/smoke-voice-guard.ts/package/CI. Existing preflight located finding UI consumes same Finding interface.

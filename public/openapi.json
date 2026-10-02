@@ -29329,6 +29329,22 @@
             "type": "string",
             "maxLength": 1000
           },
+          "tone_rules": {
+            "type": "object",
+            "properties": {
+              "max_sentence_words": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 200
+              },
+              "max_exclamations": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "additionalProperties": false
+          },
           "accent": {
             "type": "string",
             "pattern": "^#[\\da-fA-F]{6}$"

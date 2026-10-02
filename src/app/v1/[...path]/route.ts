@@ -347,7 +347,7 @@ async function handle(req: Request, ctx: Context) {
               ).rows[0];
               const findings = lintEmail(r.spec, brand?.data.forbidden_phrases ?? [], {
                 html: r.html,
-              });
+              },brand?.data.tone_rules);
               const state = findings.some((x) => x.severity === 'blocking')
                 ? 'blocked'
                 : 'incomplete';

@@ -1,3 +1,4 @@
+import{ToneRules}from'./voice-guard';
 import { z } from 'zod';
 export const BrandSchema = z
   .object({
@@ -5,6 +6,7 @@ export const BrandSchema = z
     website: z.string().max(2048),
     description: z.string().max(3000),
     voice: z.string().max(1000),
+    tone_rules:ToneRules.optional(),
     accent: z.string().regex(/^#[\da-fA-F]{6}$/),
     background: z.string().regex(/^#[\da-fA-F]{6}$/),
     font_stack: z.enum(['Arial, sans-serif', 'Georgia, serif', 'Verdana, sans-serif']),
