@@ -4,12 +4,21 @@ import { CampaignConfigurationInput, resolveCampaignTiming, type CampaignConfigu
 import { api, ApiError } from './api';
 import { useResourcePage } from './paged';
 type Campaign = { id:string; name:string; version:number; revision_id:string; state:string; intent:{artifact_hash?:string|null; planned_timing?:ResolvedCampaignTiming|null} };
-export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:string;id:string;role:string;onUpdate:()=>Promise<void>}) {
+export function CampaignConfiguration({workspace,id,role,savedState,savedVersion,onUpdate}:{workspace:string;id:string;role:string;savedState:string;savedVersion:number;onUpdate:()=>Promise<void>}) {
  const [record,setRecord]=useState<Campaign|null>(null),[name,setName]=useState(''),[revision,setRevision]=useState(''),[planned,setPlanned]=useState(false),[local,setLocal]=useState(''),[zone,setZone]=useState('UTC'),[offset,setOffset]=useState('+00:00');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[pending,setPending]=useState<CampaignConfigurationData|null>(null);
  const epoch=useRef(0),running=useRef(false),pendingCommand=useRef<CampaignConfigurationData|null>(null),pendingKey=useRef<string|null>(null);
  const path='campaigns/'+id,history=useResourcePage<CampaignConfigurationSnapshotData>(workspace,path+'/configurations?limit=5',String(record?.version??0));
- const editable=['Owner','Admin','Editor'].includes(role)&&!!record&&['draft','review_pending'].includes(record.state);
+ // Lifecycle-only actions do not advance the configuration version. Keep the
+ // form's captured base/settings, while conservatively applying observed state.
+ let currentState=record?.state??savedState;
+ if(savedVersion>(record?.version??0))currentState=savedState;
+ else if(record&&savedVersion===record.version){
+  if(!['draft','review_pending'].includes(savedState))currentState=savedState;
+  else if(['draft','review_pending'].includes(record.state))currentState=savedState==='review_pending'||record.state==='review_pending'?'review_pending':'draft';
+ }
+ const configurationChanged=!!record&&savedVersion>record.version;
+ const editable=['Owner','Admin','Editor'].includes(role)&&!!record&&['draft','review_pending'].includes(currentState);
  const hydrate=useCallback((campaign:Campaign)=>{setRecord(campaign);setName(campaign.name);setRevision(campaign.revision_id);const timing=campaign.intent.planned_timing;setPlanned(!!timing);setLocal(timing?.local_time??'');setZone(timing?.time_zone??'UTC');setOffset(timing?.utc_offset??'+00:00');},[]);
  const reload=useCallback(async()=>{
   if(running.current)return;running.current=true;const generation=++epoch.current;setBusy(true);setError('');
@@ -21,7 +30,7 @@ export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:st
  let candidate='',timingError='';
  if(planned){try{candidate=resolveCampaignTiming({local_time:local,time_zone:zone,utc_offset:offset}).utc;}catch(e){timingError=(e as Error).message;}}
  async function save(retry=false){
-  if(running.current||!editable||(pendingCommand.current&&!retry))return;
+  if(running.current||!editable||(!retry&&configurationChanged)||(pendingCommand.current&&!retry))return;
   let command=retry?pendingCommand.current:null;
   if(!command){try{command=CampaignConfigurationInput.parse({expected_version:record!.version,name,revision_id:revision,planned_timing:planned?{local_time:local,time_zone:zone,utc_offset:offset}:null});if(command.planned_timing)resolveCampaignTiming(command.planned_timing);}catch(e){setError(e instanceof Error?e.message:'Check the configuration.');return;}}
   running.current=true;const generation=++epoch.current;pendingCommand.current=command;pendingKey.current??=crypto.randomUUID();setPending(command);setBusy(true);setError('');setNotice('');let acknowledged=false;
@@ -40,7 +49,8 @@ export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:st
   {error&&<p className="alert danger" role="alert">{error}</p>}
   {notice&&<p className="small" role="status">{notice}</p>}
   {!record&&<p role="status">{busy?'Loading saved configuration…':'Saved configuration is unavailable. Reload before editing.'}</p>}
-  {record&&<p className="small break-word">Configuration v{record.version} · {record.state.replaceAll('_',' ')} · Artifact {record.intent.artifact_hash??'not captured'}</p>}
+  {record&&<p className="small break-word">Configuration v{record.version} · {currentState.replaceAll('_',' ')} · Artifact {record.intent.artifact_hash??'not captured'}</p>}
+  {configurationChanged&&<p className="alert warning" role="status">Saved configuration advanced to v{savedVersion}. This form keeps base v{record!.version} and your edits. Reload saved configuration to replace them before saving.</p>}
   <form onSubmit={e=>{e.preventDefault();void save();}}>
    <fieldset disabled={busy||!!pending||!editable}>
     <legend>Campaign settings</legend>
@@ -56,7 +66,7 @@ export function CampaignConfiguration({workspace,id,role,onUpdate}:{workspace:st
     </>}
    </fieldset>
    <p className="small" data-planned-candidate>{planned?(candidate?'Planned UTC candidate: '+candidate:timingError):'No planned timing.'} No delivery is scheduled.</p>
-   <div className="toolbar"><button className="primary" disabled={busy||!!pending||!editable||!!timingError}>Save draft configuration</button></div>
+   <div className="toolbar"><button className="primary" disabled={busy||!!pending||!editable||configurationChanged||!!timingError}>Save draft configuration</button></div>
   </form>
   {pending&&<p className="small">Acknowledgment is unresolved. Retry the original command or reload saved configuration to replace this form.</p>}
   <div className="toolbar">

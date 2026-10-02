@@ -74,6 +74,7 @@ jobs:
           npm run smoke:creation
           npm run smoke:voice-guard
           npm run smoke:campaign-configuration
+          npm run smoke:campaign-lifecycle
       - name: Production release must remain closed
         run: |
           if node scripts/start-production.mjs; then

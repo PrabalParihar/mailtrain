@@ -116,6 +116,7 @@ export function AudiencePanel({ workspace }: { workspace: string }) {
 }
 type Campaign = {
   id: string;
+  version:number;
   name: string;
   state: string;
   intent: { artifact_hash: string; audience: { eligible: boolean; reason: string }[] };
@@ -226,7 +227,7 @@ export function CampaignPanel({ workspace,role }: { workspace: string;role:strin
             <p className="small muted">
               Sender/provider: not configured · Tracking: off · Schedule: none
             </p>
-            <CampaignConfiguration workspace={workspace} id={c.id} role={role} onUpdate={reload}/>
+            <CampaignConfiguration workspace={workspace} id={c.id} role={role} savedState={c.state} savedVersion={c.version} onUpdate={reload}/>
             <div className="toolbar">
               <button
                 disabled={busy || c.state !== 'draft'}
