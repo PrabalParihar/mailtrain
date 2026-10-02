@@ -60,7 +60,7 @@ try {
   const denial=page.waitForResponse(response=>response.url().endsWith('/sender-identities/'+id+'/versions')&&response.status()===403);
   await panel.getByRole('button',{name:'Retry original sender command',exact:true}).click();await denial;
   assert.equal(await panel.getByRole('button',{name:'Retry original sender command',exact:true}).isDisabled(),true);
-  const stored=await page.evaluate(({w,id})=>JSON.parse(localStorage.getItem('lettercape.sender-form.'+w+'.'+id)!),{w:workspace,id});assert.deepEqual(stored.pending.key,versionRequests[0].key);assert.equal(stored.base.version,1);
+  const stored=await page.evaluate(({w,id,actor})=>JSON.parse(localStorage.getItem('lettercape.sender-form.'+JSON.stringify([w,actor,id]))!),{w:workspace,id,actor:user});assert.deepEqual(stored.pending.key,versionRequests[0].key);assert.equal(stored.pending.actor_id,user);assert.equal(stored.base.version,1);
   await db.query("UPDATE memberships SET role='Owner'WHERE workspace_id=$1 AND user_id=$2",[workspace,user]);await page.reload();await panel.getByRole('button',{name:'Retry original sender command',exact:true}).waitFor();
   await page.route(versionURL,async route=>{versionRequests.push({key:route.request().headers()['idempotency-key'],body:route.request().postData()!});await route.continue();});
   await panel.getByRole('button',{name:'Retry original sender command',exact:true}).click();await panel.getByRole('status').filter({hasText:'Sender draft saved.'}).waitFor();await page.unroute(versionURL);assert.deepEqual(versionRequests[1],versionRequests[0]);assert.equal((await current(id)).version,2);

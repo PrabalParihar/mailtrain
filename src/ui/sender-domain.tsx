@@ -1,39 +1,41 @@
 'use client';
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {z} from 'zod';
 import {SenderDraftInput,SenderVersionInput,SenderCheckInput,SenderView,SenderVersionView,DNSCheckView,normalizeSender,SENDER_PROVIDERS,type SenderData,type SenderVersionData} from '../domain/sender-domain';
 import {allowed,type Role} from '../domain/permissions';
 import {api,ApiError} from './api';
-import {acknowledgeSenderSave,formForSender,senderFormDirty,readSenderForm,rememberSenderForm,clearSenderForm,readSenderSelection,rememberSenderSelection,type SenderForm} from './sender-form-recovery';
+import {senderRecoveryScope,acknowledgeSenderSave,formForSender,senderFormDirty,readSenderForm,rememberSenderForm,clearSenderForm,readSenderSelection,rememberSenderSelection,type SenderForm} from './sender-form-recovery';
 
-function useSenderPage<T>(workspace:string,path:string|null,schema:z.ZodType<T>,refresh='') {
+function useSenderPage<T>(workspace:string,actor:string,path:string|null,schema:z.ZodType<T>,refresh='') {
  const [state,setState]=useState<{data:T[];total:number;cursor:string|null;loaded:boolean;busy:boolean;error:string}>({data:[],total:0,cursor:null,loaded:false,busy:false,error:''});
  const generation=useRef(0),running=useRef(false),snapshot=useRef(state);
  const read=useCallback(async(more=false)=>{
   if(!path||(more&&(running.current||!snapshot.current.cursor)))return;
   const epoch=++generation.current;running.current=true;setState(before=>({...before,busy:true,error:''}));
   try {
-   const value=await api<unknown>(workspace,path+(more?'&after='+encodeURIComponent(snapshot.current.cursor!):''));
+   const value=await api<unknown>(workspace,path+(more?'&after='+encodeURIComponent(snapshot.current.cursor!):''),'GET',undefined,undefined,undefined,undefined,actor);
    const page=z.object({data:z.array(schema),total_count:z.number().int().nonnegative(),has_more:z.boolean(),next_cursor:z.string().nullable(),request_id:z.string()}).strict().parse(value);
    if(generation.current!==epoch)return;
    const next={data:more?[...snapshot.current.data,...page.data]:page.data,total:page.total_count,cursor:page.has_more?page.next_cursor:null,loaded:true,busy:false,error:''};
    snapshot.current=next;setState(next);
   }catch(error){if(generation.current===epoch)setState(before=>({...before,busy:false,error:error instanceof Error?error.message:'Records could not be loaded.'}));}
   finally{if(generation.current===epoch)running.current=false;}
- },[workspace,path,schema]);
+ },[workspace,actor,path,schema]);
  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(active)void read();});const fence=generation;return()=>{active=false;fence.current++;};},[read,refresh]);
  return {...state,reload:()=>read(),loadMore:()=>read(true)};
 }
 
-export function SenderDomainPanel({workspace,role}:{workspace:string;role:Role}) {
+export function SenderDomainPanel({workspace,actor,role}:{workspace:string;actor:string;role:Role}) {
  if(!allowed(role,'manage'))return <section className="panel" aria-label="Sender domains"><h2>Sender domains</h2><p>Owner or Admin access is required to manage sender drafts and DNS observations.</p><p className="small muted">Sending remains disabled.</p></section>;
- return <SenderController key={workspace+':'+role} workspace={workspace}/>;
+ if(!actor)return <section className="panel" aria-label="Sender domains"><p role="status">Verified account context is unavailable. Reload your workspace before opening sender work.</p></section>;
+ return <SenderController key={JSON.stringify([workspace,actor,role])} workspace={workspace} actor={actor}/>;
 }
-function SenderController({workspace}:{workspace:string}) {
- const senders=useSenderPage(workspace,'sender-identities?limit=5',SenderView);
+function SenderController({workspace,actor}:{workspace:string;actor:string}) {
+ const scope=useMemo(()=>senderRecoveryScope(workspace,actor),[workspace,actor]);
+ const senders=useSenderPage(workspace,actor,'sender-identities?limit=5',SenderView);
  const [selected,setSelected]=useState<string|null>(null),[choice,setChoice]=useState('new'),[notice,setNotice]=useState('');
- useEffect(()=>{const id=readSenderSelection(workspace);void Promise.resolve().then(()=>{setSelected(id);setChoice(id);});},[workspace]);
- function open(id:string){rememberSenderSelection(workspace,id);setChoice(id);setSelected(id);setNotice('');}
+ useEffect(()=>{const id=readSenderSelection(scope);void Promise.resolve().then(()=>{setSelected(id);setChoice(id);});},[scope]);
+ function open(id:string){rememberSenderSelection(scope,id);setChoice(id);setSelected(id);setNotice('');}
  return <section className="panel audience-segments" aria-label="Sender domains" data-sender-domain>
   <h2>Sender drafts and DNS evidence</h2>
   <p>Save a provider-bound sender draft and observe public TXT records. Provider account verification, issued DNS values and sending remain unavailable.</p>
@@ -47,30 +49,31 @@ function SenderController({workspace}:{workspace:string}) {
    {senders.data.map(sender=><option value={sender.id} key={sender.id}>{sender.name} · v{sender.version} · {sender.provider}</option>)}
   </select></label>
   <div className="toolbar"><button disabled={senders.busy||selected===choice} onClick={()=>open(choice)}>Load selected sender</button><button disabled={senders.busy} onClick={()=>void senders.reload()}>Refresh sender drafts</button>{senders.cursor&&<button disabled={senders.busy} onClick={()=>void senders.loadMore()}>Load more sender drafts</button>}</div>
-  {selected&&<SenderEditor key={workspace+':'+selected} workspace={workspace} id={selected} admitted={senders.loaded&&!senders.error} onSaved={()=>void senders.reload()} onCreated={sender=>{open(sender.id);setNotice('Sender draft saved. Sending remains disabled.');void senders.reload();}}/>}
+  {selected&&<SenderEditor key={JSON.stringify([workspace,actor,selected])} workspace={workspace} actor={actor} id={selected} admitted={senders.loaded&&!senders.error} onSaved={()=>void senders.reload()} onCreated={sender=>{open(sender.id);setNotice('Sender draft saved. Sending remains disabled.');void senders.reload();}}/>}
  </section>;
 }
 const providerHelp={ses:'https://docs.aws.amazon.com/ses/latest/dg/mail-from.html',resend:'https://resend.com/docs/add-a-domain',sendgrid:'https://www.twilio.com/docs/sendgrid/api-reference/domain-authentication/authenticate-a-domain',mailgun:'https://documentation.mailgun.com/docs/mailgun/user-manual/domains/domains-verify'};
-function SenderEditor({workspace,id,admitted,onSaved,onCreated}:{workspace:string;id:string;admitted:boolean;onSaved:()=>void;onCreated:(sender:SenderData)=>void}) {
+function SenderEditor({workspace,actor,id,admitted,onSaved,onCreated}:{workspace:string;actor:string;id:string;admitted:boolean;onSaved:()=>void;onCreated:(sender:SenderData)=>void}) {
  const [form,setForm]=useState<SenderForm|null>(null),[truth,setTruth]=useState<SenderData|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[persisted,setPersisted]=useState(true),[denied,setDenied]=useState(false),[refresh,setRefresh]=useState(0),[now,setNow]=useState(Date.now);
  const generation=useRef(0),running=useRef(false),latest=useRef<SenderForm|null>(null),isNew=id==='new';
- const versions=useSenderPage(workspace,isNew?null:'sender-identities/'+id+'/versions?limit=5',SenderVersionView,String(refresh));
- const checks=useSenderPage(workspace,isNew?null:'sender-identities/'+id+'/dns-checks?limit=5',DNSCheckView,String(refresh));
- function install(next:SenderForm){latest.current=next;setForm(next);setPersisted(rememberSenderForm(workspace,id,next));}
+ const scope=useMemo(()=>senderRecoveryScope(workspace,actor),[workspace,actor]);
+ const versions=useSenderPage(workspace,actor,isNew?null:'sender-identities/'+id+'/versions?limit=5',SenderVersionView,String(refresh));
+ const checks=useSenderPage(workspace,actor,isNew?null:'sender-identities/'+id+'/dns-checks?limit=5',DNSCheckView,String(refresh));
+ function install(next:SenderForm){latest.current=next;setForm(next);setPersisted(rememberSenderForm(scope,id,next));}
  const load=useCallback(async(replace=false)=>{
   if(running.current)return;running.current=true;const epoch=++generation.current;setBusy(true);setError('');
-  const recovered=replace?null:readSenderForm(workspace,id);
+  const recovered=replace?null:readSenderForm(scope,id);
   try {
-   const current=isNew?null:SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+id)).sender);
+   const current=isNew?null:SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+id,'GET',undefined,undefined,undefined,undefined,actor)).sender);
    if(generation.current!==epoch)return;
    if(current&&current.id!==id)throw new Error('The saved sender does not match this editor.');
    setTruth(current);setDenied(false);
    const next=recovered?.form??formForSender(current);latest.current=next;setForm(next);
-   setPersisted(recovered?.persisted===false?false:rememberSenderForm(workspace,id,next));
+   setPersisted(recovered?.persisted===false?false:rememberSenderForm(scope,id,next));
    setNotice(recovered?.form?(next.pending?'Original sender command recovered.':senderFormDirty(next)?'Unapplied sender edits recovered.':'Saved sender loaded.'):(replace?'Saved sender loaded. Working edits were replaced.':isNew?'':'Saved sender loaded.'));
   }catch(caught){if(generation.current===epoch){setError(caught instanceof Error?caught.message:'Saved sender could not be loaded.');setDenied(caught instanceof ApiError&&[401,403].includes(caught.status));if(recovered?.form){latest.current=recovered.form;setForm(recovered.form);setPersisted(recovered.persisted);}}}
   finally{if(generation.current===epoch){running.current=false;setBusy(false);}}
- },[workspace,id,isNew]);
+ },[workspace,actor,scope,id,isNew]);
  useEffect(()=>{let active=true;void Promise.resolve().then(()=>{if(active)void load();});const fence=generation;return()=>{active=false;fence.current++;};},[load]);
  useEffect(()=>{void Promise.resolve().then(()=>setNow(Date.now()));const timer=setInterval(()=>setNow(Date.now()),60000);return()=>clearInterval(timer);},[refresh]);
  const pending=form?.pending,base=form?.base,dirty=!!form&&senderFormDirty(form),advanced=!!truth&&(!base||truth.version!==base.version);
@@ -82,30 +85,30 @@ function SenderEditor({workspace,id,admitted,onSaved,onCreated}:{workspace:strin
   const captured=latest.current;if(running.current||!captured||!admitted||denied||(kind!=='retry'&&(!editable||advanced||captured.pending)))return;
   let original=captured.pending;
   try {
-   if(kind==='retry'){if(!original)return;}
+   if(kind==='retry'){if(!original)return;if(original.actor_id!==actor)throw new Error('The original command belongs to a different account.');}
    else if(kind==='dns') {
     if(!captured.base||senderFormDirty(captured))return;
-    original={kind:'dns',path:'sender-identities/'+captured.base.id+'/dns-checks',key:crypto.randomUUID(),body:JSON.stringify(SenderCheckInput.parse({expected_version:captured.base.version}))};
+    original={actor_id:actor,kind:'dns',path:'sender-identities/'+captured.base.id+'/dns-checks',key:crypto.randomUUID(),body:JSON.stringify(SenderCheckInput.parse({expected_version:captured.base.version}))};
    }else {
     const draft=SenderDraftInput.parse({...captured.working,reply_to:captured.working.reply_to||null});normalizeSender(draft);
-    original=captured.base?{kind:'version',path:'sender-identities/'+captured.base.id+'/versions',key:crypto.randomUUID(),body:JSON.stringify(SenderVersionInput.parse({...draft,expected_version:captured.base.version}))}:{kind:'create',path:'sender-identities',key:crypto.randomUUID(),body:JSON.stringify(draft)};
+    original=captured.base?{actor_id:actor,kind:'version',path:'sender-identities/'+captured.base.id+'/versions',key:crypto.randomUUID(),body:JSON.stringify(SenderVersionInput.parse({...draft,expected_version:captured.base.version}))}:{actor_id:actor,kind:'create',path:'sender-identities',key:crypto.randomUUID(),body:JSON.stringify(draft)};
    }
   }catch{setError('Check the sender fields before saving. Your working text is preserved.');return;}
   running.current=true;const epoch=++generation.current,locked={...captured,pending:original};install(locked);setBusy(true);setError('');setNotice('');
   try {
-   const response=await api<{sender?:unknown;check?:unknown;changed?:boolean}>(workspace,original!.path,'POST',JSON.parse(original!.body),undefined,original!.key);
+   const response=await api<{sender?:unknown;check?:unknown;changed?:boolean}>(workspace,original!.path,'POST',JSON.parse(original!.body),undefined,original!.key,undefined,original!.actor_id);
    if(generation.current!==epoch)return;
    const check=original!.kind==='dns'?DNSCheckView.parse(response.check):null,receipt=check?null:SenderView.parse(response.sender);
    if(check&&(check.sender_id!==captured.base?.id||check.sender_version!==captured.base?.version))throw new Error('DNS receipt does not match the original saved version.');
    const senderID=receipt?.id??captured.base!.id;
-   const current=SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+senderID)).sender);
+   const current=SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+senderID,'GET',undefined,undefined,undefined,undefined,actor)).sender);
    if(generation.current!==epoch)return;
    if(current.id!==senderID)throw new Error('Current sender does not match the original command.');
    setTruth(current);setDenied(false);
    if(check){const next={...captured};delete next.pending;install(next);setNotice('DNS observation saved for v'+check.sender_version+'. Authentication and sending remain unverified.');}
    else {
     const next=acknowledgeSenderSave(locked,receipt!,current);
-    if(isNew&&next.base){rememberSenderForm(workspace,current.id,next);clearSenderForm(workspace,'new');onCreated(current);}
+    if(isNew&&next.base){rememberSenderForm(scope,current.id,next);clearSenderForm(scope,'new');onCreated(current);}
     else install(next);
     setNotice((response.changed===false?'No material change; saved version retained.':'Sender draft saved.')+(current.version!==receipt!.version?' A newer saved version exists. This form retains its original base and working edits until explicit reload.':''));
    }
@@ -115,7 +118,7 @@ function SenderEditor({workspace,id,admitted,onSaved,onCreated}:{workspace:strin
    setError(caught instanceof Error?caught.message:'Sender command failed.');
    if(caught instanceof ApiError&&[401,403].includes(caught.status))setDenied(true);
    if(caught instanceof ApiError&&caught.status===409&&captured.base) {
-    try{const current=SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+captured.base.id)).sender);if(generation.current===epoch)setTruth(current);}catch{/* Original command remains recoverable until explicit reload. */}
+    try{const current=SenderView.parse((await api<{sender:unknown}>(workspace,'sender-identities/'+captured.base.id,'GET',undefined,undefined,undefined,undefined,actor)).sender);if(generation.current===epoch)setTruth(current);}catch{/* Original command remains recoverable until explicit reload. */}
    }
   }finally{if(generation.current===epoch){running.current=false;setBusy(false);}}
  }
@@ -146,7 +149,7 @@ function SenderEditor({workspace,id,admitted,onSaved,onCreated}:{workspace:strin
   <div className="toolbar">
    {pending&&<button disabled={busy||!admitted||denied} onClick={()=>void command('retry')}>Retry original sender command</button>}
    {!isNew&&<button disabled={busy} onClick={()=>void load(true)}>Reload saved sender (replace working edits)</button>}
-   {isNew&&truth&&<button disabled={busy} onClick={()=>{rememberSenderForm(workspace,truth.id,formForSender(truth));clearSenderForm(workspace,'new');onCreated(truth);}}>Load current saved sender (replace working edits)</button>}
+   {isNew&&truth&&<button disabled={busy} onClick={()=>{rememberSenderForm(scope,truth.id,formForSender(truth));clearSenderForm(scope,'new');onCreated(truth);}}>Load current saved sender (replace working edits)</button>}
    {isNew&&!truth&&<button disabled={busy||!!pending} onClick={()=>void load(true)}>Reset new sender draft</button>}
    {!isNew&&<button disabled={busy||!!pending||!editable||advanced||dirty} onClick={()=>void command('dns')}>Observe saved domain DNS</button>}
   </div>

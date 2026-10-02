@@ -3434,6 +3434,8 @@ export interface operations {
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
                 "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path?: never;
             cookie?: never;
@@ -3709,6 +3711,8 @@ export interface operations {
                 "X-Workspace-Id"?: string;
                 /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
                 "Idempotency-Key": string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path?: never;
             cookie?: never;
@@ -3997,6 +4001,8 @@ export interface operations {
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
                 "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;
@@ -4280,6 +4286,8 @@ export interface operations {
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
                 "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;
@@ -4557,6 +4565,8 @@ export interface operations {
                 "X-Workspace-Id"?: string;
                 /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
                 "Idempotency-Key": string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;
@@ -4856,6 +4866,8 @@ export interface operations {
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
                 "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;
@@ -5133,6 +5145,8 @@ export interface operations {
                 "X-Workspace-Id"?: string;
                 /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
                 "Idempotency-Key": string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;

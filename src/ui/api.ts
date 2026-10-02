@@ -15,6 +15,7 @@ export async function api<T = Record<string, unknown>>(
   version?: number,
   key?: string,
   signal?: AbortSignal,
+  expectedActor?: string,
 ): Promise<T> {
   const serialized = body === undefined ? undefined : JSON.stringify(body);
   let pendingSlot: string | undefined,
@@ -41,6 +42,7 @@ export async function api<T = Record<string, unknown>>(
     headers: {
       'Content-Type': 'application/json',
       'X-Workspace-Id': workspace,
+      ...(expectedActor?{'X-Actor-Id':expectedActor}:{}),
       ...(method !== 'GET' ? { 'Idempotency-Key': commandKey ?? crypto.randomUUID() } : {}),
       ...(version ? { 'If-Match': `"draft-${version}"` } : {}),
     },

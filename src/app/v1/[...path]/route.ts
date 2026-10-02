@@ -135,7 +135,7 @@ async function handle(req: Request, ctx: Context) {
           ).rows[0]),
         ),
       );
-      return json({ data: data.filter(Boolean) });
+      return json({ data: data.filter(Boolean),actor_id:user });
     }
     if (root === 'integrations')
       return json(await withPrincipal(req, 'read', async () => ({ data: integrations })));

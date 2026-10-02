@@ -33,6 +33,8 @@ export async function senderDomainRoute(req:Request,path:string[],body:Record<st
   if(!allowed.includes(name)||!value||parameters.getAll(name).length!==1)fail(422,'VALIDATION_FAILED','Use only the documented nonempty query parameters once.');
  }
  return withPrincipal(req,'manage',async(tx,p)=>{
+  const expectedActor=req.headers.get('x-actor-id');
+  if(expectedActor!==null){z.string().min(1).parse(expectedActor);if(expectedActor!==p.user)fail(409,'ACTOR_CHANGED','Your signed-in account changed. Reload before recovering sender work.');}
   await authority(tx,p,method);
   if(method==='GET'){
    if(!id){const page=await resourcePage(req,tx,p,{resource:'sender-identities',from:'sender_identities',fields:'*'});await authority(tx,p,method);return {...page,data:page.data.map(senderView)};}

@@ -60,6 +60,7 @@ export function MailcraftApp({
 }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]),
     [workspace, setWorkspace] = useState(''),
+    [actor, setActor] = useState(''),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(''),
     [authRequired, setAuthRequired] = useState(false),
@@ -79,7 +80,9 @@ export function MailcraftApp({
   const emails = emailPage.data;
   async function refresh() {
     try {
-      const r = await api<{ data: Workspace[] }>('', 'workspaces');
+      const r = await api<{ data: Workspace[];actor_id:string }>('', 'workspaces');
+      if(typeof r.actor_id!=='string'||!r.actor_id)throw new Error('Verified account context is unavailable. Reload your workspace.');
+      setActor(r.actor_id);
       setWorkspaces(r.data);
       const saved = localStorage.getItem('mailcraft.workspace');
       setWorkspace((prev) => prev || r.data.find((w) => w.id === saved)?.id || r.data[0]?.id || '');
@@ -516,7 +519,7 @@ export function MailcraftApp({
                   View provider requirements <ArrowUpRight size={18} />
                 </Link>
               </div>
-              <SenderDomainPanel workspace={workspace} role={current?.role??'Viewer'}/>
+              <SenderDomainPanel workspace={workspace} actor={actor} role={current?.role??'Viewer'}/>
             </>
           )}
           {section === 'reports' && (

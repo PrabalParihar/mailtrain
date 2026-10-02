@@ -434,6 +434,7 @@ function add(d: Definition) {
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
+  if(d.path.startsWith('/v1/sender-identities'))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',

@@ -2,7 +2,10 @@ import {z} from 'zod';
 import {SenderDraftInput,SenderVersionInput,SenderCheckInput,SenderView,normalizeSender,type SenderData} from '../domain/sender-domain';
 
 const working=z.object({name:z.string().max(100),provider:z.enum(['ses','resend','sendgrid','mailgun']),account_label:z.string().max(100),region:z.string().max(40),from_name:z.string().max(100),from_address:z.string().max(254),reply_to:z.string().max(254)}).strict();
-const schema=z.object({base:SenderView.nullable(),working,pending:z.object({kind:z.enum(['create','version','dns']),path:z.string().max(100),key:z.string().uuid(),body:z.string().max(16000)}).strict().optional()}).strict();
+const schema=z.object({base:SenderView.nullable(),working,pending:z.object({actor_id:z.string().min(1),kind:z.enum(['create','version','dns']),path:z.string().max(100),key:z.string().uuid(),body:z.string().max(16000)}).strict().optional()}).strict();
+const scopeSchema=z.object({workspace:z.string().min(1),actor:z.string().min(1)}).strict();
+export type SenderRecoveryScope=z.infer<typeof scopeSchema>;
+export function senderRecoveryScope(workspace:string,actor:string):SenderRecoveryScope{return scopeSchema.parse({workspace,actor});}
 export type SenderForm=z.infer<typeof schema>;
 export function formForSender(base:SenderData|null):SenderForm {
  return {base,working:base?{name:base.name,provider:base.provider,account_label:base.account_label,region:base.region,from_name:base.from_name,from_address:base.from_address,reply_to:base.reply_to??''}:{name:'',provider:'ses',account_label:'',region:'',from_name:'',from_address:'',reply_to:''}};
@@ -35,18 +38,18 @@ export function acknowledgeSenderSave(form:SenderForm,receipt:SenderData,current
  const retained={...form};delete retained.pending;return retained;
 }
 const memory=new Map<string,SenderForm>(),unpersisted=new Set<string>(),selection=new Map<string,string>();let guarded=false;
-const slot=(workspace:string,id:string)=>`lettercape.sender-form.${workspace}.${id}`;
-function sourceMatches(form:SenderForm|null,id:string){return form&&(id==='new'?form.base===null:form.base?.id===id)?form:null;}
-export function readSenderForm(workspace:string,id:string) {
- const key=slot(workspace,id),cached=memory.get(key);
- if(cached)return {form:sourceMatches(structuredClone(cached),id),persisted:!unpersisted.has(key)};
- try{const raw=localStorage.getItem(key);return {form:sourceMatches(raw?parseSenderForm(raw):null,id),persisted:true};}
+const slot=(scope:SenderRecoveryScope,id:string)=>'lettercape.sender-form.'+JSON.stringify([scope.workspace,scope.actor,id]);
+function sourceMatches(form:SenderForm|null,id:string,actor:string){return form&&(!form.pending||form.pending.actor_id===actor)&&(id==='new'?form.base===null:form.base?.id===id)?form:null;}
+export function readSenderForm(scope:SenderRecoveryScope,id:string) {
+ const key=slot(scope,id),cached=memory.get(key);
+ if(cached)return {form:sourceMatches(structuredClone(cached),id,scope.actor),persisted:!unpersisted.has(key)};
+ try{const raw=localStorage.getItem(key);return {form:sourceMatches(raw?parseSenderForm(raw):null,id,scope.actor),persisted:true};}
  catch{return {form:null,persisted:false};}
 }
-export function rememberSenderForm(workspace:string,id:string,form:SenderForm) {
- const key=slot(workspace,id);memory.set(key,structuredClone(form));let persisted=true;
+export function rememberSenderForm(scope:SenderRecoveryScope,id:string,form:SenderForm) {
+ const key=slot(scope,id);if(!sourceMatches(form,id,scope.actor))return false;memory.set(key,structuredClone(form));let persisted=true;
  try {
-  const raw=JSON.stringify(form);if(!sourceMatches(parseSenderForm(raw),id))throw new Error('Recovery exceeds admitted bounds.');
+  const raw=JSON.stringify(form);if(!sourceMatches(parseSenderForm(raw),id,scope.actor))throw new Error('Recovery exceeds admitted bounds.');
   localStorage.setItem(key,raw);unpersisted.delete(key);
  }catch{persisted=false;if(senderFormDirty(form)||form.pending)unpersisted.add(key);else unpersisted.delete(key);}
  if(!guarded&&typeof window!=='undefined') {
@@ -54,13 +57,14 @@ export function rememberSenderForm(workspace:string,id:string,form:SenderForm) {
  }
  return persisted;
 }
-export function clearSenderForm(workspace:string,id:string) {
- const key=slot(workspace,id);memory.delete(key);unpersisted.delete(key);try{localStorage.removeItem(key);}catch{}
+export function clearSenderForm(scope:SenderRecoveryScope,id:string) {
+ const key=slot(scope,id);memory.delete(key);unpersisted.delete(key);try{localStorage.removeItem(key);}catch{}
 }
-export function readSenderSelection(workspace:string) {
- if(selection.has(workspace))return selection.get(workspace)!;
- try{const value=localStorage.getItem('lettercape.sender-selection.'+workspace);return value&&(value==='new'||z.uuid().safeParse(value).success)?value:'new';}catch{return 'new';}
+const selectionSlot=(scope:SenderRecoveryScope)=>'lettercape.sender-selection.'+JSON.stringify([scope.workspace,scope.actor]);
+export function readSenderSelection(scope:SenderRecoveryScope) {
+ const key=selectionSlot(scope);if(selection.has(key))return selection.get(key)!;
+ try{const value=localStorage.getItem(key);return value&&(value==='new'||z.uuid().safeParse(value).success)?value:'new';}catch{return 'new';}
 }
-export function rememberSenderSelection(workspace:string,id:string) {
- selection.set(workspace,id);try{localStorage.setItem('lettercape.sender-selection.'+workspace,id);}catch{}
+export function rememberSenderSelection(scope:SenderRecoveryScope,id:string) {
+ const key=selectionSlot(scope);selection.set(key,id);try{localStorage.setItem(key,id);}catch{}
 }
