@@ -15,3 +15,13 @@ Ruling: choose the command receipt's UUID, verify historical and replacement sta
 Ruling: the deterministic row-order fixture is disclosed synthetic browser presentation over real local HTTP metadata, not evidence of a production API sort violation — no claim that the original CI transport timing is fully known — cost if wrong: production collection-order/current-read and complete role/tenant acceptance remain full GA work.
 
 Ruling: this authorized CI recovery is a separate narrow test-identity follow-up after the completed calendar review and single native fix pass — no reopening or second whole-calendar review — cost if wrong: record the original failure and all new regression/evidence, and keep source/public launch acceptance distinct.
+
+## Subsequent navigation diagnostic — UTM source dccc071
+
+Exact CI36984321270 at dccc0716e73f0623bb6803b5cb33527bb45a92f7 failed in smoke-keys.ts:291 waiting for the Home heading after mobile navigation; it stopped before the UTM command. Renderer passed. This is distinct from the prior same-name row defect. Full native204/lint/typecheck/API93/build, complete UTM mirror/canonical HTTP+Chromium,353canonical hashes and frozen export flow had passed.
+
+After native executor recovery, the unchanged full key suite passed. Disclosed diagnostic probes also passed with6x CPU throttling, Linux Chromium against the Mac server, and pinned Linux Next/npm ci/all027migrations against a separate owned fixture database plus Linux Chromium. The first disposable Linux setup failed initial hydration because its0.0.0.0 dev hostname did not allow127.0.0.1 HMR; adding only that loopback origin in the disposable copy qualified the reproduction. A server-restart socket interruption was a fixture setup failure. Neither is claimed as the original CI cause. No product configuration or authority guard changed.
+
+The source change adds safe request-path/status/failure and JavaScript-error diagnostics on initial or Home-heading failure. It retains every navigation/secret/scope/storage assertion and the30-second assertion timeout; no forced navigation, bypass, retry or increased timeout is introduced. Temporary slow-CPU/remote-browser probe hooks were removed before publication. The original CI timing cause is not established; exact new-head CI and any further concrete failure must decide the next correction. No provider/resource/spend/send/public activation occurred.
+
+Ruling: retain strict navigation assertions and publish failure-boundary diagnostics after bounded independent native/Linux probes — a passing reproduction is insufficient to invent a root-cause fix — cost if wrong: inspect the next exact CI failure and correct its actual cause, retaining original failure evidence instead of retrying it away.

@@ -1,6 +1,6 @@
 # Verified coverage checkpoint — 2026-10-02
 
-Current UTM reviewed/fixed development checkpoint: all204tests/lint/typecheck/API93/build, owned real API/Chromium and PNG/PDF/remix/preflight checks pass. Five Important findings were fixed in ONE native RED→GREEN pass; no Minor or rereview. Actual editor link correction/persistence/reload/frozen export and invalid/unapplied scoped recovery are tested. Exhaustive rulings and limits: UTM-FROZEN-CONTENT-CHECKPOINT.md. Desktop sync, ordinary source push and exact new-head CI are pending; no production claim or gate closure follows.
+Current UTM reviewed/fixed development checkpoint: all204tests/lint/typecheck/API93/build, owned real API/Chromium and PNG/PDF/remix/preflight checks pass. Five Important findings were fixed in ONE native RED→GREEN pass; no Minor or rereview. Actual editor link correction/persistence/reload/frozen export and invalid/unapplied scoped recovery are tested. Exhaustive rulings and limits: UTM-FROZEN-CONTENT-CHECKPOINT.md. Published dccc071 matches353canonical tracked hashes and passes the complete canonical browser flow. Exact CI36984321270 failed at the existing key Home navigation before UTM; renderer passed. A narrow assertion-preserving diagnostic follow-up is in progress; no new head is CI-verified and no production claim or gate closure follows.
 
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 

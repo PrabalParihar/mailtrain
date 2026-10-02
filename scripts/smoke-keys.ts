@@ -167,8 +167,13 @@ try {
       { name: 'mailcraft_local_session', value: cookie, url: origin, sameSite: 'Strict' },
     ]);
     const page = await context.newPage();
+    const navigationEvents:{event:string;path?:string;status?:number;message?:string}[]=[];
+    page.on('pageerror',error=>navigationEvents.push({event:'pageerror',message:error.message}));
+    page.on('request',request=>{if(request.resourceType()==='document'||request.headers().rsc)navigationEvents.push({event:'request',path:new URL(request.url()).pathname});});
+    page.on('response',response=>{if(response.request().resourceType()==='document'||response.request().headers().rsc)navigationEvents.push({event:'response',path:new URL(response.url()).pathname,status:response.status()});});
+    page.on('requestfailed',request=>{if(request.resourceType()==='document'||request.headers().rsc)navigationEvents.push({event:'requestfailed',path:new URL(request.url()).pathname,message:request.failure()?.errorText});});
     await page.goto(origin + '/app/settings');
-    await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();
+    try{await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();}catch(error){console.error('Owned key initial navigation diagnostic '+JSON.stringify({path:new URL(page.url()).pathname,headings:await page.getByRole('heading').allTextContents(),statuses:await page.getByRole('status').allTextContents(),events:navigationEvents.slice(-12)}));throw error;}
     await page.getByLabel('API key name').fill('QA lost response');
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Create scoped API key' }).click();
@@ -288,7 +293,7 @@ try {
       .screenshot({ path: 'output/playwright/lettercape-api-keys.png' });
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await page.getByRole('link', { name: 'Home', exact: true }).click();
-    await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();
+    try{await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();}catch(error){console.error('Owned key navigation diagnostic '+JSON.stringify({path:new URL(page.url()).pathname,headings:await page.getByRole('heading').allTextContents(),sidebarOpen:await page.locator('.sidebar.open').count(),events:navigationEvents.slice(-12)}));throw error;}
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await page.locator('.sidebar.open').waitFor();
     await page.locator('.sidebar.open').getByRole('link', { name: 'Settings', exact: true }).click();
