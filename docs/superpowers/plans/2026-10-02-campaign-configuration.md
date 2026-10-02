@@ -18,8 +18,8 @@ Create src/domain/campaign-configuration.ts and tests/campaign-configuration.tes
 
 ### Task2 Immutable restricted storage
 Create db/026-campaign-configurations.sql and tests/campaign-configuration-db.test.ts. Preserve existing base rows; backfill current snapshot labeled migration_current. Trigger-owned restricted NOLOGIN writer, forced tenant RLS, runtime read-only snapshot grants, append on initial/material version change; mutation version/state constraints and immutable guard. Use existing local migration flow only.
-- [ ] RED owned isolated actual PostgreSQL missing table/grants/append; verify tenant/composite pin, version/CAS invariants, immutability/direct insert denial, labeled current-only backfill and transaction rollback.
-- [ ] Implement/apply only owned local database. Focused/full suite/lint/typecheck expected PASS; commit.
+- [x] RED owned isolated actual PostgreSQL missing table/grants/append; verify tenant/composite pin, version/CAS invariants, immutability/direct insert denial, labeled current-only backfill and transaction rollback.
+- [x] Implement/apply only owned local database. Focused/full suite/lint/typecheck expected PASS; commit.
 
 ### Task3 Scoped configuration API and generated contracts
 Create src/server/campaign-configuration.ts; modify audience-routes.ts and scripts/generate-api.ts/generated OpenAPI+SDK. GET campaigns/:id, GET campaigns/:id/configurations signed campaign-bound page, POST campaigns/:id/configuration with expected_version and strict settings. Scope maps remain campaign read/write. Current immutable revision supplies hash; no-op/stale/keyed replay preserve observed truth; draft/review_pending only editing.
