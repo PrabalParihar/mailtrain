@@ -39,7 +39,7 @@
     "smoke:campaign-configuration": "node --import tsx scripts/smoke-campaign-configuration.ts && node --import tsx scripts/smoke-campaign-review.ts",
     "smoke:campaign-lifecycle": "node --import tsx scripts/smoke-campaign-lifecycle.ts",
     "smoke:calendar": "node --import tsx scripts/smoke-workspace-calendar.ts",
-    "smoke:utm": "node --import tsx scripts/smoke-utm.ts --browser"
+    "smoke:utm": "node --import tsx scripts/smoke-utm.ts --browser && node --import tsx scripts/smoke-utm.ts --review-missing --review-raw --review-url && node --import tsx scripts/smoke-utm.ts --review-proposal && node --import tsx scripts/smoke-utm.ts --review-working && node --import tsx scripts/smoke-utm.ts --review-links"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

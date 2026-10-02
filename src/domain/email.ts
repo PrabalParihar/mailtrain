@@ -139,7 +139,7 @@ export const EmailSpecSchema = z
       c.addIssue({ code: 'custom', message: 'Maximum 200 nodes', path: ['sections'] });
     if (s.editing_mode === 'raw_html' && !s.raw_html)
       c.addIssue({ code: 'custom', message: 'Raw HTML required', path: ['raw_html'] });
-    if(s.tracking&&UTMParameters.safeParse(s.tracking).success){try{trackedContent(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
+    if(s.tracking&&UTMParameters.safeParse(s.tracking).success&&(s.editing_mode!=='raw_html'||!!s.raw_html)){try{trackedContent(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
     if (JSON.stringify(s).length > 1048576 && s.editing_mode === 'structured')
       c.addIssue({ code: 'custom', message: 'Maximum 1 MiB structured document' });
   });

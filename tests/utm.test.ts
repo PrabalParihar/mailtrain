@@ -32,3 +32,10 @@ test('UTF8 values percent-encode deterministically and final target bounds fail 
 });
 
 test('Malformed Unicode cannot normalize silently or escape as an encoder exception',()=>{for(const text of['sale\ud800','sale\udc00'])assert.equal(UTMParameters.safeParse({...policy,utm_campaign:text}).success,false);assert.equal(new URL(decorateMarketingHref('https://example.com',{...policy,utm_campaign:'sale 😀'})).searchParams.get('utm_campaign'),'sale 😀');});
+
+test('tracked targets require a literal absolute HTTPS authority independent of an email document base',()=>{
+ for(const href of['https:example.com/offer','https:/example.com/offer','https:'+String.fromCharCode(92)+'example.com/offer','https://'+String.fromCharCode(92)+'example.com/offer']){
+  assert.throws(()=>decorateMarketingHref(href,policy),(error:unknown)=>error instanceof UTMLinkError&&error.code==='UTM_LINK_UNSUPPORTED');
+ }
+ const value=decorateMarketingHref('HTTPS://Example.COM/a%2fb?x=a%20b#part',policy);assert.equal(new URL(value,'https://mail.example/editor/123').hostname,'example.com');assert.ok(value.startsWith('HTTPS://Example.COM/a%2fb?x=a%20b&'));assert.ok(value.endsWith('#part'));
+});

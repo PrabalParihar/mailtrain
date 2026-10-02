@@ -9,3 +9,7 @@ export function assertEmailUTMTargets(spec:Pick<EmailSpec,'editing_mode'|'sectio
  function check(block:Block){if(block.type==='columns')for(const child of block.columns.flat())check(child);else if(block.type==='button'||block.type==='product_card')decorateMarketingHref(block.href,selectedPolicy);else if(block.type==='social')for(const link of block.links)decorateMarketingHref(link.href,selectedPolicy);else if(block.type==='custom_html')decorateHtmlMarketingLinks(block.html,selectedPolicy);}
  for(const block of spec.sections)check(block);
 }
+export function copyProposalWithCurrentUTM(current:EmailSpec,proposal:EmailSpec):EmailSpec{
+ const result=structuredClone(proposal);if(current.tracking)result.tracking=structuredClone(current.tracking);else delete result.tracking;
+ assertEmailUTMTargets(result);return result;
+}

@@ -27,7 +27,7 @@ import { allowed } from '@/domain/permissions';
 import type { EmailSpec, Block, Finding } from '@/domain/email';
 import { DerivedEmails } from './derived-emails';
 import {EmailUTM}from'./email-utm';
-import{assertEmailUTMTargets,trackingFingerprint}from'@/domain/email-utm';
+import{assertEmailUTMTargets,trackingFingerprint,copyProposalWithCurrentUTM}from'@/domain/email-utm';
 import type{UTMParameterData}from'@/domain/utm';
 import { derivationSlot, pendingDerivation, rememberDerivation, acknowledgeDerivation } from './derivation-receipt';
 import type { emailLineage } from '@/server/emails';
@@ -285,7 +285,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     setDoc({ ...live.current });
     if (!dirtyAt.current) dirtyAt.current = Date.now();
     lastEdit.current = Date.now();
-    localStorage.setItem(storage, JSON.stringify(live.current));
+    try{localStorage.setItem(storage, JSON.stringify(live.current));}catch{setError('Local draft recovery is unavailable. Keep this tab open until the draft is saved.');}
     setStatus(navigator.onLine ? 'Unsaved changes' : 'Offline · local only');
     setReport(null);
     setRevision(null);
@@ -561,7 +561,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
           />
         </label>
       </div>
-      <EmailUTM key={workspace+':'+id} policy={doc.spec.tracking} canEdit={editRole} blocked={!!busy||!!conflict} onApply={applyUTM}/>
+      <EmailUTM key={workspace+':'+id} workspace={workspace} email={id} policy={doc.spec.tracking} canEdit={editRole} blocked={!!busy||!!conflict} onApply={applyUTM}/>
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
         onCreate={(input) => void act('derive', async () => {
           if (!(await flush()) || dirtyAt.current || !live.current) return;
@@ -883,8 +883,10 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
                         );
                         return;
                       }
-                      update(proposal.spec);
-                      setProposal(null);
+                      try{
+                        update(copyProposalWithCurrentUTM(live.current!.spec,proposal.spec));
+                        setProposal(null);
+                      }catch(error){setError(error instanceof Error?error.message:'Proposal links need correction before applying. Your draft and UTM policy are retained.');}
                     }}
                   >
                     Apply proposal

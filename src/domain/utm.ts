@@ -17,7 +17,7 @@ export function decorateMarketingHref(href:string,provided:UTMParameterData):str
  if(href!==href.trim()||control.test(href)||!wellFormed(href)||href.includes('{{')||href.includes('}}'))throw new UTMLinkError('UTM_LINK_UNSUPPORTED','Use a well-formed literal marketing link without unresolved merge slots or control characters.');
  let url:URL;try{url=new URL(href);}catch{throw new UTMLinkError('UTM_LINK_UNSUPPORTED','UTM requires a valid literal HTTPS marketing link.');}
  if(url.protocol==='mailto:'||url.protocol==='tel:')return href;
- if(url.protocol!=='https:'||url.username||url.password)throw new UTMLinkError('UTM_LINK_UNSUPPORTED','UTM requires HTTPS without embedded credentials.');
+ if(url.protocol!=='https:'||!/^https:\/\/[^/\\]/i.test(href)||url.username||url.password)throw new UTMLinkError('UTM_LINK_UNSUPPORTED','UTM requires a literal absolute HTTPS link without embedded credentials.');
  for(const key of url.searchParams.keys()){
   const lower=key.toLowerCase();
   if(['x-amz-signature','x-goog-signature','key-pair-id'].includes(lower))throw new UTMLinkError('UTM_LINK_UNSUPPORTED','This signed target needs destination validation before UTM can be applied.');

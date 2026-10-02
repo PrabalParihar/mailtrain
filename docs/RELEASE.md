@@ -1,6 +1,6 @@
 # Production release evidence
 
-Full Baseline A remains required. Public deployment has not occurred. No paid account or resource has been activated.
+Full Baseline A remains required. Public deployment has not occurred. No paid account or resource has been activated. Current optional UTM development checks pass204tests/API93/full build and owned browser/export regressions; source sync/exact-head CI are pending. UTM-FROZEN-CONTENT-CHECKPOINT.md preserves all single-review rulings and five Important fixes. All13gates remain open.
 
 | Gate | Current evidence | State |
 |---|---|---|

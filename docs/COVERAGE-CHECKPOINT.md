@@ -1,5 +1,7 @@
 # Verified coverage checkpoint — 2026-10-02
 
+Current UTM reviewed/fixed development checkpoint: all204tests/lint/typecheck/API93/build, owned real API/Chromium and PNG/PDF/remix/preflight checks pass. Five Important findings were fixed in ONE native RED→GREEN pass; no Minor or rereview. Actual editor link correction/persistence/reload/frozen export and invalid/unapplied scoped recovery are tested. Exhaustive rulings and limits: UTM-FROZEN-CONTENT-CHECKPOINT.md. Desktop sync, ordinary source push and exact new-head CI are pending; no production claim or gate closure follows.
+
 Working local code is distinct from GA acceptance. No entire requirement has complete GA acceptance evidence; zero of13release gates are signed closed. The full baseline remains required. No production deployment occurred.
 
 Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is published on main and synchronized to canonical Desktop/mail with338tracked SHA256 matches. All185tests/lint/typecheck/build/API93 and actual canonical calendar/campaign/lifecycle6 HTTP+Chromium pass. One fresh whole-slice review and ONE native fix pass resolved two Important defects; three Minors are deferred in WORKSPACE-CALENDAR-CHECKPOINT.md. Exact-head CI36971963596 completed SUCCESS; both verify and sandboxed renderer passed. All65requirements/all13GA gates remain binding; production deployment remains blocked.

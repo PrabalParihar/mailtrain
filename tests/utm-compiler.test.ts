@@ -44,3 +44,11 @@ test('conflicts unsupported merge/signed links and ambiguous raw attributes prod
   assert.throws(()=>decorateHtmlMarketingLinks(raw,tracking));const parsed=EmailSpecSchema.safeParse({...original,tracking,editing_mode:'raw_html',raw_html:raw});assert.equal(parsed.success,false);if(!parsed.success)assert.ok(parsed.error.issues.some(x=>x.path.includes('tracking')));
  }
 });
+
+test('parser-reconstructed raw anchors sharing a source interval receive exactly one valid patch',async()=>{
+ const raw='<p><a href="https://example.org">one<p>two</a>',changed=decorateHtmlMarketingLinks(raw,tracking);assert.equal(changed.split('utm_source=').length-1,1,'one source attribute must be patched once');
+ const source={...blankSpec('brand','Brand'),tracking,editing_mode:'raw_html' as const,raw_html:raw};assert.equal(EmailSpecSchema.safeParse(source).success,true);const artifact=await compileEmail(source);assert.ok(artifact.html.includes('utm_source=newsletter'));assert.ok(artifact.text.includes('https://example.org?utm_source=newsletter'));assert.ok(!artifact.html.includes('href="href='));
+});
+test('enabled tracking missing or empty raw content returns the existing located validation issue without throwing',()=>{
+ for(const raw of[undefined,'']){const value={...blankSpec('brand','Brand'),tracking,editing_mode:'raw_html',raw_html:raw};const result=EmailSpecSchema.safeParse(value);assert.equal(result.success,false);if(!result.success)assert.ok(result.error.issues.some(issue=>issue.path.includes('raw_html')));}
+});
