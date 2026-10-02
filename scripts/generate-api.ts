@@ -381,8 +381,8 @@ const examples: Record<string, unknown> = {
     locale: 'en-US',
     mode: 'single',
   },
-  DraftInput: { spec: blankSpec(exampleId, 'Example brand') },
-  PreviewInput: { spec: blankSpec(exampleId, 'Example brand') },
+  DraftInput: { spec: {...blankSpec(exampleId, 'Example brand'),tracking:{utm_source:'newsletter',utm_medium:'email',utm_campaign:'early-access'}} },
+  PreviewInput: { spec: {...blankSpec(exampleId, 'Example brand'),tracking:{utm_source:'newsletter',utm_medium:'email',utm_campaign:'early-access'}} },
   RestoreInput: { revision_id: exampleId },
   HtmlInput: { html: '<p>Example</p>' },
   UrlInput: { url: 'https://example.com' },
@@ -931,7 +931,7 @@ const spec = {
     'rights/deletion/retention and operations',
   ],
   'x-lettercape-json-semantics':
-    'EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references). Server validation remains authoritative.',
+    'EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative.',
 };
 await mkdir('public', { recursive: true });
 await mkdir('sdk', { recursive: true });

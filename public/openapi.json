@@ -15983,7 +15983,12 @@
                       "address": "",
                       "unsubscribe_slot": true
                     }
-                  ]
+                  ],
+                  "tracking": {
+                    "utm_source": "newsletter",
+                    "utm_medium": "email",
+                    "utm_campaign": "early-access"
+                  }
                 }
               }
             }
@@ -17008,7 +17013,12 @@
                       "address": "",
                       "unsubscribe_slot": true
                     }
-                  ]
+                  ],
+                  "tracking": {
+                    "utm_source": "newsletter",
+                    "utm_medium": "email",
+                    "utm_campaign": "early-access"
+                  }
                 }
               }
             }
@@ -32178,6 +32188,32 @@
           "raw_html": {
             "type": "string",
             "maxLength": 2000000
+          },
+          "tracking": {
+            "type": "object",
+            "properties": {
+              "utm_source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "utm_medium": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "utm_campaign": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "utm_source",
+              "utm_medium",
+              "utm_campaign"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -35207,5 +35243,5 @@
     "billing/customer/entitlements/signed webhooks",
     "rights/deletion/retention and operations"
   ],
-  "x-lettercape-json-semantics": "EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references). Server validation remains authoritative."
+  "x-lettercape-json-semantics": "EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative."
 }

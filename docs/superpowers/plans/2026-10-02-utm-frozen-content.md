@@ -16,8 +16,8 @@ Files src/domain/utm.ts and tests/utm.test.ts. Export UTMParameters, UTM_POLICY_
 
 ### Task 2: Compiler and immutable contracts
 Files email domain/server errors as needed, generated API/SDK and actual HTTP smoke. If used, promote installedparse5 exact7.3.0 to explicit direct dependency offline; inspect installed source/type contract.
-- [ ] Pure/actual HTTP RED: tracking rejected/current output missing, typed nested links and raw/custom safe-source locations, deterministic manifest/hash, unchanged source/query/slots, exact old download/hash/campaign pins, semantic422/tenant/Viewer denial.
-- [ ] Implement optional strict document policy and token-preserving supported HTML targets with honest unsupported boundary. Expected full/lint/typecheck/API/build and immutable HTTP PASS; commit/task-done.
+- [x] Pure/actual HTTP RED: tracking rejected/current output missing, typed nested links and raw/custom safe-source locations, deterministic manifest/hash, unchanged source/query/slots, exact old download/hash/campaign pins, semantic422/tenant/Viewer denial.
+- [x] Implement optional strict document policy and token-preserving supported HTML targets with honest unsupported boundary. Expected full/lint/typecheck/API/build and immutable HTTP PASS; commit/task-done.
 
 ### Task 3: Editor controls and recovery
 Files src/ui/email-utm.tsx/editor, browser smoke/package/CI.

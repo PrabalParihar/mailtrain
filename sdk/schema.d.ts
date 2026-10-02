@@ -2276,6 +2276,11 @@ export interface components {
                 })[][];
             })[];
             raw_html?: string;
+            tracking?: {
+                utm_source: string;
+                utm_medium: string;
+                utm_campaign: string;
+            };
         };
         KeyInput: {
             name: string;
@@ -17187,7 +17192,12 @@ export interface operations {
                  *             "address": "",
                  *             "unsubscribe_slot": true
                  *           }
-                 *         ]
+                 *         ],
+                 *         "tracking": {
+                 *           "utm_source": "newsletter",
+                 *           "utm_medium": "email",
+                 *           "utm_campaign": "early-access"
+                 *         }
                  *       }
                  *     }
                  */
@@ -18083,7 +18093,12 @@ export interface operations {
                  *             "address": "",
                  *             "unsubscribe_slot": true
                  *           }
-                 *         ]
+                 *         ],
+                 *         "tracking": {
+                 *           "utm_source": "newsletter",
+                 *           "utm_medium": "email",
+                 *           "utm_campaign": "early-access"
+                 *         }
                  *       }
                  *     }
                  */

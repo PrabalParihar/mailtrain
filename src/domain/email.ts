@@ -1,3 +1,5 @@
+import {UTMParameters,UTM_POLICY_VERSION,UTMLinkError,decorateMarketingHref,type UTMParameterData}from'./utm';
+import {decorateHtmlMarketingLinks,htmlMarketingTargets}from'./utm-html';
 import type{ToneRuleData}from'./voice-guard';
 import { z } from 'zod';
 import { createElement as h } from 'react';
@@ -118,6 +120,7 @@ export const EmailSpecSchema = z
       .strict(),
     sections: z.array(BlockSchema).max(200),
     raw_html: z.string().max(2000000).optional(),
+    tracking: UTMParameters.optional(),
   })
   .strict()
   .superRefine((s, c) => {
@@ -136,6 +139,7 @@ export const EmailSpecSchema = z
       c.addIssue({ code: 'custom', message: 'Maximum 200 nodes', path: ['sections'] });
     if (s.editing_mode === 'raw_html' && !s.raw_html)
       c.addIssue({ code: 'custom', message: 'Raw HTML required', path: ['raw_html'] });
+    if(s.tracking&&UTMParameters.safeParse(s.tracking).success){try{trackedContent(s);}catch(error){if(error instanceof UTMLinkError)c.addIssue({code:'custom',message:error.message,path:['tracking']});else throw error;}}
     if (JSON.stringify(s).length > 1048576 && s.editing_mode === 'structured')
       c.addIssue({ code: 'custom', message: 'Maximum 1 MiB structured document' });
   });
@@ -361,10 +365,26 @@ function block(b: Block, accent: string): ReturnType<typeof h> {
       );
   }
 }
+function trackedContent(s:{editing_mode:'structured'|'raw_html';sections:Block[];raw_html?:string;tracking?:UTMParameterData}){
+ if(!s.tracking)return s;
+ const policy=s.tracking;
+ function html(source:string){decorateHtmlMarketingLinks(source,policy);return decorateHtmlMarketingLinks(sanitizeRaw(source).html,policy);}
+ function simple(b:Exclude<Block,{type:'columns'}>):Exclude<Block,{type:'columns'}>{
+  if(b.type==='button'||b.type==='product_card')return{...b,href:decorateMarketingHref(b.href,policy)};
+  if(b.type==='social')return{...b,links:b.links.map(link=>({...link,href:decorateMarketingHref(link.href,policy)}))};
+  if(b.type==='custom_html')return{...b,html:html(b.html)};
+  return b;
+ }
+ if(s.editing_mode==='raw_html')return{...s,raw_html:html(s.raw_html!)};
+ return{...s,sections:s.sections.map(b=>b.type==='columns'?{...b,columns:b.columns.map(col=>col.map(simple))}:simple(b))};
+}
+function trackedHtmlText(html:string){return sanitizeHtml(html,{allowedTags:[],allowedAttributes:{}})+'\n'+htmlMarketingTargets(html).join('\n');}
 export async function compileEmail(value: EmailSpec) {
   const s = EmailSpecSchema.parse(value);
+  const rendered=trackedContent(s);
   const manifest = {
-    renderer: 'mailcraft-react-email-1',
+    renderer: s.tracking?'mailcraft-react-email-utm-1':'mailcraft-react-email-1',
+    ...(s.tracking?{link_policy:UTM_POLICY_VERSION}:{}),
     sanitizer: 'allowlist-1',
     schema: s.schema_version,
     brand: s.brand_kit_version_id,
@@ -385,7 +405,7 @@ export async function compileEmail(value: EmailSpec) {
       h(
         'tr',
         {},
-        h('td', { style: { padding: 32 } }, ...s.sections.map((b) => block(b, s.theme.accent))),
+        h('td', { style: { padding: 32 } }, ...rendered.sections.map((b) => block(b, s.theme.accent))),
       ),
     ),
   );
@@ -423,11 +443,11 @@ export async function compileEmail(value: EmailSpec) {
     ),
   );
   const html =
-    s.editing_mode === 'raw_html' ? sanitizeRaw(s.raw_html!).html : await render(document);
+    s.editing_mode === 'raw_html' ? (s.tracking?rendered.raw_html!:sanitizeRaw(s.raw_html!).html) : await render(document);
   const text =
     s.editing_mode === 'raw_html'
-      ? sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
-      : s.sections
+      ? (s.tracking?trackedHtmlText(html):sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }))
+      : rendered.sections
           .flatMap((b) => (b.type === 'columns' ? b.columns.flat() : [b]))
           .map((b) =>
             b.type === 'hero'
@@ -443,8 +463,8 @@ export async function compileEmail(value: EmailSpec) {
                       : b.type === 'image'
                         ? b.alt
                         : b.type === 'custom_html'
-                          ? sanitizeHtml(b.html, { allowedTags: [], allowedAttributes: {} })
-                          : '',
+                          ? (s.tracking?trackedHtmlText(b.html):sanitizeHtml(b.html, { allowedTags: [], allowedAttributes: {} }))
+                          : b.type==='social'&&s.tracking?b.links.map(link=>link.label+': '+link.href).join('\n'):'',
           )
           .join('\n\n');
   const hash = createHash('sha256')
