@@ -1,3 +1,4 @@
+import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
 import {SenderDraftInput,SenderVersionInput,SenderCheckInput,SenderView,SenderVersionView,DNSObservation,DNSCheckView} from '../src/domain/sender-domain';
 import{CampaignConfigurationInput,CampaignConfigurationSnapshot,CampaignConfigurationView}from'../src/domain/campaign-configuration';
@@ -50,6 +51,9 @@ const schemas: Record<string, Schema> = {
   DispatchPolicy: object({ scope: { type: 'string', enum: ['global','provider','workspace'] }, target: string, paused: { type: 'boolean' }, version: { type: 'integer', minimum: 0 }, reason: { type: 'string', enum: ['incident','abuse_review','maintenance','verified_recovery'] }, updated_at: nullable(time) }, undefined, false),
   Brand: fromZod(BrandSchema),
   EmailSpec: fromZod(EmailSpecSchema),
+  ConversionProposalInput:fromZod(ConversionProposalInput),
+  ConversionAcceptInput:fromZod(ConversionAcceptInput),
+  ConversionProposal:fromZod(ConversionProposalSchema),
   KeyInput: fromZod(KeyInput),
   RemixInput: fromZod(RemixInput),
   LocaleDraftInput: fromZod(LocaleDraftInput),
@@ -247,6 +251,8 @@ for(const [name,item]of Object.entries({WebhookDeliveries:'WebhookDelivery',Webh
 schemas.WebhookDeliveryResponse=envelope({delivery:ref('WebhookDelivery'),configuration:ref('WebhookConfiguration')});
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
+schemas.ConversionProposalResponse=object({request_id:string,proposal:ref('ConversionProposal')},undefined,false);
+schemas.ConversionAcceptResponse=object({request_id:string,email:object({id:uuid,title:string,doc_version:{type:'integer',minimum:1},spec:ref('EmailSpec'),updated_at:time},undefined,false)},undefined,false);
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
 schemas.MembershipCommandResponse=envelope({member:ref('Membership'),changes:array(ref('MembershipChange'))});
 schemas.MembershipSummaryResponse=envelope({summary:ref('MembershipSummary')});
@@ -390,6 +396,8 @@ const examples: Record<string, unknown> = {
   PreviewInput: { spec: {...blankSpec(exampleId, 'Example brand'),tracking:{utm_source:'newsletter',utm_medium:'email',utm_campaign:'early-access'}} },
   RestoreInput: { revision_id: exampleId },
   HtmlInput: { html: '<p>Example</p>' },
+  ConversionProposalInput:{expected_version:1},
+  ConversionAcceptInput:{expected_version:1,source_hash:'0'.repeat(64),proposal_hash:'1'.repeat(64),acknowledge_layout_change:true},
   UrlInput: { url: 'https://example.com' },
   NamedInput: { name: 'Example list' },
   FieldInput: { key: 'score', label: 'Score', type: 'number' },
@@ -434,7 +442,7 @@ function add(d: Definition) {
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
-  if(d.path.startsWith('/v1/sender-identities'))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
+  if(d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',
@@ -667,6 +675,8 @@ add({
   description:
     'Queues a durable proposal only. Unconfigured AI/finite allowance produces an honest inspectable error; never sends.',
 });
+add({id:'prepareEmailConversion',path:'/v1/emails/{id}/conversion-proposal',method:'POST',body:'ConversionProposalInput',response:'ConversionProposalResponse',scope:'emails:write',description:'Read-only proposal pinned to the current raw source/version; explicit unsupported cases stay raw, safe complex fragments remain opaque. No Monaco/VML/universal/client-fidelity claim.'});
+add({id:'acceptEmailConversion',path:'/v1/emails/{id}/convert-to-blocks',method:'POST',body:'ConversionAcceptInput',response:'ConversionAcceptResponse',keyed:true,etag:true,scope:'emails:write',description:'Explicit layout-change acknowledgment and exact source/proposal hashes. Current authority after receipt/resource waits; atomic original raw checkpoint and new structured head. Historical exact receipts never replace current detail; recover the same body/key and original If-Match.'});
 add({ id: 'listEmailDerivatives', path: '/v1/emails/{id}/derivatives', method: 'GET', response: 'DerivativesPage', paged: true, scope: 'emails:read' });
 for (const [id, command, body] of [['remixRevision', 'remix', 'RemixInput'], ['createLocaleDraft', 'localize', 'LocaleDraftInput']] as const)
   add({ id, path: '/v1/email-revisions/{id}/' + command, method: 'POST', response: 'DerivationResponse', body, keyed: true, status: 201, scope: 'emails:write', description: command === 'localize' ? 'Creates a separately versioned manual locale draft linked to the frozen source. Source text is retained, not translated or reviewed; no AI/provider/send success is implied.' : 'Copies a frozen source into a separately versioned same-workspace remix with immutable source provenance. Source remains intact.' });

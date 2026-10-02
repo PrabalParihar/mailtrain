@@ -16656,6 +16656,16 @@
               "format": "uuid"
             },
             "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
           }
         ],
         "responses": {
@@ -17002,6 +17012,680 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OperationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "emails:write"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": true
+      }
+    },
+    "/v1/emails/{id}/conversion-proposal": {
+      "post": {
+        "operationId": "prepareEmailConversion",
+        "summary": "prepare email conversion",
+        "description": "Read-only proposal pinned to the current raw source/version; explicit unsupported cases stay raw, safe complex fragments remain opaque. No Monaco/VML/universal/client-fidelity claim.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionProposalInput"
+              },
+              "example": {
+                "expected_version": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversionProposalResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-scopes": [
+          "emails:write"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/emails/{id}/convert-to-blocks": {
+      "post": {
+        "operationId": "acceptEmailConversion",
+        "summary": "accept email conversion",
+        "description": "Explicit layout-change acknowledgment and exact source/proposal hashes. Current authority after receipt/resource waits; atomic original raw checkpoint and new structured head. Historical exact receipts never replace current detail; recover the same body/key and original If-Match.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 200
+            },
+            "description": "Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"draft-[1-9][0-9]*\"$"
+            },
+            "description": "Acknowledged draft version; stale412, absent428."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConversionAcceptInput"
+              },
+              "example": {
+                "expected_version": 1,
+                "source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "proposal_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+                "acknowledge_layout_change": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversionAcceptResponse"
                 }
               }
             }
@@ -35842,6 +36526,946 @@
         ],
         "additionalProperties": false
       },
+      "ConversionProposalInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "additionalProperties": false
+      },
+      "ConversionAcceptInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expected_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "source_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "proposal_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "acknowledge_layout_change": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "expected_version",
+          "source_hash",
+          "proposal_hash",
+          "acknowledge_layout_change"
+        ],
+        "additionalProperties": false
+      },
+      "ConversionProposal": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "source_doc_version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "source_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "proposal_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "original_html": {
+                "type": "string",
+                "maxLength": 2000000
+              },
+              "converted_nodes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200
+              },
+              "opaque_nodes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200
+              },
+              "notes": {
+                "maxItems": 201,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "layout_change",
+                        "opaque_preserved",
+                        "unsupported_source",
+                        "limit"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "status": {
+                "type": "string",
+                "const": "available"
+              },
+              "spec": {
+                "type": "object",
+                "properties": {
+                  "schema_version": {
+                    "type": "string",
+                    "const": "1.0"
+                  },
+                  "editing_mode": {
+                    "type": "string",
+                    "enum": [
+                      "structured",
+                      "raw_html"
+                    ]
+                  },
+                  "locale": {
+                    "type": "string",
+                    "enum": [
+                      "en-US",
+                      "en-GB",
+                      "fr-FR",
+                      "de-DE",
+                      "es-ES",
+                      "it-IT",
+                      "pt-BR",
+                      "nl-NL",
+                      "sv-SE",
+                      "da-DK",
+                      "no-NO",
+                      "fi-FI",
+                      "pl-PL",
+                      "cs-CZ",
+                      "tr-TR",
+                      "ja-JP",
+                      "ko-KR",
+                      "zh-CN",
+                      "zh-TW",
+                      "hi-IN",
+                      "ar-SA",
+                      "he-IL"
+                    ]
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "ltr",
+                      "rtl"
+                    ]
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "preheader": {
+                    "type": "string",
+                    "maxLength": 250
+                  },
+                  "brand_kit_version_id": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "theme": {
+                    "type": "object",
+                    "properties": {
+                      "content_width_px": {
+                        "type": "integer",
+                        "minimum": 320,
+                        "maximum": 800
+                      },
+                      "background": {
+                        "type": "string",
+                        "pattern": "^#[\\da-fA-F]{6}$"
+                      },
+                      "accent": {
+                        "type": "string",
+                        "pattern": "^#[\\da-fA-F]{6}$"
+                      },
+                      "font_stack": {
+                        "type": "string",
+                        "enum": [
+                          "Arial, sans-serif",
+                          "Georgia, serif",
+                          "Verdana, sans-serif"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "content_width_px",
+                      "background",
+                      "accent",
+                      "font_stack"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sections": {
+                    "maxItems": 200,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "hero"
+                                },
+                                "heading": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "heading",
+                                "text"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "text"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "text"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "image"
+                                },
+                                "src": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                },
+                                "alt": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "decorative": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "src",
+                                "alt"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "button"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 200
+                                },
+                                "href": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "label",
+                                "href"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "divider"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "social"
+                                },
+                                "links": {
+                                  "maxItems": 10,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "label": {
+                                        "type": "string",
+                                        "maxLength": 80
+                                      },
+                                      "href": {
+                                        "type": "string",
+                                        "maxLength": 2048
+                                      }
+                                    },
+                                    "required": [
+                                      "label",
+                                      "href"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "links"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "legal_footer"
+                                },
+                                "identity": {
+                                  "type": "string",
+                                  "maxLength": 500
+                                },
+                                "address": {
+                                  "type": "string",
+                                  "maxLength": 1000
+                                },
+                                "unsubscribe_slot": {
+                                  "type": "boolean",
+                                  "const": true
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "identity",
+                                "address",
+                                "unsubscribe_slot"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "product_card"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "maxLength": 10000
+                                },
+                                "price": {
+                                  "type": "string",
+                                  "maxLength": 100
+                                },
+                                "href": {
+                                  "type": "string",
+                                  "maxLength": 2048
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "title",
+                                "description",
+                                "price",
+                                "href"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 80
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "const": "custom_html"
+                                },
+                                "html": {
+                                  "type": "string",
+                                  "maxLength": 200000
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "type",
+                                "html"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            },
+                            "type": {
+                              "type": "string",
+                              "const": "columns"
+                            },
+                            "columns": {
+                              "minItems": 1,
+                              "maxItems": 2,
+                              "type": "array",
+                              "items": {
+                                "maxItems": 20,
+                                "type": "array",
+                                "items": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "hero"
+                                        },
+                                        "heading": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "text": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "heading",
+                                        "text"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "text"
+                                        },
+                                        "text": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "text"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "image"
+                                        },
+                                        "src": {
+                                          "type": "string",
+                                          "maxLength": 2048
+                                        },
+                                        "alt": {
+                                          "type": "string",
+                                          "maxLength": 500
+                                        },
+                                        "decorative": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "src",
+                                        "alt"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "button"
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 200
+                                        },
+                                        "href": {
+                                          "type": "string",
+                                          "maxLength": 2048
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "label",
+                                        "href"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "divider"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "social"
+                                        },
+                                        "links": {
+                                          "maxItems": 10,
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "maxLength": 80
+                                              },
+                                              "href": {
+                                                "type": "string",
+                                                "maxLength": 2048
+                                              }
+                                            },
+                                            "required": [
+                                              "label",
+                                              "href"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "links"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "legal_footer"
+                                        },
+                                        "identity": {
+                                          "type": "string",
+                                          "maxLength": 500
+                                        },
+                                        "address": {
+                                          "type": "string",
+                                          "maxLength": 1000
+                                        },
+                                        "unsubscribe_slot": {
+                                          "type": "boolean",
+                                          "const": true
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "identity",
+                                        "address",
+                                        "unsubscribe_slot"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "product_card"
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "description": {
+                                          "type": "string",
+                                          "maxLength": 10000
+                                        },
+                                        "price": {
+                                          "type": "string",
+                                          "maxLength": 100
+                                        },
+                                        "href": {
+                                          "type": "string",
+                                          "maxLength": 2048
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "title",
+                                        "description",
+                                        "price",
+                                        "href"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 80
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "const": "custom_html"
+                                        },
+                                        "html": {
+                                          "type": "string",
+                                          "maxLength": 200000
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "type",
+                                        "html"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "type",
+                            "columns"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "raw_html": {
+                    "type": "string",
+                    "maxLength": 2000000
+                  },
+                  "tracking": {
+                    "type": "object",
+                    "properties": {
+                      "utm_source": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "utm_medium": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "utm_campaign": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      }
+                    },
+                    "required": [
+                      "utm_source",
+                      "utm_medium",
+                      "utm_campaign"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schema_version",
+                  "editing_mode",
+                  "locale",
+                  "direction",
+                  "subject",
+                  "preheader",
+                  "brand_kit_version_id",
+                  "theme",
+                  "sections"
+                ],
+                "additionalProperties": false
+              },
+              "preview_html": {
+                "type": "string",
+                "maxLength": 2000000
+              }
+            },
+            "required": [
+              "source_doc_version",
+              "source_hash",
+              "proposal_hash",
+              "original_html",
+              "converted_nodes",
+              "opaque_nodes",
+              "notes",
+              "status",
+              "spec",
+              "preview_html"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "source_doc_version": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "source_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "proposal_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "original_html": {
+                "type": "string",
+                "maxLength": 2000000
+              },
+              "converted_nodes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200
+              },
+              "opaque_nodes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 200
+              },
+              "notes": {
+                "maxItems": 201,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "layout_change",
+                        "opaque_preserved",
+                        "unsupported_source",
+                        "limit"
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "status": {
+                "type": "string",
+                "const": "unsupported"
+              },
+              "spec": {
+                "type": "null"
+              },
+              "preview_html": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "source_doc_version",
+              "source_hash",
+              "proposal_hash",
+              "original_html",
+              "converted_nodes",
+              "opaque_nodes",
+              "notes",
+              "status",
+              "spec",
+              "preview_html"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
       "KeyInput": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -38847,6 +40471,66 @@
           "email"
         ],
         "additionalProperties": true
+      },
+      "ConversionProposalResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ConversionProposal"
+          }
+        },
+        "required": [
+          "request_id",
+          "proposal"
+        ],
+        "additionalProperties": false
+      },
+      "ConversionAcceptResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "title": {
+                "type": "string"
+              },
+              "doc_version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "spec": {
+                "$ref": "#/components/schemas/EmailSpec"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "doc_version",
+              "spec",
+              "updated_at"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "request_id",
+          "email"
+        ],
+        "additionalProperties": false
       },
       "DerivationResponse": {
         "type": "object",

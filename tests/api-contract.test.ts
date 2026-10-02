@@ -73,7 +73,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   ];
   const ids = ['', '{id}', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone'];
   const commands = [
-    'dns-checks',
+    'dns-checks','conversion-proposal','convert-to-blocks',
     'role','transfer-owner',
     '',
     'memory-preview',

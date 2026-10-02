@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import {EmailConversion}from'./email-conversion';
+import{ConversionProposalSchema}from'@/domain/email-conversion-contracts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,7 +43,7 @@ type Report = {
   rule_set_version: string;
   findings: Finding[];
 };
-export function Editor({ workspace, id, role }: { workspace: string; id: string; role: Role }) {
+export function Editor({ workspace, id, actor, role }: { workspace: string; id: string; actor:string; role: Role }) {
   const editRole = allowed(role, 'edit');
   const router = useRouter(),
     [doc, setDoc] = useState<Doc | null>(null),
@@ -73,7 +75,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     busyRef = useRef(''),
     editorActive = useRef(false),
     exportController = useRef<AbortController | null>(null);
-  const writable = editRole && !['raw', 'restore', 'reload', 'fork'].includes(busy);
+  const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
     dirtyAt = useRef(0),
@@ -273,7 +275,7 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
     if (
       !editRole ||
       !live.current ||
-      ['raw', 'restore', 'reload', 'fork'].includes(busyRef.current)
+      ['raw', 'restore', 'reload', 'fork','convert'].includes(busyRef.current)
     )
       return;
     epoch.current++;
@@ -562,6 +564,33 @@ export function Editor({ workspace, id, role }: { workspace: string; id: string;
         </label>
       </div>
       <EmailUTM key={workspace+':'+id} workspace={workspace} email={id} policy={doc.spec.tracking} canEdit={editRole} blocked={!!busy||!!conflict} onApply={applyUTM}/>
+      <EmailConversion key={JSON.stringify([workspace,actor,id])} workspace={workspace} email={id} actor={actor} spec={doc.spec} version={doc.doc_version} canEdit={editRole&&!!actor} blocked={!!busy||!!conflict}
+        onPrepare={async()=>{
+          if(busyRef.current||conflictRef.current||!editRole||!actor)return null;
+          let prepared:{proposal:ReturnType<typeof ConversionProposalSchema.parse>;context:{version:number;spec:string}}|null=null;
+          await act('conversion-review',async()=>{
+            if(!(await flush())||dirtyAt.current||!live.current)return;
+            const origin=anchor();
+            const response=await api<{proposal:unknown}>(workspace,'emails/'+id+'/conversion-proposal','POST',{expected_version:origin.version},undefined,undefined,undefined,actor);
+            if(!matches(origin))throw Error('The draft changed during conversion review. Your source is preserved; review the current draft again.');
+            const value=ConversionProposalSchema.parse(response.proposal);
+            if(value.source_doc_version!==origin.version||value.original_html!==live.current!.spec.raw_html)throw Error('The conversion proposal does not match the saved raw source.');
+            prepared={proposal:value,context:{version:origin.version,spec:origin.spec}};
+          });
+          return prepared;
+        }}
+        onAccept={async(command,context)=>{
+          if(busyRef.current||conflictRef.current||!editRole||!actor)throw Error('Resolve the current draft action or conflict before recovering conversion.');
+          busyRef.current='convert';setBusy('convert');setError('');const origin=anchor();
+          try{
+            if(command.body.expected_version!==context.version)throw Error('The original conversion context is inconsistent.');
+            const response=await api<{email:Doc}>(workspace,'emails/'+id+'/convert-to-blocks','POST',command.body,command.body.expected_version,command.key,undefined,actor);
+            const current=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
+            if(current.email.id!==id||response.email.id!==id||current.email.doc_version<response.email.doc_version)throw Error('The conversion receipt does not match current saved truth. Keep the original command and retry.');
+            if(matches(origin)&&!dirtyAt.current){install(current.email);localStorage.removeItem(storage);setReport(null);setRevision(null);setSelected(current.email.spec.sections[0]?.id??'');}
+            else if(editorActive.current)setError('Conversion was acknowledged; newer local edits are preserved. Compare or reload the current saved head before continuing.');
+          }finally{busyRef.current='';setBusy('');}
+        }}/>
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
         onCreate={(input) => void act('derive', async () => {
           if (!(await flush()) || dirtyAt.current || !live.current) return;

@@ -903,6 +903,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/emails/{id}/conversion-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * prepare email conversion
+         * @description Read-only proposal pinned to the current raw source/version; explicit unsupported cases stay raw, safe complex fragments remain opaque. No Monaco/VML/universal/client-fidelity claim.
+         */
+        post: operations["prepareEmailConversion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/emails/{id}/convert-to-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * accept email conversion
+         * @description Explicit layout-change acknowledgment and exact source/proposal hashes. Current authority after receipt/resource waits; atomic original raw checkpoint and new structured head. Historical exact receipts never replace current detail; recover the same body/key and original If-Match.
+         */
+        post: operations["acceptEmailConversion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/emails/{id}/derivatives": {
         parameters: {
             query?: never;
@@ -2547,6 +2587,194 @@ export interface components {
                 utm_campaign: string;
             };
         };
+        ConversionProposalInput: {
+            expected_version: number;
+        };
+        ConversionAcceptInput: {
+            expected_version: number;
+            source_hash: string;
+            proposal_hash: string;
+            /** @constant */
+            acknowledge_layout_change: true;
+        };
+        ConversionProposal: {
+            source_doc_version: number;
+            source_hash: string;
+            proposal_hash: string;
+            original_html: string;
+            converted_nodes: number;
+            opaque_nodes: number;
+            notes: {
+                /** @enum {string} */
+                code: "layout_change" | "opaque_preserved" | "unsupported_source" | "limit";
+                message: string;
+            }[];
+            /** @constant */
+            status: "available";
+            spec: {
+                /** @constant */
+                schema_version: "1.0";
+                /** @enum {string} */
+                editing_mode: "structured" | "raw_html";
+                /** @enum {string} */
+                locale: "en-US" | "en-GB" | "fr-FR" | "de-DE" | "es-ES" | "it-IT" | "pt-BR" | "nl-NL" | "sv-SE" | "da-DK" | "no-NO" | "fi-FI" | "pl-PL" | "cs-CZ" | "tr-TR" | "ja-JP" | "ko-KR" | "zh-CN" | "zh-TW" | "hi-IN" | "ar-SA" | "he-IL";
+                /** @enum {string} */
+                direction: "ltr" | "rtl";
+                subject: string;
+                preheader: string;
+                brand_kit_version_id: string;
+                theme: {
+                    content_width_px: number;
+                    background: string;
+                    accent: string;
+                    /** @enum {string} */
+                    font_stack: "Arial, sans-serif" | "Georgia, serif" | "Verdana, sans-serif";
+                };
+                sections: (({
+                    id: string;
+                    /** @constant */
+                    type: "hero";
+                    heading: string;
+                    text: string;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "text";
+                    text: string;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "image";
+                    src: string;
+                    alt: string;
+                    decorative?: boolean;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "button";
+                    label: string;
+                    href: string;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "divider";
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "social";
+                    links: {
+                        label: string;
+                        href: string;
+                    }[];
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "legal_footer";
+                    identity: string;
+                    address: string;
+                    /** @constant */
+                    unsubscribe_slot: true;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "product_card";
+                    title: string;
+                    description: string;
+                    price: string;
+                    href: string;
+                } | {
+                    id: string;
+                    /** @constant */
+                    type: "custom_html";
+                    html: string;
+                }) | {
+                    id: string;
+                    /** @constant */
+                    type: "columns";
+                    columns: ({
+                        id: string;
+                        /** @constant */
+                        type: "hero";
+                        heading: string;
+                        text: string;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "text";
+                        text: string;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "image";
+                        src: string;
+                        alt: string;
+                        decorative?: boolean;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "button";
+                        label: string;
+                        href: string;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "divider";
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "social";
+                        links: {
+                            label: string;
+                            href: string;
+                        }[];
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "legal_footer";
+                        identity: string;
+                        address: string;
+                        /** @constant */
+                        unsubscribe_slot: true;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "product_card";
+                        title: string;
+                        description: string;
+                        price: string;
+                        href: string;
+                    } | {
+                        id: string;
+                        /** @constant */
+                        type: "custom_html";
+                        html: string;
+                    })[][];
+                })[];
+                raw_html?: string;
+                tracking?: {
+                    utm_source: string;
+                    utm_medium: string;
+                    utm_campaign: string;
+                };
+            };
+            preview_html: string;
+        } | {
+            source_doc_version: number;
+            source_hash: string;
+            proposal_hash: string;
+            original_html: string;
+            converted_nodes: number;
+            opaque_nodes: number;
+            notes: {
+                /** @enum {string} */
+                code: "layout_change" | "opaque_preserved" | "unsupported_source" | "limit";
+                message: string;
+            }[];
+            /** @constant */
+            status: "unsupported";
+            spec: null;
+            preview_html: null;
+        };
         KeyInput: {
             name: string;
             scopes: ("brands:read" | "brands:write" | "emails:read" | "emails:write" | "emails:export" | "audience:read" | "audience:write" | "campaigns:read" | "campaigns:write" | "campaigns:approve" | "campaigns:send" | "integrations:read" | "events:read" | "webhooks:read" | "webhooks:write" | "sender:read" | "sender:write")[];
@@ -3236,6 +3464,22 @@ export interface components {
             email: components["schemas"]["Email"];
         } & {
             [key: string]: unknown;
+        };
+        ConversionProposalResponse: {
+            request_id: string;
+            proposal: components["schemas"]["ConversionProposal"];
+        };
+        ConversionAcceptResponse: {
+            request_id: string;
+            email: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                doc_version: number;
+                spec: components["schemas"]["EmailSpec"];
+                /** Format: date-time */
+                updated_at: string;
+            };
         };
         DerivationResponse: {
             request_id: string;
@@ -18099,6 +18343,8 @@ export interface operations {
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
                 "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
             };
             path: {
                 id: string;
@@ -18404,6 +18650,585 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OperationResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    prepareEmailConversion: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                "application/json": components["schemas"]["ConversionProposalInput"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionProposalResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            412: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            429: {
+                headers: {
+                    /** @description Minimum seconds before retry */
+                    "Retry-After"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "RATE_LIMITED",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": false
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req-example",
+                     *       "error": {
+                     *         "code": "STATE_CONFLICT",
+                     *         "message": "Resolve the documented request or setup requirement.",
+                     *         "retryable": true
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    acceptEmailConversion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
+                "X-Workspace-Id"?: string;
+                /** @description Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts. */
+                "Idempotency-Key": string;
+                /** @description Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED. */
+                "X-Actor-Id"?: string;
+                /** @description Acknowledged draft version; stale412, absent428. */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "source_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+                 *       "proposal_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+                 *       "acknowledge_layout_change": true
+                 *     }
+                 */
+                "application/json": components["schemas"]["ConversionAcceptInput"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged result */
+            200: {
+                headers: {
+                    "X-Request-Id"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversionAcceptResponse"];
                 };
             };
             /** @description Safe error; preserve request ID. Business errors do not automatically retry. */

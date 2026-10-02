@@ -457,9 +457,10 @@ export function MailcraftApp({
           )}
           {section === 'emails' && screen[1] && screen[1] !== 'new' && (
             <Editor
-              key={workspace + screen[1]}
+              key={JSON.stringify([workspace,actor,screen[1]])}
               workspace={workspace}
               id={screen[1]}
+              actor={actor}
               role={current?.role ?? 'Viewer'}
             />
           )}

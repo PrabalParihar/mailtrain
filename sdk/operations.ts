@@ -408,6 +408,22 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "prepareEmailConversion": {
+    "method": "POST",
+    "path": "/v1/emails/{id}/conversion-proposal",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "acceptEmailConversion": {
+    "method": "POST",
+    "path": "/v1/emails/{id}/convert-to-blocks",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
   "listEmailDerivatives": {
     "method": "GET",
     "path": "/v1/emails/{id}/derivatives",

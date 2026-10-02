@@ -59,6 +59,7 @@ jobs:
           npm run smoke:api
           npm run smoke:navigation
           npm run smoke:editor
+          npm run smoke:conversion
           npm run smoke:import
           npm run smoke:preferences
           npm run smoke:keys

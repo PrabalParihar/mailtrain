@@ -1,3 +1,4 @@
+import {emailConversionRoute}from'@/server/email-conversion';
 import {workspacePreferenceRoute} from '@/server/workspace-calendar';
 import{creationPage,creationView,creationAttempts}from'@/server/creation-history';
 import { membershipRoute } from '@/server/membership-route';
@@ -61,6 +62,7 @@ async function handle(req: Request, ctx: Context) {
         fail(428, 'VERSION_REQUIRED', 'Supply the acknowledged If-Match draft version.');
       return v;
     };
+    if(root==='emails'&&id&&['conversion-proposal','convert-to-blocks'].includes(command))return json(await emailConversionRoute(req,id,command,body,key));
     if (root === 'health')
       return json({ status: 'ok', release: 'development', dispatch_enabled: false });
     if(root==='sender-identities')return json(await senderDomainRoute(req,path,body,key),method==='POST'&&!id?201:200);
@@ -180,6 +182,7 @@ async function handle(req: Request, ctx: Context) {
       if (method === 'GET')
         return json(
           await withPrincipal(req, 'read', async (tx, p) => {
+            const expectedActor=req.headers.get('x-actor-id');if(expectedActor!==null){z.string().min(1).parse(expectedActor);if(expectedActor!==p.user)fail(409,'ACTOR_CHANGED','Your signed-in account changed. Reload before recovering email work.');}
             if (id && command === 'derivatives') {
               await getEmail(tx, id);
               return resourcePage(req, tx, p, {
