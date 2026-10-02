@@ -195,3 +195,9 @@ The immutable ledger remains the complete record of implementation alternatives 
 ## Handoff
 
 Root can perform its ONE native Important/Critical RED→GREEN pass for F1, retain F2 as deferred, run appropriate affected/final qualification, and record these rulings. The reviewed HEAD is intentionally unchanged. The owned reproduction source and all reviewer logs remain in `/tmp` as review deliverables; database/browser fixtures were cleaned exactly. No remaining reviewer environment blocker exists. Remote publication/production acceptance limitations remain as documented by the author and ledger.
+
+## Verified canonical local closeout
+
+Canonical Desktop/mail fast-forwarded cleanly from874df36 to6f8e148: **396 tracked SHA256 matches**, zero40-path collisions, ignored private.env0600 and both readable PRDs unchanged by mode/size/inode/mtime; no private contents read. `/tmp/lettercape-sender-canonical-sync.json` retains the exact head and verification.
+
+Complete canonical `smoke:sender-domain` actual HTTP plus both sender/actor Chromium suites PASS on owned3002, as do canonical keyboard390/1440, editor and API14 groups. Logs `/tmp/lettercape-sender-canonical-{sender,navigation,editor,api}.log`. The source fix isb5b4e2d; subsequent public evidence changes do not change executable behavior. This completes local source/verification work, while Task6 remote publication and exact-current-head CI stay blocked pending fresh direct trusted approval. Keep private closeout ledgers. All65requirements/all13gates remain open; no production deployment.
