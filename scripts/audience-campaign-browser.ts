@@ -100,7 +100,7 @@ try{
     assert.equal((await call(path)).campaign.version,8);await page.reload();await box.getByRole('button',{name:'Retry original configuration',exact:true}).waitFor();assert.equal(await name.isDisabled(),true);await page.unroute('**/v1/'+path);
     await db.query("UPDATE memberships SET role='Editor' WHERE workspace_id=$1 AND user_id=$2",[workspace,user]);
     const deniedCommand=page.waitForResponse(response=>new URL(response.url()).pathname==='/v1/'+path+'/configuration'&&response.request().method()==='POST'&&response.status()===403);
-    await box.getByRole('button',{name:'Retry original configuration',exact:true}).click();assert.equal((await deniedCommand).status(),403);await box.getByRole('alert').filter({hasText:/role|permission/i}).waitFor();
+    await box.getByRole('button',{name:'Retry original configuration',exact:true}).click();const deniedResponse=await deniedCommand;assert.equal(deniedResponse.status(),403);assert.equal((await deniedResponse.json()).error.code,'INSUFFICIENT_SCOPE');
     assert.deepEqual(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).pending,pendingSlot),pendingRecord.pending);await db.query("UPDATE memberships SET role='Owner' WHERE workspace_id=$1 AND user_id=$2",[workspace,user]);
     await box.getByRole('button',{name:'Retry original configuration',exact:true}).click();await box.getByRole('status').filter({hasText:'Draft configuration saved.'}).waitFor();assert.equal(transmitted[2].key,transmitted[0].key);assert.equal(transmitted[2].body,transmitted[0].body);assert.equal((await call(path)).campaign.version,8);await page.unroute('**/v1/'+path+'/configuration');
     // Response loss followed by cancellation still permits only the original receipt, not fresh editing.
