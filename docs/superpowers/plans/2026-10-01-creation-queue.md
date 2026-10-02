@@ -51,5 +51,5 @@ Consumes store/engine evidence. Return redacted attempt/accounting metadata, nev
 - [x] Verify interruption/repeated click/lost response/reload/workspace navigation/mobile, configured-provider absent, queue/idempotency/accounting; existing membership/authority/key/contract smokes; full tests/lint/typecheck/API/build. Expected PASS. Commit.
 
 ### Task5: Single review/publication
-- [ ] One fresh Astrahigh reviewer of complete BASE..HEAD/plan/spec/ledger and all five review focuses. Regrade by effect; one Important/Critical RED→GREEN pass, Minors deferred and all declined judgments ruled.
+- [x] One fresh Astrahigh reviewer of complete BASE..HEAD/plan/spec/ledger and all five review focuses. Regrade by effect; one Important/Critical RED→GREEN pass, Minors deferred and all declined judgments ruled.
 - [ ] Final tests/full checks/owned HTTP/Chromium; canonical clean expected-head check and tracked-only hash-verified sync; authorized ordinary push; exact-head CI readback. No production activation until private setup/full13gates accepted.
