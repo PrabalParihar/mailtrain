@@ -40,9 +40,9 @@ Consumes Task1 contracts. Produces claimCreation(pool,wake):Promise<CreationClai
 ### Task3: Separate rebuildable queues and actual process recovery
 Files create src/server/creation-queues.ts, src/server/creation-engine.ts, src/server/creation-worker.ts, tests/creation-engine.test.ts, tests/creation-worker-restart.test.ts and owned process fixture; modify existing src/server/worker.ts to guarded compatibility entry, ai.ts/safe-fetch.ts cancellation adapters, package scripts/CI/env example.
 Consumes Task2 store functions. Engine runCreation(claim,adapters,signal):Promise<void>; adapters{extract(context,signal),generate(context,signal)} production adapters are existing real implementations, fixture adapters strictly owned loopback. Queue enqueueCreation(wake,type), reconcileCreation(), closeCreationQueues(); data strict Task1 wake only.
-- [ ] RED engine/tests and distinct owned-process HTTP fixture: kill after effect commit/withhold acknowledgment; SQL recovery retains AI reservation and prevents second request, old tokens deny; separate pre-start kill safely requeues, Redis wake loss rebuilds and duplicates have one effect; global/per-tenant limits honored.
-- [ ] Implement BullMQ ID-only queues, SQL periodic reconciliation, graceful cancellation/renewal and restricted worker pool. Production entry refuses incomplete/nonempty same-build gates/private worker identity before queue/provider access. Real AI not configured remains truthful pre-start failure.
-- [ ] Run focused engine/restart tests and existing key-worker/cancellation tests→PASS; full suite/checks→PASS. Commit.
+- [x] RED engine/tests and distinct owned-process HTTP fixture: kill after effect commit/withhold acknowledgment; SQL recovery retains AI reservation and prevents second request, old tokens deny; separate pre-start kill safely requeues, Redis wake loss rebuilds and duplicates have one effect; global/per-tenant limits honored.
+- [x] Implement BullMQ ID-only queues, SQL periodic reconciliation, graceful cancellation/renewal and restricted worker pool. Production entry refuses incomplete/nonempty same-build gates/private worker identity before queue/provider access. Real AI not configured remains truthful pre-start failure.
+- [x] Run focused engine/restart tests and existing key-worker/cancellation tests→PASS; full suite/checks→PASS. Commit.
 
 ### Task4: Truthful operation recovery UI/API
 Files modify operation route/schema generator/sdk, src/ui/api.ts and creation status controls; create scripts/smoke-creation-queue.ts.

@@ -1,64 +1,9 @@
-import { withCreationQueueFixture } from './fixtures/creation-queue-lock';
-import { test, after } from 'node:test';
-import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
-import { spawn } from 'node:child_process';
-import pg from 'pg';
-import env from '@next/env';
-env.loadEnvConfig(process.cwd());
-const admin = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL });
-after(() => admin.end());
-test('queued API creation rechecks revoked, expired and narrowed credentials', async () => withCreationQueueFixture(async () => {
-  const workspace = randomUUID(),
-    user = 'key-worker-' + randomUUID(),
-    jobs = [randomUUID(), randomUUID(), randomUUID()],
-    keys = [randomUUID(), randomUUID(), randomUUID()];
-  await admin.query('INSERT INTO workspaces(id,name) VALUES($1,$2)', [
-    workspace,
-    'Key worker fixture',
-  ]);
-  await admin.query("INSERT INTO memberships(workspace_id,user_id,role) VALUES($1,$2,'Owner')", [
-    workspace,
-    user,
-  ]);
-  for (let i = 0; i < 3; i++) {
-    await admin.query(
-      'INSERT INTO api_keys(workspace_id,id,key_hash,name,scopes,created_by,expires_at,revoked_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',
-      [
-        workspace,
-        keys[i],
-        randomUUID(),
-        'Fixture',
-        JSON.stringify([i === 2 ? 'brands:read' : 'brands:write']),
-        user,
-        new Date(Date.now() + (i === 1 ? -1000 : 3600000)),
-        i === 0 ? new Date() : null,
-      ],
-    );
-    await admin.query(
-      "INSERT INTO operations(workspace_id,id,type,input,created_by,created_api_key_id) VALUES($1,$2,'brand.extract',$3,$4,$5)",
-      [workspace, jobs[i], JSON.stringify({ url: 'http://127.0.0.1' }), user, keys[i]],
-    );
-  }
-  const worker = spawn(process.execPath, ['--import', 'tsx', 'src/server/worker.ts'], {
-    stdio: 'ignore',
-  });
-  try {
-    let rows: { state: string; error: { code: string } }[] = [];
-    for (let i = 0; i < 100; i++) {
-      rows = (
-        await admin.query('SELECT state,error FROM operations WHERE workspace_id=$1', [workspace])
-      ).rows;
-      if (rows.every((r) => r.state === 'failed')) break;
-      await new Promise((r) => setTimeout(r, 50));
-    }
-    assert.equal(rows.length, 3);
-    assert.ok(rows.every((r) => r.error?.code === 'PERMISSION_REVOKED'));
-  } finally {
-    worker.kill('SIGTERM');
-    await new Promise<void>((resolve) => worker.once('exit', () => resolve()));
-    for (const table of ['operations', 'api_keys', 'memberships'])
-      await admin.query('DELETE FROM ' + table + ' WHERE workspace_id=$1', [workspace]);
-    await admin.query('DELETE FROM workspaces WHERE id=$1', [workspace]);
-  }
+import test from'node:test';import assert from'node:assert/strict';import{randomUUID}from'node:crypto';import{spawn}from'node:child_process';import{once}from'node:events';import pg from'pg';import env from'@next/env';import{withCreationDatabase}from'./fixtures/creation-database';env.loadEnvConfig(process.cwd());
+test('queued API creation rechecks revoked, expired and narrowed credentials in the actual durable worker',async()=>withCreationDatabase(async connection=>{
+ const admin=new pg.Pool({connectionString:connection}),workspace=randomUUID(),user='key-worker-'+randomUUID(),jobs=[randomUUID(),randomUUID(),randomUUID()],keys=[randomUUID(),randomUUID(),randomUUID()];
+ await admin.query("INSERT INTO workspaces(id,name)VALUES($1,'Key worker fixture')",[workspace]);await admin.query("INSERT INTO memberships(workspace_id,user_id,role)VALUES($1,$2,'Owner')",[workspace,user]);
+ for(let index=0;index<3;index++){await admin.query('INSERT INTO api_keys(workspace_id,id,key_hash,name,scopes,created_by,expires_at,revoked_at)VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[workspace,keys[index],randomUUID(),'Fixture',JSON.stringify([index===2?'brands:read':'brands:write']),user,new Date(Date.now()+(index===1?-1000:3600000)),index===0?new Date():null]);await admin.query("INSERT INTO operations(workspace_id,id,type,input,created_by,created_api_key_id)VALUES($1,$2,'brand.extract',$3,$4,$5)",[workspace,jobs[index],JSON.stringify({url:'http://127.0.0.1'}),user,keys[index]]);}
+ const prefix='creation-fixture-'+randomUUID().replaceAll('-',''),worker=spawn(process.execPath,['--import','tsx','tests/fixtures/creation-worker-process.ts'],{env:{LOCAL_DEVELOPMENT:'true',NODE_ENV:'test'},stdio:['pipe','ignore','ignore']});worker.stdin!.end(JSON.stringify({connection,redis:process.env.REDIS_URL,prefix,receiver:'http://127.0.0.1:1',mode:'normal'}));
+ try{let rows:{state:string;error:{code:string}}[]=[];for(let index=0;index<100;index++){rows=(await admin.query('SELECT state,error FROM operations WHERE workspace_id=$1',[workspace])).rows;if(rows.every(row=>row.state==='failed'))break;await new Promise(resolve=>setTimeout(resolve,50));}assert.equal(rows.length,3);assert.ok(rows.every(row=>row.error?.code==='PERMISSION_REVOKED'));}
+ finally{if(worker.exitCode===null&&worker.signalCode===null){const ended=once(worker,'exit');worker.kill('SIGTERM');await ended;}const{Redis}=await import('ioredis');const redis=new Redis(process.env.REDIS_URL!);try{const pending=await redis.keys(prefix+':*');if(pending.length)await redis.del(...pending);}finally{await redis.quit();}await admin.end();}
 }));

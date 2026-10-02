@@ -1,0 +1,5 @@
+import test from'node:test';import assert from'node:assert/strict';import{spawnSync}from'node:child_process';
+test('creation production entry refuses disabled activation and incomplete same-build evidence before queues/providers',()=>{
+ const base={...process.env,LOCAL_DEVELOPMENT:'false',DATABASE_URL:'',MIGRATION_DATABASE_URL:'',LOCAL_BOOTSTRAP_SECRET:'',CREATION_WORKER_DATABASE_URL:'postgresql://private-worker@127.0.0.1:1/fixture',CREATION_SCHEDULER_DATABASE_URL:'postgresql://private-scheduler@127.0.0.1:1/fixture',REDIS_URL:'redis://127.0.0.1:1',RELEASE_BUILD:'owned-gate-fixture'};
+ for(const enabled of['false','true']){const child=spawnSync(process.execPath,['--import','tsx','src/server/creation-worker.ts'],{env:{...base,CREATION_WORKER_ENABLED:enabled},encoding:'utf8',timeout:5000});assert.equal(child.status,1);assert.match(child.stderr,enabled==='true'?/full-GA evidence incomplete/:/Creation worker disabled/);assert.doesNotMatch(child.stderr,/ECONNREFUSED|creation_wakeup_unavailable/);}
+});

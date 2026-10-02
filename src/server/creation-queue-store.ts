@@ -15,8 +15,8 @@ export async function dueCreation(pool:pg.Pool):Promise<CreationWakeData[]>{retu
 export async function claimCreation(pool:pg.Pool,input:CreationWakeData):Promise<CreationClaim|null>{
  const wake=CreationWake.parse(input),row=(await pool.query('SELECT public.mailcraft_claim_creation($1,$2,$3)AS result',[wake.workspace_id,wake.operation_id,randomUUID()])).rows[0].result;return row===null?null:Claim.parse(row);
 }
-export async function beginCreationAttempt(pool:pg.Pool,input:CreationClaim):Promise<CreationContext|null>{
- const claim=Claim.parse(input),row=(await pool.query('SELECT public.mailcraft_begin_creation($1,$2,$3)AS result',[claim.workspace_id,claim.operation_id,claim.token])).rows[0].result;
+async function creationContext(pool:pg.Pool,input:CreationClaim,start:boolean):Promise<CreationContext|null>{
+ const claim=Claim.parse(input),row=(await pool.query(start?'SELECT public.mailcraft_begin_creation($1,$2,$3)AS result':'SELECT public.mailcraft_prepare_creation($1,$2,$3)AS result',[claim.workspace_id,claim.operation_id,claim.token])).rows[0].result;
  if(row===null)return null;
  const operation=Operation.parse(row.operation);if(operation.workspace_id!==claim.workspace_id||operation.id!==claim.operation_id)throw new Error('Creation context identity mismatch.');
  let brand:Brand|null=null,memory:MemoryContext|null=null;
@@ -26,6 +26,8 @@ export async function beginCreationAttempt(pool:pg.Pool,input:CreationClaim):Pro
  }
  return{operation,brand,memory,grant_until:timestamp.parse(row.grant_until)};
 }
+export function prepareCreationAttempt(pool:pg.Pool,input:CreationClaim){return creationContext(pool,input,false);}
+export function beginCreationAttempt(pool:pg.Pool,input:CreationClaim){return creationContext(pool,input,true);}
 export async function renewCreation(pool:pg.Pool,input:CreationClaim):Promise<boolean>{const claim=Claim.parse(input);return(await pool.query('SELECT public.mailcraft_renew_creation($1,$2,$3)AS result',[claim.workspace_id,claim.operation_id,claim.token])).rows[0].result;}
 export async function settleCreation(pool:pg.Pool,input:CreationClaim,provided:CreationSettlement):Promise<boolean>{const claim=Claim.parse(input),outcome=Outcome.parse(provided);return(await pool.query('SELECT public.mailcraft_settle_creation($1,$2,$3,$4,$5,$6)AS result',[claim.workspace_id,claim.operation_id,claim.token,outcome.outcome,outcome.result===undefined?null:JSON.stringify(outcome.result),outcome.retry_after_ms??null])).rows[0].result;}
 export async function recoverCreation(pool:pg.Pool,input:CreationWakeData):Promise<boolean>{const wake=CreationWake.parse(input);return(await pool.query('SELECT public.mailcraft_recover_creation($1,$2)AS result',[wake.workspace_id,wake.operation_id])).rows[0].result;}

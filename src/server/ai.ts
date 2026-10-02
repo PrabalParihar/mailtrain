@@ -3,6 +3,7 @@ import { EmailSpecSchema, blankSpec } from '../domain/email';
 import type { Brand } from '../domain/brand';
 import { BrandMemoryContext,type MemoryContext } from '../domain/brand-memory';
 import { fail } from './errors';
+import{CreationAdapterError}from'./creation-engine';import{aiResponseFailure}from'./ai-response-policy';
 const CopySchema = z
   .object({
     subject: z.string().min(1).max(200),
@@ -53,6 +54,7 @@ export async function generateProposal(
   },
   brand: Brand,
   memory: MemoryContext,
+  signal?: AbortSignal,
 ) {
   if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_MODEL)
     fail(409, 'PROVIDER_NOT_READY', 'AI provider not configured.');
@@ -76,14 +78,15 @@ export async function generateProposal(
         },
       },
     }),
-    signal: AbortSignal.timeout(120000),
+    signal: AbortSignal.any([AbortSignal.timeout(120000),...(signal?[signal]:[])]),
   });
-  if (!response.ok)
-    fail(
-      503,
-      'AI_PROVIDER_ERROR',
-      'The AI provider did not return usable output. The draft is preserved.',
-    );
+  if (!response.ok){
+    const errorBody=response.status===429?await response.json():null;
+    if(response.status!==429)await response.body?.cancel();
+    const failure=aiResponseFailure(response.status,errorBody,response.headers.get('retry-after'),Date.now());
+    if(failure.outcome==='terminal')fail(503,failure.code??'AI_PROVIDER_ERROR','The AI provider rejected this request. The draft is preserved.');
+    throw new CreationAdapterError(failure.outcome,failure.retry_after_ms);
+  }
   const result = await response.json();
   if (result.status === 'incomplete')
     fail(422, 'AI_TRUNCATED', 'AI output was incomplete. No proposal was applied.');

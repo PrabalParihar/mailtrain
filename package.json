@@ -32,7 +32,8 @@
     "smoke:webhook-history-configured": "node --import tsx scripts/smoke-webhook-configured.ts --history",
     "smoke:brand-memory": "node --import tsx scripts/smoke-brand-memory.ts",
     "smoke:authority": "node --import tsx scripts/smoke-current-authority.ts",
-    "smoke:memberships": "node --import tsx scripts/smoke-memberships.ts"
+    "smoke:memberships": "node --import tsx scripts/smoke-memberships.ts",
+    "worker:creation": "node --import tsx src/server/creation-worker.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

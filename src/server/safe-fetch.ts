@@ -71,12 +71,14 @@ async function withinDeadline<T>(promise: Promise<T>, deadline: number): Promise
     clearTimeout(timer);
   }
 }
-export async function safeFetchHtml(input: string): Promise<{ html: string; url: string }> {
+export async function safeFetchHtml(input: string,signal?:AbortSignal): Promise<{ html: string; url: string }> {
   const deadline = Date.now() + 15000;
   let u = validatePublicUrl(input);
   for (let redirects = 0; redirects <= 5; redirects++) {
+    signal?.throwIfAborted();
     const hostname = u.hostname.replace(/^\[|\]$/g, '');
     const answers = await withinDeadline(lookup(hostname, { all: true }), deadline);
+    signal?.throwIfAborted();
     if (!answers.length || answers.some((a) => !publicAddress(a.address)))
       fail(422, 'UNSAFE_URL', 'The URL resolves to a private or reserved network.');
     const pinned = answers[0];
@@ -89,6 +91,7 @@ export async function safeFetchHtml(input: string): Promise<{ html: string; url:
       const req = (u.protocol === 'https:' ? https : http).get(
         u,
         {
+          signal,
           headers: {
             'User-Agent': 'LettercapeBrandReview/1.0',
             Accept: 'text/html',

@@ -1,0 +1,7 @@
+import pg from'pg';import{randomUUID}from'node:crypto';import{spawn}from'node:child_process';import{readFile,readdir}from'node:fs/promises';
+export async function withCreationDatabase<T>(run:(connection:string)=>Promise<T>,through?:'023-creation-queue'):Promise<T>{
+ const base=process.env.MIGRATION_DATABASE_URL;if(process.env.LOCAL_DEVELOPMENT!=='true'||!base||!['127.0.0.1','localhost','postgres'].includes(new URL(base).hostname))throw new Error('Owned local database required.');
+ const db='creation_fixture_'+randomUUID().replaceAll('-',''),admin=new pg.Pool({connectionString:base}),url=new URL(base);url.pathname='/'+db;
+ try{await admin.query('CREATE DATABASE '+db);if(through){const client=new pg.Client({connectionString:url.toString()});await client.connect();try{for(const file of(await readdir('db')).filter(file=>/^\d+.*\.sql$/.test(file)&&file<=through+'.sql').sort())await client.query(await readFile('db/'+file,'utf8'));}finally{await client.end();}}else{const migrated=await new Promise<boolean>(resolve=>{const child=spawn(process.execPath,['--import','tsx','scripts/migrate.ts'],{env:{...process.env,MIGRATION_DATABASE_URL:url.toString()},stdio:'ignore'});child.once('error',()=>resolve(false));child.once('exit',code=>resolve(code===0));});if(!migrated)throw new Error('Owned creation fixture migration failed.');}return await run(url.toString());}
+ finally{await admin.query('DROP DATABASE IF EXISTS '+db);await admin.end();}
+}
