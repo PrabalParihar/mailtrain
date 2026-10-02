@@ -380,6 +380,7 @@ type Definition = {
   blocked?: boolean;
   query?: unknown[];
   scope?: string;
+  additionalScopes?: string[];
   example?: unknown;
   binary?: boolean;
   binaryBody?: boolean;
@@ -542,7 +543,7 @@ function add(d: Definition) {
       : {}),
     responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}),...(d.sourceCommand||d.sourceJson?{408:errors[400],415:errors[400]}:{}) },
     ...(d.textBody||d.sourceJson?{'x-lettercape-body-max-bytes':d.textBody?MAX_RAW_SOURCE_BYTES:MAX_SOURCE_COMMAND_JSON_BYTES}:{}),
-    'x-lettercape-scopes': d.scope ? [d.scope] : [],
+    'x-lettercape-scopes': [...(d.scope?[d.scope]:[]),...(d.additionalScopes??[])],
     'x-lettercape-availability': d.blocked ? 'blocked' : 'development',
     'x-lettercape-idempotent-command': !!d.keyed,
   };
@@ -929,11 +930,11 @@ add({id:'getWorkspacePreferences',path:'/v1/workspace-preferences',method:'GET',
 add({id:'setWorkspaceTimezone',path:'/v1/workspace-preferences/timezone',method:'POST',body:'WorkspaceTimezoneInput',example:{expected_version:1,time_zone:'UTC'},response:'WorkspaceTimezoneResponse',keyed:true,session:true,description:'Current Owner/Admin session and exact preference version. Replay acknowledges the original command and returns current preference. Campaign intent, hashes and approval remain intact; this does not schedule delivery.'});
 add({id:'getCampaignCalendar',path:'/v1/campaigns/calendar',method:'GET',response:'CampaignCalendarResponse',paged:true,scope:'campaigns:read',query:[{name:'month',in:'query',required:true,schema:fromZod(CalendarMonth)}],description:'Complete valid planned timing displayed in saved workspace timezone. Signed cursor binds actor, tenant, month and timezone version. Redacted metadata only; no accepted delivery schedule or audience-performance measurement.'});
 const assessmentDescription='Historical recipient observations from an exact immutable campaign configuration and verified frozen audience. Current Owner/Admin audience authority and additional audience:read API-key scope required on every request/replay. Selected topic is assessment context only. No approval, dispatch authorization, delivery attempt, provider call, frequency reservation or send quota. Production worker identity remains unqualified; local development worker only.';
-add({id:'prepareRecipientAssessment',path:'/v1/campaigns/{id}/recipient-assessments',method:'POST',body:'RecipientAssessmentInput',response:'RecipientAssessmentResponse',status:202,keyed:true,explicitKey:true,scope:'campaigns:write',description:assessmentDescription+' Version and digest CAS; original keyed receipt is historical, retrieve detail for current progress. Maximum10,000 members; input16KiB.'});
-add({id:'listRecipientAssessments',path:'/v1/campaigns/{id}/recipient-assessments',method:'GET',response:'RecipientAssessmentsPage',paged:true,scope:'campaigns:read',description:assessmentDescription});
-add({id:'getRecipientAssessment',path:'/v1/recipient-assessments/{id}',method:'GET',response:'RecipientAssessmentResponse',scope:'campaigns:read',description:assessmentDescription});
-add({id:'listRecipientObservations',path:'/v1/recipient-assessments/{id}/observations',method:'GET',response:'RecipientObservationsPage',paged:true,scope:'campaigns:read',description:assessmentDescription+' Contact IDs only; no recipient addresses. Signed cursor binds actor/tenant/assessment and date filters, default25/max100.'});
-add({id:'cancelRecipientAssessment',path:'/v1/recipient-assessments/{id}/cancel',method:'POST',body:'Empty',response:'RecipientAssessmentResponse',keyed:true,explicitKey:true,scope:'campaigns:write',description:assessmentDescription+' Retains manifest and committed observations. A completed run remains completed.'});
+add({id:'prepareRecipientAssessment',path:'/v1/campaigns/{id}/recipient-assessments',method:'POST',body:'RecipientAssessmentInput',response:'RecipientAssessmentResponse',status:202,keyed:true,explicitKey:true,scope:'campaigns:write',additionalScopes:['audience:read'],description:assessmentDescription+' Version and digest CAS; original keyed receipt is historical, retrieve detail for current progress. Maximum10,000 members; input16KiB.'});
+add({id:'listRecipientAssessments',path:'/v1/campaigns/{id}/recipient-assessments',method:'GET',response:'RecipientAssessmentsPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:assessmentDescription});
+add({id:'getRecipientAssessment',path:'/v1/recipient-assessments/{id}',method:'GET',response:'RecipientAssessmentResponse',scope:'campaigns:read',additionalScopes:['audience:read'],description:assessmentDescription});
+add({id:'listRecipientObservations',path:'/v1/recipient-assessments/{id}/observations',method:'GET',response:'RecipientObservationsPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:assessmentDescription+' Contact IDs only; no recipient addresses. Signed cursor binds actor/tenant/assessment and date filters, default25/max100.'});
+add({id:'cancelRecipientAssessment',path:'/v1/recipient-assessments/{id}/cancel',method:'POST',body:'Empty',response:'RecipientAssessmentResponse',keyed:true,explicitKey:true,scope:'campaigns:write',additionalScopes:['audience:read'],description:assessmentDescription+' Retains manifest and committed observations. A completed run remains completed.'});
 add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignDetailResponse',scope:'campaigns:read'});
 add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
 add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS, exact owned content and explicit planned timing. Optional audience_snapshot_id requires current Owner/Admin audience authority and additional audience:read on a key; omission preserves the existing selection. Exact frozen members/source digest are verified and bound without live re-evaluation. Material changes clear review/approval; no-op does not append history. Original receipts require current authority and do not imply current lifecycle state or accepted delivery.'});

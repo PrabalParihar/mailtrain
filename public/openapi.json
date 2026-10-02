@@ -33525,7 +33525,8 @@
           }
         },
         "x-lettercape-scopes": [
-          "campaigns:write"
+          "campaigns:write",
+          "audience:read"
         ],
         "x-lettercape-availability": "development",
         "x-lettercape-idempotent-command": true
@@ -33862,7 +33863,8 @@
           }
         },
         "x-lettercape-scopes": [
-          "campaigns:read"
+          "campaigns:read",
+          "audience:read"
         ],
         "x-lettercape-availability": "development",
         "x-lettercape-idempotent-command": false
@@ -34164,7 +34166,8 @@
           }
         },
         "x-lettercape-scopes": [
-          "campaigns:read"
+          "campaigns:read",
+          "audience:read"
         ],
         "x-lettercape-availability": "development",
         "x-lettercape-idempotent-command": false
@@ -34503,7 +34506,8 @@
           }
         },
         "x-lettercape-scopes": [
-          "campaigns:read"
+          "campaigns:read",
+          "audience:read"
         ],
         "x-lettercape-availability": "development",
         "x-lettercape-idempotent-command": false
@@ -34827,7 +34831,8 @@
           }
         },
         "x-lettercape-scopes": [
-          "campaigns:write"
+          "campaigns:write",
+          "audience:read"
         ],
         "x-lettercape-availability": "development",
         "x-lettercape-idempotent-command": true

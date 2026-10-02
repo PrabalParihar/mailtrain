@@ -488,3 +488,117 @@ SHA-256 values were stable across the final reads:
 - /tmp/lettercape-recipient-type-qualified.log SHA256 `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
 - /tmp/lettercape-recipient-api-qualified.log SHA256 `b048d81cd471be3a534381d99ef93436089b220314cb02d517e71a4bf6904719`
 - /tmp/lettercape-recipient-build-qualified.log SHA256 `cb66524ce94b2879b00178cd900c951dbbd0c58cda5079d1ffebe40985d79ad2`
+
+## Verbatim ONE immutable whole review
+
+# Recipient assessment immutable whole-slice review
+
+Verdict: **Pass for the bounded local preparation implementation, with two Minor documentation/contract consistency findings. No actionable Critical or Important finding.** This verdict does not accept REQ-036 in full, production assessment operations, a submission/attempt ledger, or any GA gate.
+
+This is the single fresh whole-slice review requested by root. It is not a new audit of the frozen source/media slices. No product files were edited, no tests or applications were launched, no database was accessed, and no private configuration, provider, paid resource, remote publication, or deployment was used. The only written deliverables are this report and its companion hash files in `/tmp`.
+
+## Immutable identity and review coverage
+
+- Repository: `/tmp/lettercape-recipient-assessment-native`.
+- Base: `6df75a9b3a87ce8f2c9c2109af06666312559e3b`.
+- Candidate and observed HEAD before/after review: `12b605821565411af23d89f198c761875cd22ed5`.
+- Supplied whole patch: `/tmp/lettercape-recipient-whole.diff`.
+- Patch SHA-256: `a45cb62ef9f89b2fbdd904033baab3273b651de6b246a656f69bf5b8f5d11622`.
+- Fresh `git diff --binary BASE CANDIDATE` produced the same SHA-256. The patch covers 34 files, 5,832 insertions and 93 deletions. Tracked working files stayed clean. The existing untracked `tooling/openapi/node_modules` entry was unchanged and outside the reviewed artifact. `git diff --check BASE CANDIDATE` exited zero.
+
+Reviewed the complete changed scope: migration 034, domain contracts/evaluator, assessment services and local worker, HTTP admission/routing/scopes/pagination integration, actor threading and panel/recovery helpers, unit/DB/browser/crash fixtures, package/CI wiring, generator and generated OpenAPI/SDK additions, README and delivery/coverage/capability updates. Read the design and plan and all embedded task handoffs/reviews/corrections in `docs/RECIPIENT-ASSESSMENTS-CHECKPOINT.md`. Followed relevant existing current-authority, permissions, idempotency, tenant transaction, snapshot source/digest, frequency and preference contracts. Inspected the existing release-gate register and retained full-baseline statements.
+
+Generated artifacts were examined as semantic structures as well as diff sections: the OpenAPI changes add exactly six assessment schemas and four paths/five operations; a TypeScript AST comparison found only the corresponding added paths, schemas and five operation types, with no changed existing SDK member. New operation success/error references, request headers, paging parameters, body types, false authorization literal and fixed blocker tuple agree with runtime contracts, except for Minor M2 below. This structural inspection avoids treating thousands of repeated generated error-envelope lines as independent logic.
+
+## Findings
+
+### Critical
+
+None found in the reviewed scope.
+
+### Important
+
+None found in the reviewed scope. The four earlier task-level Important findings are corrected in this candidate and are not reissued.
+
+### Minor M1 — the authoritative capability row contradicts the new REQ-036 classification
+
+**Location:** `docs/CAPABILITIES.md:73` (new classification/totals), in conflict with its REQ-036 row at `docs/CAPABILITIES.md:42`. Related: `docs/DELIVERY-CHECKPOINT.md:82` and `docs/COVERAGE-CHECKPOINT.md:32`.
+
+**Reproduction/evidence:** Read the REQ-036 table row: its state is still `Required / pending` and its evidence is the generic implementation-pending sentence. Read the new paragraph at line 73 and the amended delivery/coverage trackers: these classify REQ-036 as Partial preparation/logs and report 42 partial / 18 undelivered / 5 roadmap. Counting the capability table itself still gives the old classification for this row. The patch updates the appended summary but never updates this row.
+
+**Impact:** A reader or downstream status extractor using the advertised 65-row capability register gets a different delivery classification from the current summary and other trackers. This obscures what this slice actually delivered; it does not create send authority or falsely close a release gate.
+
+**Correction:** Update REQ-036's row to Partial / development, briefly name the qualified local preparation/log visibility, and retain explicit submission/attempt-ledger and production-operation obligations. Keep the 65-row baseline and zero whole-requirement/gate acceptance unchanged.
+
+**Cost:** Very small documentation-only correction and a row-count/wording check. No behavioral test or broad rerun is justified. If deferred, retain the inconsistency as a Minor ledger entry.
+
+### Minor M2 — machine-readable scopes omit mandatory audience:read on all five new operations
+
+**Location:** `scripts/generate-api.ts:932` through `:936`; generated examples include `public/openapi.json:33527` and `:33864`. The existing emitter at generator line 545 converts the single `scope` into `x-lettercape-scopes`.
+
+**Reproduction/evidence:** Inspect `paths['/v1/campaigns/{id}/recipient-assessments'].post['x-lettercape-scopes']`: it is only `["campaigns:write"]`. The three GET operations similarly list only `campaigns:read`, and cancel lists only `campaigns:write`. Create a valid current Owner/Admin API key containing exactly the advertised list and call the respective assessment operation: `assertAssessmentAuthority` at `src/server/recipient-assessments.ts:15` first requires `audience:read`, so the request returns `403 INSUFFICIENT_SCOPE`. The existing DB scope regression demonstrates the read variant rejects a campaigns-only key. All five operation descriptions correctly mention the extra scope; the structured extension is incomplete.
+
+**Impact:** A client, documentation generator or permission-provisioning integration consuming the machine-readable scope list can provision a key that cannot call any of these operations. This is a discoverability/contract completeness defect, not an authorization bypass; the server correctly denies insufficient scope, and human-readable descriptions provide a workaround.
+
+**Correction:** Allow the generator to express multiple unconditional required scopes and emit both campaign read/write and `audience:read` for these five operations, preserving current backend enforcement. Regenerate affected artifacts. No broader rewrite of unrelated conditional-scope operations is required for this finding.
+
+**Cost:** Small generator/metadata correction plus focused generated-contract verification. If deferred, explicitly retain that scope provisioning must also read the operation description.
+
+## Final-system assessment
+
+**Authority, tenant isolation and privacy — acceptable for this slice.** Routes require audience authority; services independently recheck current Owner/Admin audience authority and campaign read/write plus audience-read scopes before keyed replay or reads. Existing authority admission locks current workspace/membership/key state. New tables use forced RLS and composite tenant pins; immutable evidence cannot be rewritten through the runtime role, and status history is appended by the restricted history trigger role. Creation binds current campaign version/digest, immutable configuration ID/content revision and a digest-verified frozen snapshot, with tenant-owned explicit nullable topic. The public views omit member manifests, recipient addresses and provider secrets. Creator identity is historical audit metadata, not an authorization credential. No generic operations row is introduced.
+
+**Durability, bounded work and cancellation — acceptable.** PostgreSQL job rows are authoritative; Redis is not part of assessment durability. One transaction claims one queued/running job with `FOR UPDATE ... SKIP LOCKED`, selects at most 100 members from the immutable, sorted/unique, maximum-10,000 snapshot and locks existing contacts in stable order. Observation uniqueness plus atomic job progress and deferred consistency guards prevent committed partial batches or duplicate member evidence. Cancellation serializes on the job row, preserves observations, and cannot turn a terminal completed assessment into cancellation. A killed process rolls back its uncommitted work; committed progress determines restart position. An empty frozen snapshot completes without observations. Production fairness, capacity and retention qualification remain open rather than implied by these bounds.
+
+**Current facts, clocks and creator lifecycle — acceptable under the documented admission contract.** SQL derives current deletion/missing, captured exclusion, suppression, global consent, explicit-topic and existing frequency facts. It overwrites caller-supplied current facts/time, fixes one database observation instant after contact locking, and applies the shared cross-topic reserved/uncertain or accepted-window semantics. Fixed 1/7/30-day elapsed milliseconds avoid timezone/DST drift. Captured exclusion remains exclusion even if current consent recovers; locale values are evidence without a locale-eligibility claim. The worker holds original creator membership/key locks after real-clock admission. An already-admitted maximum-100-member historical preparation batch may finish after creator-key expiry; the next batch cancels. This admitted-batch cost is disclosed and does not authorize sending. Classified transient local/database failures retry after rollback; unclassified authority/programming failures stop with sanitized diagnostics.
+
+**Browser recovery and fresh truth — acceptable.** Assessment UI mounts only for Owner/Admin, is keyed by workspace/campaign/actor/role, sends the expected actor on all its requests, and fences asynchronous work on actor/configuration/lifecycle changes. Original create/cancel key and body must pass bounded actor-bound durable storage before POST. Origin Web Locks enclose complete compare/write/readback and compare/remove/readback operations. Unsupported locks fail closed for mutation while historical reads remain available. Repeated local clicks are synchronously fenced; competing tabs cannot replace the admitted unresolved original. Retry retains the exact command, creation receipts are matched to it, and a fresh detail request supplies current job status. Configuration reload validates current server identity/version/digest and preserves pending original commands. History/observation pages validate strict envelopes and scoped IDs; cursor filters and actor/tenant binding use the existing signed cursor service.
+
+**HTTP/API/SDK/CI integration — acceptable apart from M2.** Exact supported methods and route shapes are admitted before dispatch; creation/cancellation use dedicated 16-KiB JSON admission with truthful header/stream overflow messages. Strict small command schemas bound validation expansion; SQL/internal errors remain sanitized by the common HTTP boundary. Creation returns 202 with the assessment Location and retry hint, not a generic operation. Explicit-key SDK metadata, typed false authorization and fixed blockers agree with runtime. The recipient smoke is wired after the owned source/locale fixtures and before the shared dev server in CI. Saved native evidence is not represented as exact-head remote CI success.
+
+**Plan compliance — local slice implemented; closeout still pending.** The design and four implementation scopes are present. The explicit local CLI checks development mode, non-production execution, owned loopback DB hostname and caller-supplied workspace/actor; no provider transport exists. Canonical migration/synchronization/Desktop validation are controller-owned post-review steps and are not falsely claimed complete by the frozen checkpoint. Root's later message reports additional Linux packaging/UID/private-exclusion/closed-startup evidence, but this reviewer did not independently run or qualify that evidence and does not substitute it for the pending canonical closeout.
+
+## Evidence inspected, without rerunning qualification
+
+The supplied final logs exist, their checked SHA-256 values match the checkpoint, and their contents support the reported results:
+
+| Evidence | Observed result | SHA-256 |
+|---|---|---|
+| `/tmp/lettercape-recipient-suite-qualified.log` | 471 tests, 471 pass, 0 fail/cancel/skip | `88831ee1aa7c0f93e7b14c1cb5c7201167a01998e98650f0fc457b0a385d02c9` |
+| `/tmp/lettercape-recipient-lint-qualified.log` | Saved lint qualification | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-recipient-type-qualified.log` | Saved type qualification | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-recipient-api-qualified.log` | 120 documented operations; generated API/SDK match | `b048d81cd471be3a534381d99ef93436089b220314cb02d517e71a4bf6904719` |
+| `/tmp/lettercape-recipient-build-qualified.log` | Completed production build/route output | `cb66524ce94b2879b00178cd900c951dbbd0c58cda5079d1ffebe40985d79ad2` |
+| `/tmp/lettercape-recipient-browser7.log` | Four actual executable-flow PASS groups | `7d548a026481d06b590ebbc48e5a2de190584d5344364c456b9340b121af01d3` |
+
+The browser script and saved log cover staged-observation/progress SIGKILL before commit with zero persisted rows, distinct worker restart, lost committed acknowledgment, double-click and original replay/reload, frozen membership/current suppression and consent, zero frequency/quota/operations/campaign writes, two real same-origin tabs contending for one recovery lock/job, cancellation, unsupported-lock reads/mutation refusal, signed pagination/filter mismatch, transient 503 retry, 390-pixel overflow check, delayed status after navigation and Viewer denial. The instrumented main context recorded zero external requests and the primary page recorded zero page errors; this is the script's instrumentation scope, not a universal browser/network assurance claim.
+
+Earlier task reports record meaningful RED/GREEN evidence and corrections for UI cross-tab admission/clearing and runtime expiry/clock/DST behavior. The final configured suite supersedes earlier failed or unconfigured suites without hiding them. Reviewer checks were read-only identity/diff/semantic comparisons; initial auxiliary SDK inspection attempts failed due a Node argument and output-buffer limit, then the corrected read-only AST inspection succeeded. No application test result is inferred from those auxiliary attempts.
+
+## Retained obligations and costs
+
+- All 65 PRD requirements and all 13 release gates remain binding; zero whole requirements or gates are accepted by this review. Intended tracker totals are 42 partial, 18 undelivered and 5 roadmap, subject to M1's register correction.
+- REQ-036 advances only for local preparation and historical logs. Full durable submission/attempt ledger, immutable approval/sender/address/locale policy pins, personalization, consent/frequency/quota reservations, committed submission markers, provider idempotency/ambiguity reconciliation, received DKIM/RFC8058 and signed feedback remain undelivered or unqualified. Provider/legal/economic prerequisites do not remove independent implementation work.
+- Assessment production service identity, continuous operation/recovery policy, workload capacity, retention and privacy acceptance remain open. A stopped local worker leaves durable work queued; maximum 10,000 members and 100 per transaction are admitted work bounds, not a production throughput promise. Repeated observations accumulate historical storage and database work.
+- An admitted batch may record up to 100 historical facts after creator-key expiry before the next batch cancels. Holding authority/contact locks serializes competing changes for the batch. These are explicit consistency/latency costs.
+- Browser mutation compatibility requires usable durable storage and cooperative same-origin Web Locks. Older tabs running prior unlocked code are outside the corrected cooperative guarantee. Corrupt/unavailable storage refuses mutation, and a retained unresolved command must be reconciled rather than silently replaced.
+- SQL and the small pure domain evaluator encode the same rule-version contract; future rule changes must keep both aligned. The present authoritative worker path uses SQL facts and counts, avoiding duplicated current-clock evaluation.
+- Previously recorded source/media costs remain inherited: one source Minor plus six media Minors (seven total), together with their original production/source/physical-storage/client qualification limits. They were not reopened or counted as new findings here. Other previously parked SDK/editor/locale/operational items retain their existing ledger status; this review does not erase them or claim a new global tally.
+- Additive main migration, preservation of original drafts/revisions and private metadata, canonical/Desktop tracked-file/readability and executable qualification, and any permitted publication/remote-CI decision still need the controller's exact closeout evidence. Existing source/media/locale proof remains historical at its documented head. No private main data or Desktop copy was inspected by this reviewer.
+
+Recommendation: accept the local preparation behavior, adjudicate both Minor findings explicitly in the root ledger, and complete the already planned canonical closeout. No Important fix wave is required by this report. Do not expand this result into production/send/attempt-ledger acceptance or reopen a whole-review loop.
+
+
+## Exhaustive whole-review rulings
+
+0 Critical/0 Important/2 Minor. No Important correction wave needed. W-M1 accepted and corrected capability-table REQ036 row to Partial, retaining full submission/attempt obligations. W-M2 accepted and corrected generated x-lettercape-scopes for ONLY five assessment operations to include mandatory audience:read alongside campaigns scopes. Prose/runtime enforcement already required both. Regeneration/strict scope proof/API check/type/lint/build qualify this metadata correction; no runtime sending or prior frozen slice is reopened. Inherited source M1 and six media Minors remain costs in their own checkpoints. All13gates/65requirements remain unaccepted; no external readiness implied.
+
+## Whole-review Minor correction qualification
+
+Whole report SHA256 `75baf607947797085c719b1dbb3ca02ee6c390f4358ce8aaddce3e341470c3a3`. Structured comparison proves ONLY five API required-scope arrays changed; all other OpenAPI structures and existing SDK member shapes remain unchanged. Capability table still65 unique rows, REQ036Partial; coverage42Partial18undelivered5roadmap and zero accepted. Scope metadata correction lint/type/API120/build pass; application runtime and471-test executable bytes remain unchanged.
+- /tmp/lettercape-recipient-minor-proof.json SHA256 `34dda1b37469c8255cc7ae595af336aa055031235d060f73484753b3b2636812`
+- /tmp/lettercape-recipient-api-minor-generate.log SHA256 `659af0a82ca6f6ca2ad69e9442bdf4263187f69528ae7dba6addfe1f2f7a66aa`
+- /tmp/lettercape-recipient-api-minor-check.log SHA256 `b048d81cd471be3a534381d99ef93436089b220314cb02d517e71a4bf6904719`
+- /tmp/lettercape-recipient-type-minor.log SHA256 `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
+- /tmp/lettercape-recipient-lint-minor.log SHA256 `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
+- /tmp/lettercape-recipient-build-minor.log SHA256 `a68f434d4da9ef7579c10fc41c25dbe36d1c7a54d14bba9db79711b6c8f2e928`
