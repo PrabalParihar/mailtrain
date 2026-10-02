@@ -1,3 +1,4 @@
+import{CampaignConfigurationInput,CampaignConfigurationSnapshot}from'../src/domain/campaign-configuration';
 import{CreationMetadata,CreationAttempt,CreationSummary,CreationType}from'../src/domain/creation-history';
 import { Membership,MembershipChange,MembershipSummary,RoleChangeInput,RemoveMemberInput,TransferOwnerInput } from '../src/domain/memberships';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
@@ -128,6 +129,8 @@ const schemas: Record<string, Schema> = {
     ['csv'],
     false,
   ),
+  CampaignConfigurationInput:fromZod(CampaignConfigurationInput),
+  CampaignConfigurationSnapshot:fromZod(CampaignConfigurationSnapshot),
   CampaignInput: object(
     { name: { type: 'string', minLength: 1, maxLength: 160 }, revision_id: uuid },
     undefined,
@@ -186,6 +189,7 @@ const schemas: Record<string, Schema> = {
     created_at: time,
   }),
   Campaign: object({
+    version:{type:'integer',minimum:1},
     id: uuid,
     name: string,
     state: string,
@@ -219,6 +223,7 @@ for (const [name, item] of Object.entries({
   Revisions: 'Revision',
   Contacts: 'Contact',
   Campaigns: 'Campaign',
+  CampaignConfigurations:'CampaignConfigurationSnapshot',
   Segments: 'Segment',
   Audit: 'Audit',
   Derivatives: 'Email',
@@ -259,6 +264,7 @@ schemas.KeyResponse = envelope(
 );
 schemas.GenericResponse = envelope({}, []);
 schemas.CampaignResponse = envelope({ campaign: ref('Campaign') });
+schemas.CampaignConfigurationResponse=envelope({campaign:ref('Campaign'),changed:{type:'boolean'},notice:string});
 schemas.Health = envelope({
   status: { const: 'ok' },
   release: { const: 'development' },
@@ -388,6 +394,7 @@ const examples: Record<string, unknown> = {
   InspectInput: { csv: 'email\nfixture@example.com' },
   ImportInput: { csv: 'email\nfixture@example.com', mapping: { email: 'email', attributes: {} } },
   CampaignInput: { name: 'Example campaign', revision_id: exampleId },
+  CampaignConfigurationInput:{expected_version:1,name:'Example planned campaign',revision_id:exampleId,planned_timing:{local_time:'2026-11-01T01:30',time_zone:'America/New_York',utc_offset:'-04:00'}},
   KeyInput: { name: 'Example reader', scopes: ['emails:read'], expires_in_days: 90 },
 };
 function add(d: Definition) {
@@ -820,6 +827,9 @@ add({
   keyed: true,
   scope: 'campaigns:write',
 });
+add({id:'getCampaign',path:'/v1/campaigns/{id}',method:'GET',response:'CampaignResponse',scope:'campaigns:read'});
+add({id:'listCampaignConfigurations',path:'/v1/campaigns/{id}/configurations',method:'GET',response:'CampaignConfigurationsPage',paged:true,scope:'campaigns:read',description:'Observed immutable configuration metadata only; current-only migration provenance does not invent earlier versions. No raw audience or provider secrets.'});
+add({id:'configureCampaign',path:'/v1/campaigns/{id}/configuration',method:'POST',body:'CampaignConfigurationInput',response:'CampaignConfigurationResponse',keyed:true,scope:'campaigns:write',description:'Current draft/review-pending version CAS; exact owned revision/hash and explicit planned local minute/IANA zone/offset. Planned timing never accepts scheduling. Material changes clear review/approval and retain captured audience/provider/sender/tracking. Stale commands conflict; unchanged commands do not append history.'});
 for (const [id, command, blocked, scope] of [
   ['submitCampaignReview', 'submit-review', false, 'campaigns:write'],
   ['approveCampaign', 'approve', true, 'campaigns:approve'],

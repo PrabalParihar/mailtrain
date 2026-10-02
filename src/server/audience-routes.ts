@@ -1,4 +1,5 @@
 import{LINT_RULES_VERSION}from'../domain/preflight';
+import{campaignDetail,campaignConfigurations,configureCampaign}from'./campaign-configuration';
 import { z } from 'zod';
 import { withPrincipal } from './auth';
 import { keyed } from './commands';
@@ -66,6 +67,12 @@ export async function audienceRoute(
           ? readImportErrors(tx, id, new URL(req.url).searchParams.get('cursor'))
           : importCommand(tx, p, id, cmd, body, key);
       if (root === 'campaigns') {
+        if(id&&req.method==='GET'){
+          if(!cmd)return campaignDetail(tx,id);
+          if(cmd==='configurations')return campaignConfigurations(req,tx,p,id);
+          fail(404,'RESOURCE_NOT_FOUND','Campaign command not found.');
+        }
+        if(id&&cmd==='configuration')return configureCampaign(tx,p,id,body,key);
         if (req.method === 'GET')
           return resourcePage(req, tx, p, {
             resource: 'campaigns',

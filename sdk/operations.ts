@@ -608,6 +608,30 @@ export const operationRegistry = {
     "binary": false,
     "blocked": false
   },
+  "getCampaign": {
+    "method": "GET",
+    "path": "/v1/campaigns/{id}",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
+  "listCampaignConfigurations": {
+    "method": "GET",
+    "path": "/v1/campaigns/{id}/configurations",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "blocked": false
+  },
+  "configureCampaign": {
+    "method": "POST",
+    "path": "/v1/campaigns/{id}/configuration",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "blocked": false
+  },
   "submitCampaignReview": {
     "method": "POST",
     "path": "/v1/campaigns/{id}/submit-review",

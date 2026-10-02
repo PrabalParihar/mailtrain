@@ -23,8 +23,8 @@ Create db/026-campaign-configurations.sql and tests/campaign-configuration-db.te
 
 ### Task3 Scoped configuration API and generated contracts
 Create src/server/campaign-configuration.ts; modify audience-routes.ts and scripts/generate-api.ts/generated OpenAPI+SDK. GET campaigns/:id, GET campaigns/:id/configurations signed campaign-bound page, POST campaigns/:id/configuration with expected_version and strict settings. Scope maps remain campaign read/write. Current immutable revision supplies hash; no-op/stale/keyed replay preserve observed truth; draft/review_pending only editing.
-- [ ] RED actual owned HTTP/DB: new endpoints missing; strict foreign/role/key/encoded, version/CAS/no-op/header-independent keyed body identity, missing revision/rollback, pinned hash/timing/history, signed pagination binding and no provider/approval changes.
-- [ ] Implement routes/typed response metadata. Full tests/lint/typecheck/API/build expected PASS; commit.
+- [x] RED actual owned HTTP/DB: new endpoints missing; strict foreign/role/key/encoded, version/CAS/no-op/header-independent keyed body identity, missing revision/rollback, pinned hash/timing/history, signed pagination binding and no provider/approval changes.
+- [x] Implement routes/typed response metadata. Full tests/lint/typecheck/API/build expected PASS; commit.
 
 ### Task4 Actual UI and browser recovery
 Create src/ui/campaign-configuration.tsx and scripts/smoke-campaign-configuration.ts; update campaign cards/app role prop/package/CI. Freeze form while submitting; immediate mutex; stored settings with planned-only semantics; explicit stale-base reload; original-key retry and authoritative reload/no-op; metadata history without audience/secret material.

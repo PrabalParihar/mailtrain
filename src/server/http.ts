@@ -88,9 +88,10 @@ export function assertRouteMethod(path: string[], method: string) {
   }
   if (root === 'campaigns') {
     if (!id) methods = ['GET', 'POST'];
+    else if(uuid.test(id)&&(!command||command==='configurations'))methods=['GET'];
     else if (
       uuid.test(id) &&
-      ['submit-review', 'approve', 'send', 'schedule', 'pause', 'resume', 'cancel'].includes(
+      ['configuration', 'submit-review', 'approve', 'send', 'schedule', 'pause', 'resume', 'cancel'].includes(
         command,
       )
     )
