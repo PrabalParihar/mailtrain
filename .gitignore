@@ -15,3 +15,6 @@ docs/RAILWAY-BUDGET-PLAN.md
 
 # Per-plan verification scratch; durable evidence is recorded in docs.
 .superpowers/
+
+# Deterministic Monaco assets are generated locally before dev/build.
+public/code-editor/

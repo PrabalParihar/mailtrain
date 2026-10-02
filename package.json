@@ -44,7 +44,11 @@
     "smoke:audience-selection": "node --import tsx scripts/smoke-audience-selection.ts && node --import tsx scripts/smoke-audience-selection.ts --probe-cutoff && node --import tsx scripts/audience-selection-browser.ts && node --import tsx scripts/audience-campaign-browser.ts && node --import tsx scripts/audience-campaign-browser.ts --probe-verification && node --import tsx scripts/audience-selection-browser.ts --probe-large-recovery && node --import tsx scripts/audience-campaign-browser.ts --probe-long-revision",
     "smoke:editor": "node --import tsx scripts/smoke-editor.ts",
     "smoke:sender-domain": "node --import tsx scripts/smoke-sender-domain.ts && node --import tsx scripts/sender-domain-browser.ts && node --import tsx scripts/sender-actor-browser.ts",
-    "smoke:conversion": "node --import tsx scripts/smoke-conversion-api.ts && node --import tsx scripts/smoke-conversion.ts && node --import tsx scripts/conversion-review-browser.ts && node --import tsx scripts/conversion-review-browser.ts --preview"
+    "smoke:conversion": "node --import tsx scripts/smoke-conversion-api.ts && node --import tsx scripts/smoke-conversion.ts && node --import tsx scripts/conversion-review-browser.ts && node --import tsx scripts/conversion-review-browser.ts --preview",
+    "code-editor:assets": "node --import tsx scripts/build-code-editor.ts",
+    "predev": "npm run code-editor:assets",
+    "prebuild": "npm run code-editor:assets",
+    "smoke:code-editor": "node --import tsx scripts/smoke-code-editor.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",
@@ -58,14 +62,15 @@
     "ioredis": "6.0.0",
     "jose": "6.2.12",
     "lucide-react": "1.49.0",
+    "monaco-editor": "0.57.0",
     "next": "16.3.8",
+    "parse5": "7.3.0",
     "pg": "8.23.1",
     "playwright": "1.63.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sanitize-html": "2.18.0",
-    "zod": "4.6.5",
-    "parse5": "7.3.0"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/node": "26.6.3",
@@ -75,6 +80,7 @@
     "@types/sanitize-html": "2.16.2",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
+    "esbuild": "0.28.2",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.8",
     "tsx": "4.23.15",

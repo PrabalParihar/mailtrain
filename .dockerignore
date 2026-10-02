@@ -13,3 +13,6 @@ docs/RAILWAY-BUDGET-PLAN.md
 **/node_modules
 
 .superpowers
+
+# Rebuild pinned code-editor assets inside the image.
+public/code-editor

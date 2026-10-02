@@ -14,6 +14,8 @@ const config: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      {source:'/code-editor/:path*',headers:[{key:'Cache-Control',value:'public, max-age=31536000, immutable'}]},
+      {source:'/code-editor/manifest.json',headers:[{key:'Cache-Control',value:'no-store'}]},
       {
         source: '/preferences/:path*',
         headers: [
