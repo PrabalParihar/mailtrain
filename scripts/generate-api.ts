@@ -1,3 +1,4 @@
+import{KlaviyoReview}from'../src/domain/esp-export-contracts';
 import {RecipientAssessmentInput,RecipientAssessmentView,RecipientObservationView}from'../src/domain/recipient-assessments';
 import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
@@ -41,6 +42,8 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  KlaviyoReview:fromZod(KlaviyoReview),
+  KlaviyoReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:KlaviyoReview})),
   EmailSourceSpec: fromZod(EmailSourceSpecSchema),
   SourceProfile: fromZod(SourceProfileSchema),
   SaveReceipt: {...fromZod(SaveReceiptSchema),description:'Durable CAS receipt; saved_doc_version equals request_base_version+1. Hashes identify the actual committed spec and exact UTF-8 source. A receipt does not grant authority or certify render eligibility.'},
@@ -779,6 +782,8 @@ add({
     },
   ],
 });
+add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'KlaviyoReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}}]});
+add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,scope:'emails:export',description:'Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
 for (const [id, command, blocked] of [
   ['preflightRevision', 'preflight', false],
   ['exportRevision', 'export', true],

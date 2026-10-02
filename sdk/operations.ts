@@ -876,6 +876,30 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "reviewDestinationRevision": {
+    "method": "GET",
+    "path": "/v1/email-revisions/{id}/destination-review",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "downloadDestinationRevision": {
+    "method": "GET",
+    "path": "/v1/email-revisions/{id}/destination-artifact",
+    "keyed": false,
+    "paged": false,
+    "binary": true,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
   "preflightRevision": {
     "method": "POST",
     "path": "/v1/email-revisions/{id}/preflight",

@@ -1635,3 +1635,5 @@ td {
 .locale-comparison-columns>div {min-width:0;}
 .locale-comparison-columns pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:18rem;overflow:auto;font-size:.85rem;}
 @media(max-width:760px){.locale-comparison-columns {grid-template-columns:1fr;}}
+
+.klaviyo-preparation { min-width: 0; overflow-wrap: anywhere; }

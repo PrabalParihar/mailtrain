@@ -27,13 +27,13 @@ Reviewed workspace-calendar source c7e4a5166bbb53582dfa4150305344e1c3635985 is p
 
 Shared resource pages, OpenAPI3.1 and generated TypeScript SDK passed 36 local tests, full checks, actual HTTP/Chromium and one fresh review/fix pass. REQ-048 is partial tested development; full-GA families/public package/provider acceptance remain open.
 
-## Partial local implementation with acceptance still required (42)
+## Partial local implementation with acceptance still required (43)
 
-REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-036, REQ-037, REQ-038, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
+REQ-001, REQ-002, REQ-003, REQ-004, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-019, REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-035, REQ-036, REQ-037, REQ-038, REQ-040, REQ-041, REQ-047, REQ-048, REQ-049, REQ-050, REQ-052, REQ-057, REQ-060, REQ-062, REQ-063, REQ-064
 
-## Required capability not delivered; implementation and/or configuration missing (18)
+## Required capability not delivered; implementation and/or configuration missing (17)
 
-REQ-005, REQ-012, REQ-018, REQ-020, REQ-022, REQ-033, REQ-034, REQ-040, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
+REQ-005, REQ-012, REQ-018, REQ-020, REQ-022, REQ-033, REQ-034, REQ-042, REQ-043, REQ-044, REQ-045, REQ-051, REQ-053, REQ-055, REQ-056, REQ-058, REQ-061
 
 ## PRD roadmap requirements retained (5)
 
@@ -61,3 +61,5 @@ Published campaign configuration e8f96c0:172tests/API90/lint/typecheck/build, on
 Evidence-only9c0188b exact CI36972763920 failed on the key fixture first-name-row Revoke timeout; renderer passed. Do not inherit c7e4a51 success for that newer head. Separate authorized identity-regression recovery is documented in KEY-CI-RECOVERY.md; no source/public launch claim is made until recovery-head CI passes.
 
 Verified key recovery e7c365462533df74a411867b50a9948e5a32b1e7: all185tracked tests/lint/typecheck/API93/build and actual canonical key HTTP+Chromium pass; clean Desktop339tracked SHA256 matches, authorized ordinary main push/exact remote readback and exact CI36975231690 verify+renderer SUCCESS. This supersedes the failed9c0188b evidence head while preserving its failure/diagnosis in KEY-CI-RECOVERY.md. No provider, paid resource, send or public deployment effect; all65/all13 remain required.
+
+Klaviyo development foundation:484native tests/zero skips,122API and actual frozen native preparation/download/browser pass. REQ040Partial,43partial17undelivered5roadmap; all65/all13 remain binding and zero accepted. Live OAuth/account/conformance/durable jobs/remaining four adapters and all production gates remain open.

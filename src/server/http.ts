@@ -74,7 +74,7 @@ export function assertRouteMethod(path: string[], method: string) {
   if (root === 'email-revisions') {
     if (!id) methods = ['GET'];
     else if (uuid.test(id)) {
-      if (command === 'download') methods = ['GET'];
+      if (['download','destination-review','destination-artifact'].includes(command)) methods = ['GET'];
       else if (['preflight', 'export', 'remix', 'localize'].includes(command)) methods = ['POST'];
     }
   }
