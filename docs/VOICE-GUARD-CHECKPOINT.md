@@ -12,11 +12,11 @@ Final checks:160/160 tests, lint0/typecheck/build/API87 pass. Existing brand-mem
 
 ## Independent review and publication
 
-One fresh Astra high whole-slice review of486c451..eb9b343 found no Critical/four Important/three Minor findings. One native fix pass verified all four Important RED→GREEN: actual saved-form and recovered-proposal adoption fences, per-field structured hero/footer/product counts with precise locations, and raw/custom BR/block sentence boundaries while preserving inline words and existing literal blockers. Final pure18/18/full160/160 and actual affected HTTP/browser checks pass. No rereview; Minors below remain deferred.
+One fresh Astra high whole-slice review of486c451..eb9b343 found no Critical/four Important/three Minor findings. One native fix pass verified all four Important RED→GREEN: actual saved-form and recovered-proposal adoption/inactive-effect fences, per-field structured hero/footer/product counts with precise locations, and raw/custom BR/block sentence boundaries while preserving inline words and existing literal blockers. Final pure18/18/full160/160 and actual affected HTTP/browser checks pass. No rereview; Minors below remain deferred.
 
-Canonical Desktop/mail and remote main currently remain the previously reviewed486c451 checkpoint,151tests,306tracked hashes and exact-head CI36947751152 success. Reviewed Voice Guard source publication/canonical hashes/exact-head CI readback are pending. Source publication is distinct from public application activation.
+Source publication remains pending. Canonical Desktop/mail advanced cleanly to interim5514ccd with315tracked SHA256 matches, preserving unrelated/ignored files, but its browser validation exposed an abandoned initial-read race. No remote push of that intermediate checkpoint occurred; remote main remains the reviewed486c451 checkpoint,151tests/306tracked hashes/exact-head CI36947751152 success. The native initial-read fix now fences inactive Strict Mode effects; actual held-first/active-second read RED20 replacing edit10→GREEN edit10 retained, and subsequent submitted/returned/stored/displayed10 agree. Final corrected source/canonical/CI readback is still required.
 
-Reviewer independently ran16focused tests and all-API-mocked browser reproductions. Author's owned actual HTTP/Chromium regressions use ephemeral tenant/session/operation data; synthetic completed recovery data is disclosed, with no extraction/model/send calls. Final logs also include /tmp/lettercape-voice-final-{tests,lint,typecheck,api,build,http,preflight,creation,brand}.log and /tmp/lettercape-voice-review-{pure-red,pure-green,save-red,proposal-red,browser-green}.log.
+Reviewer independently ran16focused tests and all-API-mocked browser reproductions. Author's owned actual HTTP/Chromium regressions use ephemeral tenant/session/operation data; synthetic completed recovery data is disclosed, with no extraction/model/send calls. Final post-correction logs are /tmp/lettercape-voice-final2-{tests,lint,typecheck,api,build,http,preflight,creation,brand}.log; deterministic abandoned effect RED evidence is /tmp/lettercape-voice-review-abandoned-read-red.log. Earlier logs also include /tmp/lettercape-voice-final-{tests,lint,typecheck,api,build,http,preflight,creation,brand}.log and /tmp/lettercape-voice-review-{pure-red,pure-green,save-red,proposal-red,browser-green}.log.
 
 ## Rulings I made
 
@@ -63,6 +63,12 @@ Final: Ruling: declined initial-read failure recovery policy — visible read er
 Final: Ruling: declined earlier authorization/publication claims — persistent user authorization stands, while source sync/main CI is separately recorded from native checks — cost if wrong: expected-head clean canonical hashes and exact-head remote readback before calling source published.
 
 Final: Ruling: declined fresh broad reviewer regression certification — author freshly ran full160suite/lint/typecheck/API/build and actual owned HTTP/browser; reviewer independently ran16focused tests and mocked browser repros — cost if wrong: source publication must pass exact-head full CI and all GA certification remains separate.
+
+Final: Ruling: overturn the earlier fixture-only interpretation of the combined transition failure — native canonical evidence proves the abandoned initial effect can overwrite edits; add an effect cleanup fence to ignore its data/error/readiness — cost if wrong: further stale-response/hydration tests must pass before source publication, and broader real-client GA acceptance remains.
+
+Final: Ruling: creation same-event test waits for the active saved-kit read before programmatic clicks — after the fence, direct HTMLButtonElement.click on disabled Review website correctly issued zero POSTs and timed out waiting for a fabricated lost response — cost if wrong: tests must still prove two enabled same-event clicks issue exactly one original-key request and recover it; assertions retained.
+
+Final: Ruling: retry an exec-server transport disconnect once with read-only pwd — retry succeeded and pending owned logs were read back PASS before any resumed mutation — cost if wrong: pause native work immediately if the transport fails again rather than infer command completion.
 
 ## Deferred minors
 

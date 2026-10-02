@@ -29,16 +29,19 @@ export function BrandPanel({ workspace }: { workspace: string }) {
     [url, setUrl] = useState(''),[operationId,setOperationId]=useState('');
   const running=useRef(false),watch=useRef<AbortController|null>(null);useEffect(()=>()=>{watch.current?.abort();},[]);
   useEffect(() => {
+    let active=true;
     void api<{ brand: { id:string;version: number; data: Brand } | null }>(workspace, 'brands/current')
       .then((r) => {
+        if(!active)return;
         if (r.brand) {
           setBrand(r.brand.data);
           setVersion(r.brand.version);
           setBrandId(r.brand.id);
         }
       })
-      .catch((e) => setError(e.message))
-      .finally(()=>setBrandReady(true));
+      .catch((e) => {if(active)setError(e.message);})
+      .finally(()=>{if(active)setBrandReady(true);});
+    return()=>{active=false;};
   }, [workspace]);
   const field = <K extends keyof Brand>(name: K, value: Brand[K]) =>
     setBrand((b) => ({ ...b, [name]: value }));
