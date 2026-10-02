@@ -866,3 +866,30 @@ The corrected offline Linux image `lettercape-source-check:native-pass`, config 
 | `/tmp/lettercape-source-linux-build-native-pass.log` | `1c751bcd7f2b4e4806c065c6193e44d15daa8db89bbe17ff011be6a76ca1d047` |
 | `/tmp/lettercape-source-linux-native-pass-assets.log` | `176e7c87f61973817744331befe34ddd894882141e4dd7398bed04cd3a00bf1e` |
 | `/tmp/lettercape-source-linux-native-pass-startup.log` | `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754` |
+
+## Canonical source qualification and original data preservation
+
+Corrected executable source: `761d89e6c14502822cc4730accfae73f5bff9826`; frozen candidate `408a1e063831b1200d4e46fa76a9bbc8d0bdd2b6` had one whole review, followed by ONE root Important correction commit. No rereview is asserted. Main and actual `Path.home()/Desktop/mail` synchronized through local-only Git fetch/fast-forward. All526 tracked-file SHA256 values match; both trees are clean, no unrelated new-path collisions, exact43-byte BOM/mixed-EOL fixture SHA256 `17df8f0540032fa4649cd68365dd3199d1b5f5b24d2ee3c6a64eff4568312e83` matches. Original private configuration mode0600/size986/inode44097037/mtime_ns1790839723000000000 and authoritative MD/DOCX metadata remain unchanged. Private configuration contents were never copied, printed or hashed; trusted application/test configuration loading is disclosed. The proof initially falsely rejected the intentionally tracked public `.env.example` after the fast-forward; its allowlist was corrected and the idempotent proof completed without changing `.env.local`.
+
+Additive033 applied to the owned loopback main database. Original columns remain identical for109emails (SHA256 `95d2d1cd1822bab9b78601321d99db238f2298ba245b9b3b209d257063a4a172`) and221revisions (SHA256 `a600901eefd05fae90e155eb30f2aece3f9a0236dcd0b91ccfb0f938666294d4`). The one available raw head receives legacy-stored-1;108 structured heads have no raw profile. No old source/spec/artifact/manifest/hash/updated timestamp was rewritten.
+
+Actual canonical exact locked npm install from offline cache completed484packages; build/lint/typecheck/API114 passed. Canonical actual restricted source storage and complete source recovery/fragment refusal/editor/Monaco/conversion pointer+keyboard/mobile/UTM/preflight HTTP-Chromium baseline passed. Full Monaco still reports two unexplained404 diagnostics and zero uncaught errors. Canonical real GIF scan/native fallback/static preview/ZIP/PNG/PDF/remix/eligible fork/restore/CAS and held-Chromium takedown409/zero cache attachment all passed. Generated fixture databases/apps/workers/stores were stopped and cleaned. No live provider/model/send/collector/billing action or public deployment occurred.
+
+All65 requirements/all13 gates remain binding, with41Partial/19undelivered/5retained-roadmap and zero entire requirement/gate accepted. Physical browser quota, legacy oversized corpus, source Minor M1 and six inherited media Minors remain disclosed. Automatic approval review blocked ordinary GitHub main publication as unverified external private-source egress under the original no-push instruction; direct native permission remains unanswered. Exact-current-head remote CI and every production gate remain open.
+
+| Canonical evidence | SHA256 |
+| --- | --- |
+| `/tmp/lettercape-source-canonical-sync-proof.json` | `540616c60aacb54b923765f99fc49c7bdbe54396521c40e21c8ecb619b67c8e5` |
+| `/tmp/lettercape-source-main-db-preflight.json` | `434b83e126d5b097c2a3dce927abc02d2014d142027ed33e869d790b0c024e53` |
+| `/tmp/lettercape-source-main-migration.log` | `8af80a4ecb2ae41d3cdf0c4f0e2eaeb489ef1ab822e595fdc43339178f4654e3` |
+| `/tmp/lettercape-source-main-db-preservation.json` | `07e7ab0925dc99c613c4e040b05d21a1bf9ae17aec70b219f47cf9a2f592d919` |
+| `/tmp/lettercape-source-canonical-npm-ci.log` | `5582d9be7e26f59ff9e6a9258f3e9347e640aaf7617d2a4a494e1e11fb953a6e` |
+| `/tmp/lettercape-source-canonical-build.log` | `ff3b186d5b91e3ffb10f1a1eb78e8547876e2676affa5d399be55aff2cf6e2ac` |
+| `/tmp/lettercape-source-canonical-lint.log` | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-source-canonical-type.log` | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-source-canonical-api.log` | `6c8f0936de4b67928019aaedba31e013d1ce37c6515f3817a0859cb9ad6041f0` |
+| `/tmp/lettercape-source-canonical-storage.log` | `cdcf07e1d4e44040579c07cbb3df802924e9249ae9ef6b06c72934e8fc6331df` |
+| `/tmp/lettercape-source-canonical-editor.log` | `f018c118ec7df1ad739b5b899fedbd6105a2b71f7c1ae732df88694f50932c3b` |
+| `/tmp/lettercape-source-canonical-fragments.log` | `3a544c4f4397cafc21e46feaab8e9e67240f5c619518a0a47d927b3c26cfbf7f` |
+| `/tmp/lettercape-source-canonical-baseline.log` | `5167b49ce56f7521c4e4a8fc657dcc396db961882ba758aa9ecd958e4f3bac19` |
+| `/tmp/lettercape-source-canonical-media.log` | `affaf8674d6e6d0d2c80d2af49c55c6743665bfdceb7007dd5735ceea2aabe57` |
