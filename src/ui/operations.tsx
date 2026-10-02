@@ -1,4 +1,5 @@
 'use client';
+import{CampaignConfiguration}from'./campaign-configuration';
 import { useEffect, useState } from 'react';
 import{WebhookDeliveryHistory}from'./webhook-history';
 import { WebhookEndpoints } from './webhooks';
@@ -120,7 +121,7 @@ type Campaign = {
   intent: { artifact_hash: string; audience: { eligible: boolean; reason: string }[] };
   digest: string;
 };
-export function CampaignPanel({ workspace }: { workspace: string }) {
+export function CampaignPanel({ workspace,role }: { workspace: string;role:string }) {
   const campaignPage = useResourcePage<Campaign>(workspace, 'campaigns');
   const revisionPage = useResourcePage<{ id: string; revision_no: number; subject: string }>(
     workspace,
@@ -225,6 +226,7 @@ export function CampaignPanel({ workspace }: { workspace: string }) {
             <p className="small muted">
               Sender/provider: not configured · Tracking: off · Schedule: none
             </p>
+            <CampaignConfiguration workspace={workspace} id={c.id} role={role} onUpdate={reload}/>
             <div className="toolbar">
               <button
                 disabled={busy || c.state !== 'draft'}

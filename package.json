@@ -35,7 +35,8 @@
     "smoke:memberships": "node --import tsx scripts/smoke-memberships.ts",
     "smoke:creation": "node --import tsx scripts/smoke-creation-queue.ts",
     "smoke:voice-guard": "node --import tsx scripts/smoke-voice-guard.ts && node --import tsx scripts/smoke-voice-review.ts",
-    "worker:creation": "node --import tsx src/server/creation-worker.ts"
+    "worker:creation": "node --import tsx src/server/creation-worker.ts",
+    "smoke:campaign-configuration": "node --import tsx scripts/smoke-campaign-configuration.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

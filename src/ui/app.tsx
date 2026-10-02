@@ -450,7 +450,7 @@ export function MailcraftApp({
             />
           )}
           {section === 'audience' && <AudiencePanel key={workspace} workspace={workspace} />}
-          {section === 'campaigns' && <CampaignPanel key={workspace} workspace={workspace} />}
+          {section === 'campaigns' && <CampaignPanel key={workspace} workspace={workspace} role={current?.role??'Viewer'} />}
           {section === 'settings' && (
             <SettingsPanel key={workspace} workspace={workspace} role={current?.role ?? ''} />
           )}

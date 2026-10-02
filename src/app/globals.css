@@ -1599,3 +1599,12 @@ td {
 .brand-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: contents; }
 .voice-rule-controls { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 18px 0; }
 .voice-rule-controls legend { font-weight: 600; padding: 0 6px; }
+.campaign-configuration { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; min-width: 0; }
+.campaign-configuration fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: .8rem; min-width: 0; }
+.campaign-configuration legend { font-weight: 600; margin-bottom: .8rem; }
+.campaign-configuration label { display: grid; gap: .4rem; min-width: 0; }
+.campaign-configuration input { width: 100%; min-width: 0; }
+.campaign-configuration .checkbox-label { display: flex; align-items: center; gap: .5rem; }
+.campaign-configuration input[type=checkbox] { width: auto; }
+.campaign-configuration-history ol { padding-left: 1.3rem; }
+.campaign-configuration-history li { border-bottom: 1px solid var(--line); padding: .5rem 0; }
