@@ -37,7 +37,8 @@ try {
       { kind: 'engagement', event: 'clicked', op: 'not_observed', within_days: 30 },
     ] },
   ] };
-  const made = await call('segments', 'POST', { name: 'Owned nested saved rule', rule });
+  const largeRule={kind:'all',children:Array.from({length:3},()=>({kind:'any',children:Array.from({length:20},()=>({kind:'attribute',field:'first_name',op:'eq',value:'a'.repeat(2000)}))}))};
+  const made = await call('segments', 'POST', { name: 'Owned nested saved rule', rule:process.argv.includes('--probe-large-recovery')?largeRule:rule });
   assert.equal(made.r.status, 200); const segment = made.j.segment;
   const leafMade=await call('segments','POST',{name:'Owned leaf source',rule:{kind:'attribute',field:'first_name',op:'exists'}},randomUUID(),other);
   assert.equal(leafMade.r.status,200);const leafSegment=leafMade.j.segment;
@@ -49,7 +50,20 @@ try {
   await page.goto(origin + '/app/audience');
   await page.getByLabel(/^Saved segment/).waitFor();
   async function switchWorkspace(id:string){await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByLabel('Active brand workspace',{exact:true}).selectOption(id);await page.waitForURL(url=>url.pathname==='/app');await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByRole('link',{name:'Audience',exact:true}).click();}
-  if (process.argv.includes('--controls-red')) {
+  if(process.argv.includes('--probe-large-recovery')) {
+    const panel=page.getByRole('region',{name:'Segments and frozen selections',exact:true});
+    await page.getByLabel(/^Saved segment/).selectOption(segment.id);
+    const value=panel.getByLabel('Rule 1.1 comparison value',{exact:true});await value.waitFor();await value.fill('b'.repeat(2000));
+    await page.reload();await value.waitFor({timeout:5000});assert.equal(await value.inputValue(),'b'.repeat(2000));
+    const sent:{key:string;body:string}[]=[];
+    await page.route('**/v1/segments/'+segment.id+'/versions',async route=>{sent.push({key:route.request().headers()['idempotency-key'],body:route.request().postData()!});assert.equal((await route.fetch()).status(),200);await route.abort('failed');});
+    await panel.getByRole('button',{name:'Save new segment version',exact:true}).click();await panel.getByRole('alert').filter({hasText:/fetch|Failed/i}).waitFor();
+    await page.unroute('**/v1/segments/'+segment.id+'/versions');await page.reload();await panel.getByRole('button',{name:'Retry original segment command',exact:true}).waitFor({timeout:5000});
+    await page.route('**/v1/segments/'+segment.id+'/versions',async route=>{sent.push({key:route.request().headers()['idempotency-key'],body:route.request().postData()!});await route.continue();});
+    await panel.getByRole('button',{name:'Retry original segment command',exact:true}).click();await panel.getByRole('status').filter({hasText:'Segment version saved.'}).waitFor();
+    assert.deepEqual(sent[1],sent[0]);assert.equal((await call('segments/'+segment.id)).j.segment.current_version,2);assert.equal(await value.inputValue(),'b'.repeat(2000));
+    console.log('Owned large-rule reload/lost acknowledgment PASS: 64 nodes, 2000-character values, saved source + dirty tree + original body/key, no duplicate version.');
+  }else if (process.argv.includes('--controls-red')) {
     await page.getByRole('button', { name: 'Add group to Root', exact: true }).waitFor({ timeout: 3000 });
   } else {
     await page.getByLabel(/^Saved segment/).selectOption(segment.id);

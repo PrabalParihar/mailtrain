@@ -15,18 +15,25 @@ export function normalizeSavedRule(input: unknown): Rule {
   return walk(input,0);
 }
 const text=z.string().max(2000), nodeId=z.string().min(1).max(100);
+// JSON can expand one UTF-16 code unit to six characters. Bound the entire
+// admitted 100-node envelope, including both escaped serialized rule copies.
+// 256/node covers keys, operators, punctuation and bounded structural metadata.
+const ruleJSONLimit=100*((2000+48)*6+256);
+const commandJSONLimit=ruleJSONLimit+8192;
+const workingJSONLimit=100*((2000*2+100)*6+256);
+const recoveryJSONLimit=workingJSONLimit+2*(ruleJSONLimit+commandJSONLimit)+8192;
 const tree: z.ZodType<WorkingRule> = z.lazy(()=>z.union([
   z.object({nodeId,kind:z.enum(['all','any']),children:z.array(tree).max(20)}).strict(),
   z.object({nodeId,kind:z.literal('attribute'),field:text,op:z.enum(['eq','neq','contains','gt','gte','lt','lte','exists','not_exists']),value:text}).strict(),
   z.object({nodeId,kind:z.enum(['tag','list']),relationId:text,op:z.enum(['in','not_in'])}).strict(),
   z.object({nodeId,kind:z.literal('engagement'),event:z.enum(['opened','clicked','delivered']),op:z.enum(['observed','not_observed']),within_days:text}).strict(),
 ]));
-const pendingSchema=z.object({kind:z.enum(['create','version','freeze']),path:z.string().max(100),key:z.string().uuid(),body:z.string().max(100000),source_id:z.string().uuid().nullable(),source_version:z.number().int().nonnegative()}).strict();
-const recoverySchema=z.object({segment_id:z.string().uuid().nullable(),base_version:z.number().int().nonnegative(),saved_fingerprint:z.string().max(100000).nullable(),name:z.string().max(100),root:tree,pending:pendingSchema.optional()}).strict();
+const pendingSchema=z.object({kind:z.enum(['create','version','freeze']),path:z.string().max(100),key:z.string().uuid(),body:z.string().max(commandJSONLimit),source_id:z.string().uuid().nullable(),source_version:z.number().int().nonnegative()}).strict();
+const recoverySchema=z.object({segment_id:z.string().uuid().nullable(),base_version:z.number().int().nonnegative(),saved_fingerprint:z.string().max(ruleJSONLimit).nullable(),name:z.string().max(100),root:tree,pending:pendingSchema.optional()}).strict();
 export type SegmentRecovery=z.infer<typeof recoverySchema>;
 export function parseSegmentRecovery(raw:string):SegmentRecovery|null {
   try {
-    if(raw.length>256000)return null;
+    if(raw.length>recoveryJSONLimit)return null;
     // Bound JSON nesting before recursive validation to avoid a corrupt local record exhausting the stack.
     let depth=0,quoted=false,escaped=false;
     for(const ch of raw){if(escaped){escaped=false;continue;}if(quoted&&ch==='\\'){escaped=true;continue;}if(ch==='"'){quoted=!quoted;continue;}if(!quoted){if(ch==='{'||ch==='['){if(++depth>24)return null;}else if(ch==='}'||ch===']')depth--;}}
@@ -52,7 +59,7 @@ export function readSegmentRecovery(workspace:string) {
 }
 export function rememberSegmentRecovery(workspace:string,record:SegmentRecovery,protect:boolean) {
   memory.set(workspace,structuredClone(record));let persisted=true;
-  try{localStorage.setItem('lettercape.segment-form.'+workspace,JSON.stringify(record));unpersisted.delete(workspace);}catch{persisted=false;if(protect)unpersisted.add(workspace);else unpersisted.delete(workspace);}
+  try{const raw=JSON.stringify(record);if(!parseSegmentRecovery(raw))throw new Error('Recovery record exceeds admitted bounds.');localStorage.setItem('lettercape.segment-form.'+workspace,raw);unpersisted.delete(workspace);}catch{persisted=false;if(protect)unpersisted.add(workspace);else unpersisted.delete(workspace);}
   if(!unloadInstalled&&typeof window!=='undefined'){window.addEventListener('beforeunload',event=>{if(unpersisted.size){event.preventDefault();event.returnValue='';}});unloadInstalled=true;}
   return persisted;
 }

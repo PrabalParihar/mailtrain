@@ -31,7 +31,14 @@ try{
   const page=await context.newPage();await page.goto(origin+'/app/campaigns');const box=page.locator('[data-campaign-configuration="'+campaign.id+'"]');
   await box.getByLabel('Configuration name',{exact:true}).waitFor();
   await box.getByLabel('Frozen audience selection',{exact:true}).waitFor({timeout:5000});
-  if(process.argv.includes('--clear-verification-red')||process.argv.includes('--probe-verification')){
+  if(process.argv.includes('--probe-long-revision')){
+    const name=box.getByLabel('Configuration name',{exact:true}),revisionInput=box.getByLabel('Configuration frozen revision',{exact:true}),source=box.getByLabel('Frozen audience snapshot ID',{exact:true});
+    await name.fill('Keep my other changes');await revisionInput.fill('x'.repeat(101));await box.getByLabel('Add planned timing',{exact:true}).check();await box.getByLabel('Planned local minute',{exact:true}).fill('2026-11-02T12:30');await source.fill(sources[25].id);await box.getByRole('status').filter({hasText:'Frozen audience verified.'}).waitFor();
+    await page.reload();await box.getByRole('status').filter({hasText:'Unapplied campaign configuration edits recovered.'}).waitFor({timeout:5000});
+    assert.equal(await name.inputValue(),'Keep my other changes');assert.equal(await revisionInput.inputValue(),'x'.repeat(101));assert.equal(await box.getByLabel('Planned local minute',{exact:true}).inputValue(),'2026-11-02T12:30');assert.equal(await source.inputValue(),sources[25].id);assert.equal((await call(path)).campaign.version,2);
+    await box.getByRole('button',{name:'Save draft configuration',exact:true}).click();await box.getByRole('alert').waitFor();assert.equal((await call(path)).campaign.version,2);assert.equal(await name.inputValue(),'Keep my other changes');
+    console.log('Owned long invalid revision reload PASS: name, timing, source and 101-character invalid revision retained; invalid save does not change server configuration.');
+  }else if(process.argv.includes('--clear-verification-red')||process.argv.includes('--probe-verification')){
     const input=box.getByLabel('Frozen audience snapshot ID',{exact:true});let release!:()=>void,start!:()=>void,complete!:()=>void;
     const held=new Promise<void>(resolve=>{release=resolve;}),started=new Promise<void>(resolve=>{start=resolve;}),completed=new Promise<void>(resolve=>{complete=resolve;});
     await page.route('**/v1/audience-snapshots/'+sources[25].id+'/metadata',async route=>{const response=await route.fetch();start();await held;try{await route.fulfill({response});}catch(e){assert.match(String(e),/Route is already handled|Target.*closed/);}finally{complete();}});

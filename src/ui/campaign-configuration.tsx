@@ -4,7 +4,7 @@ import {CampaignConfigurationInput,CampaignConfigurationView,resolveCampaignTimi
 import {api,ApiError} from './api';
 import {useResourcePage} from './paged';
 import {AudienceSnapshotSelector} from './audience-snapshot-selector';
-import {campaignFormDirty,formForCampaign,readCampaignForm,rememberCampaignForm,type CampaignForm,type CampaignView} from './campaign-form-recovery';
+import {campaignFormDirty,campaignRevisionTextLimit,formForCampaign,readCampaignForm,rememberCampaignForm,type CampaignForm,type CampaignView} from './campaign-form-recovery';
 export function CampaignConfiguration({workspace,id,role,savedState,savedVersion,onUpdate}:{workspace:string;id:string;role:string;savedState:string;savedVersion:number;onUpdate:()=>Promise<void>}) {
  const [form,setForm]=useState<CampaignForm|null>(null),[observed,setObserved]=useState<CampaignView|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[persisted,setPersisted]=useState(true),[verifiedAudience,setVerifiedAudience]=useState<string|null>(null);
  const epoch=useRef(0),running=useRef(false),latest=useRef<CampaignForm|null>(null),path='campaigns/'+id;
@@ -66,13 +66,13 @@ export function CampaignConfiguration({workspace,id,role,savedState,savedVersion
    <fieldset disabled={busy||!!pending||!editable}>
     <legend>Campaign settings</legend>
     <label>Configuration name<input required maxLength={160} value={form?.name??''} onChange={e=>change({name:e.target.value})}/></label>
-    <label>Configuration frozen revision<input required value={form?.revision??''} onChange={e=>change({revision:e.target.value})} spellCheck={false}/></label>
+    <label>Configuration frozen revision<input required maxLength={campaignRevisionTextLimit} value={form?.revision??''} onChange={e=>change({revision:e.target.value})} spellCheck={false}/></label>
     <p className="small muted">Copy a saved checkpoint ID from the email editor. The server verifies ownership and pins its immutable artifact.</p>
     <label className="checkbox-label"><input type="checkbox" checked={form?.planned??false} onChange={e=>change({planned:e.target.checked})}/>Add planned timing</label>
     {form?.planned&&<>
      <label>Planned local minute<input type="datetime-local" required step={60} value={form.local} onChange={e=>change({local:e.target.value})}/></label>
      <label>Planned IANA time zone<input required maxLength={100} value={form.zone} onChange={e=>change({zone:e.target.value})} placeholder="America/New_York"/></label>
-     <label>Planned UTC offset<input required pattern="[+-](0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]" value={form.offset} onChange={e=>change({offset:e.target.value})} placeholder="-04:00"/></label>
+     <label>Planned UTC offset<input required maxLength={100} pattern="[+-](0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]" value={form.offset} onChange={e=>change({offset:e.target.value})} placeholder="-04:00"/></label>
      <p className="small muted">Choose the intended offset explicitly for a repeated daylight-saving minute. Nonexistent minutes cannot be saved.</p>
     </>}
    </fieldset>
