@@ -17,6 +17,7 @@ import {
   ChevronDown,
   PanelLeft,
   BookOpen,
+  X,
 } from 'lucide-react';
 import { product } from '@/config/product';
 import { Logo } from './logo';
@@ -205,7 +206,19 @@ export function MailcraftApp({
   return (
     <div className="app-shell">
       <aside id="workspace-navigation" ref={navigationPanel} className={`sidebar ${menu ? 'open' : ''}`}>
-        <Logo />
+        <div className="sidebar-heading">
+          <Logo />
+          <button
+            className="icon-button mobile-menu"
+            aria-label="Close navigation"
+            onClick={() => {
+              setMenu(false);
+              navigationToggle.current?.focus();
+            }}
+          >
+            <X size={20} aria-hidden="true" />
+          </button>
+        </div>
         <div className="workspace-picker">
           <label className="sr-only" htmlFor="workspace">
             Active brand workspace
@@ -279,6 +292,7 @@ export function MailcraftApp({
         </header>
         <main
           id="main"
+          tabIndex={-1}
           className={`main-content ${section === 'emails' && screen[1] && screen[1] !== 'new' ? 'editor-page' : ''}`}
         >
           {error && (
@@ -374,9 +388,7 @@ export function MailcraftApp({
                     View all <ArrowUpRight size={16} />
                   </Link>
                 </div>
-                {emails.length ? (
-                  <EmailRows emails={emails.slice(0, 5)} />
-                ) : (
+                <EmailCollection key={workspace} page={emailPage} emails={emails.slice(0, 5)}>
                   <div className="empty-state">
                     <Mail size={32} />
                     <h3>A fresh page is waiting.</h3>
@@ -385,7 +397,7 @@ export function MailcraftApp({
                       Create an email <ArrowUpRight size={16} />
                     </Link>
                   </div>
-                )}
+                </EmailCollection>
               </section>
               <div className="dashboard-stats">
                 <div>
@@ -430,14 +442,7 @@ export function MailcraftApp({
                 </Link>
               </div>
               <div className="panel">
-                {emailPage.error && (
-                  <p className="alert danger" role="alert">
-                    {emailPage.error}
-                  </p>
-                )}
-                {emails.length ? (
-                  <EmailRows emails={emails} />
-                ) : (
+                <EmailCollection key={workspace} page={emailPage} emails={emails}>
                   <div className="empty-state">
                     <Mail size={36} />
                     <h2>Begin with a blank page.</h2>
@@ -446,7 +451,7 @@ export function MailcraftApp({
                       Create email
                     </Link>
                   </div>
-                )}
+                </EmailCollection>
                 {emailPage.hasMore && (
                   <button disabled={emailPage.busy} onClick={() => void emailPage.loadMore()}>
                     Load older emails
@@ -550,6 +555,38 @@ export function MailcraftApp({
           <Link href="/status">Service status</Link>
         </footer>
       </div>
+    </div>
+  );
+}
+function EmailCollection({ page, emails, children }: {
+  page: ReturnType<typeof useResourcePage<Email>>;
+  emails: Email[];
+  children: React.ReactNode;
+}) {
+  const retrying = useRef(false);
+  return (
+    <div>
+      {page.error && (
+        <div className="alert danger" role="alert">
+          <span>
+            {page.error}
+            {emails.length > 0 && ' Showing the last loaded drafts. Refresh to see current versions.'}
+          </span>
+          <button disabled={page.busy} onClick={async () => {
+            if (retrying.current) return;
+            retrying.current = true;
+            try { await page.reload(); } finally { retrying.current = false; }
+          }}>
+            Retry loading emails
+          </button>
+        </div>
+      )}
+      {(!page.loaded || page.busy) && !page.error && (
+        <p role="status" className="muted">
+          {page.loaded ? 'Refreshing emails…' : 'Loading emails…'}
+        </p>
+      )}
+      {emails.length > 0 ? <EmailRows emails={emails} /> : page.loaded && !page.error ? children : null}
     </div>
   );
 }

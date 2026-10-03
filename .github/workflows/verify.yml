@@ -70,6 +70,7 @@ jobs:
           done
           npm run smoke:api
           npm run smoke:navigation
+          npm run smoke:usability
           npm run smoke:editor
           npm run smoke:code-editor
           npm run smoke:conversion
@@ -101,6 +102,14 @@ jobs:
             echo "Unexpected production startup without release evidence"
             exit 1
           fi
+      - name: Upload UI usability evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: usability-evidence
+          path: output/usability
+          if-no-files-found: warn
+          retention-days: 7
   renderer:
     runs-on: ubuntu-latest
     timeout-minutes: 20

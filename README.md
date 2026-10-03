@@ -32,10 +32,13 @@ npm run typecheck
 npm run build
 # With the local dev server running:
 npm run smoke:api
+npm run smoke:usability
 npm run release:check
 ```
 
 Database tests require the isolated local PostgreSQL service. Release check intentionally fails while required evidence is pending. `docs/CAPABILITIES.md` and `docs/RELEASE.md` retain gaps instead of redefining GA scope.
+
+The usability smoke renders the actual local Next app in Chromium with explicitly simulated read-only workspace, email-list, empty-brand and empty-job-list responses. It checks responsive screens, keyboard navigation, 200% text sizing, long titles, and loading/error/retry states without creating sessions, changing database records or calling providers. Set `APP_ORIGIN` to your loopback dev server; screenshots and a report are written to `output/usability`. This is UI regression evidence, not a full WCAG audit or backend/provider acceptance. The in-app documentation at `/docs` explains acknowledged saves, checkpoints, recovery, mobile navigation and preview limitations.
 
 ## Deployment preparation
 

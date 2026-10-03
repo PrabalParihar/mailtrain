@@ -7,7 +7,7 @@ export default function Landing() {
     <main id="main" className="landing">
       <header>
         <Logo />
-        <nav>
+        <nav aria-label="Product navigation">
           <Link href="/docs">Documentation</Link>
           <Link href="/status">Status</Link>
           <Link className="button primary" href="/app">
