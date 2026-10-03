@@ -78,6 +78,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [hasPendingSave,setHasPendingSave]=useState(false),
     [status, setStatus] = useState('Loading'),
     [error, setError] = useState(''),
+    [validationError, setValidationError] = useState(''),
     [selected, setSelected] = useState(''),
     [html, setHtml] = useState(''),
     [previewHtml,setPreviewHtml]=useState(''),
@@ -169,6 +170,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     live.current = d;
     setDoc(d);
     ack.current = canonicalSpecString(d.spec);
+    setValidationError('');
     dirtyAt.current = 0;
     setStatus('Saved · v' + d.doc_version);
     setSelected((prev) => prev || d.spec.sections[0]?.id || '');
@@ -227,7 +229,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if (!live.current) return true;
     if (!pendingSave.current&&canonicalSpecString(live.current.spec)===ack.current) {
       // Undo/reorder can return to the already acknowledged spec without a write.
-      if(!conflictRef.current&&!pendingUncertain.current){dirtyAt.current=0;setStatus('Saved · v'+live.current.doc_version);}
+      if(!conflictRef.current&&!pendingUncertain.current){dirtyAt.current=0;setStatus('Saved · v'+live.current.doc_version);setValidationError('');}
       return true;
     }
     if (conflictRef.current||pendingUncertain.current) return false;
@@ -237,7 +239,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       const validation=EmailSourceSpecSchema.safeParse(context.spec);
       if(!validation.success){
         const issue=validation.error.issues[0],position=issue.path[0]==='sections'&&typeof issue.path[1]==='number'?`block ${issue.path[1]+1}`:'the draft fields';
-        setError(`Complete ${position} before saving: ${issue.message}. Your edits remain in this tab.`);
+        setValidationError(`Complete ${position} before saving: ${issue.message}. Your edits remain in this tab.`);
         setStatus('Incomplete fields · local work retained');
         return false;
       }
@@ -272,7 +274,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         if(dirty){dirtyAt.current=Date.now();preserveLocal(live.current);setStatus('Unsaved changes');}
         else{dirtyAt.current=0;setStatus('Saved · v'+validated.savedVersion);}
         await removeSourceRecovery(scope,{draft:!dirty,command:true,expectedDraft:{docVersion:command.baseVersion,specHash:command.specHash},expectedCommandKey:command.key});
-        if(sameContext(scope,life))setError('');return true;
+        if(sameContext(scope,life)){setError('');setValidationError('');}return true;
       }catch(e){
         if(!sameContext(scope,life))return false;
         if(pendingSave.current)pendingUncertain.current=true;
@@ -514,6 +516,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     busyRef.current = name;
     setBusy(name);
     setError('');
+    setValidationError('');
     try {
       await fn();
     } catch (e) {
@@ -609,9 +612,9 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </button>
         </div>
       </div>
-      {error && (
+      {(error || validationError) && (
         <div className="alert danger" role="alert">
-          {error}
+          {error || validationError}
         </div>
       )}
       {conflict && (
@@ -936,7 +939,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                 Plaintext
               </button>
             </div>
-            <div role="group" aria-label="Simulated viewport">
+            {view === 'canvas' && <div role="group" aria-label="Simulated viewport">
               <button
                 aria-label="Desktop simulation"
                 className={!mobile ? 'selected' : ''}
@@ -951,12 +954,12 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               >
                 <Smartphone size={17} />
               </button>
-            </div>
+            </div>}
           </div>
-          <p className="simulation-label">
+          {view === 'canvas' && <p className="simulation-label">
             <span className="badge warning">Simulation</span> {mobile ? '390px mobile' : 'Desktop'}{' '}
             · Same draft revision · No real-client verification
-          </p>
+          </p>}
           {view === 'outline' ? (
             doc.spec.editing_mode === 'structured' ? <EmailLinearOutline
               sections={doc.spec.sections} readOnly={!writable} locale={doc.spec.locale} direction={doc.spec.direction}

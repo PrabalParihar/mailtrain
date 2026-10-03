@@ -1,0 +1,11 @@
+# Editor feedback corrections
+
+The two inherited ordinary Outline minor findings are corrected. Simulated viewport controls and the simulation label now render only in Preview; Outline, HTML and Plaintext retain their own views without implying that the viewport controls affect them. Preview still supports desktop/mobile simulation through native keyboard buttons.
+
+Field validation feedback now has its own state. When the existing no-write fast path recognizes the acknowledged spec after Undo, it clears only resolved field validation and retains unrelated operational feedback. Original unresolved-save/conflict guards, receipts, recovery, saves, revisions and exports are unchanged. Existing action/install/success paths clear validation consistently with their prior feedback lifecycle.
+
+Both failures were observed before implementation in an owned native Chromium app/disposable database: Outline viewport count1 expected0; keyboard Undo restored saved status while validation remained visible through a15second assertion timeout. The first corrected run exposed an ambiguous new HTML-view test locator; scoping it to Editor view corrected the harness without another production change.
+
+Fresh local validation: seven actual Outline browser groups plus cleanup, including Preview keyboard controls and hidden controls/labels in non-Preview views, invalid-Save/keyboard-Undo/no-write restoration, repeated invalid correction and unrelated preview-error preservation. Existing repeated clicks/lost receipt/reload/export/320px/root text zoom/raw/RTL/Viewer/mobile/desktop flows passed. All five inherited column groups plus cleanup passed. Both owned apps stopped and disposable databases removed. Native mobile pixels inspected. Full configured test suite:941total/939pass/0fail/2inheritedskips; lint/typecheck/API consistency140operations passed. Production build, independent review, preserved synchronization, publication and exact-head CI are recorded in delivery.
+
+No pricing/seat entitlement, provider/account, sending, billing, schema/API/access or paused collaboration/SQL/security/revocation work changed. Full65requirements/13gates remain in force with no whole requirement or gate accepted. See INVITATION-SEAT-POLICY-DECISION.md for the unresolved commercial decision and independent fixture-only work possible without it.

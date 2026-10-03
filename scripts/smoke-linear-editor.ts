@@ -43,6 +43,8 @@ await sourceDatabase(async({db,p,brand,tx})=>{
     assert.equal(await page.getByRole('button',{name:'Outline',exact:true}).count(),1,'A real linear Outline view is missing');
     const outline=page.getByRole('region',{name:'Linear email Outline',exact:true});await outline.waitFor();
     assert.equal(await outline.locator('[data-linear-block]').count(),10);
+    if(!process.argv.includes('--undo-feedback')){assert.equal(await page.getByRole('group',{name:'Simulated viewport',exact:true}).count(),0,'Outline must not show controls that affect only Preview');assert.equal(await page.locator('.simulation-label').count(),0,'Outline must not claim a simulated viewport');}
+
     const block=(id:string)=>outline.locator(`[data-linear-block="${id}"]`);
     const order=()=>outline.locator('[data-linear-block]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-linear-block')));
     const saved=()=>page.getByRole('status').filter({hasText:/^Saved · v/}).waitFor();
@@ -93,7 +95,11 @@ await sourceDatabase(async({db,p,brand,tx})=>{
     await block('source').getByRole('textbox',{name:'Custom HTML source',exact:true}).fill(source);
     await page.getByRole('button',{name:'Preview',exact:true}).click();await page.locator('iframe[title="Email browser simulation"]').waitFor();
     assert.equal(await page.locator('iframe[title="Email browser simulation"]').getAttribute('sandbox'),'');
-    await page.getByRole('button',{name:'Plaintext',exact:true}).click();await page.getByRole('button',{name:'Outline',exact:true}).click();
+    await page.getByRole('button',{name:'390 pixel mobile simulation',exact:true}).focus();await page.keyboard.press('Enter');assert.equal(await page.locator('iframe[title="Email browser simulation"]').evaluate(frame=>frame.classList.contains('mobile')),true);
+    await page.getByRole('button',{name:'Desktop simulation',exact:true}).focus();await page.keyboard.press('Enter');assert.equal(await page.locator('iframe[title="Email browser simulation"]').evaluate(frame=>frame.classList.contains('mobile')),false);
+
+    await page.getByRole('button',{name:'Plaintext',exact:true}).click();assert.equal(await page.getByRole('group',{name:'Simulated viewport',exact:true}).count(),0);assert.equal(await page.locator('.simulation-label').count(),0);
+    await page.getByRole('group',{name:'Editor view',exact:true}).getByRole('button',{name:'HTML',exact:true}).click();assert.equal(await page.getByRole('group',{name:'Simulated viewport',exact:true}).count(),0);assert.equal(await page.locator('.simulation-label').count(),0);await page.getByRole('button',{name:'Outline',exact:true}).click();
     assert.equal(await block('source').getByRole('textbox',{name:'Custom HTML source',exact:true}).inputValue(),source);
     await save();await page.reload();await outline.waitFor();assert.equal(await block('hero').getByRole('textbox',{name:'Heading',exact:true}).inputValue(),'Edited Outline heading');
     assert.equal(await block('source').getByRole('textbox',{name:'Custom HTML source',exact:true}).inputValue(),source);
@@ -125,7 +131,19 @@ await sourceDatabase(async({db,p,brand,tx})=>{
     await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).fill('https://');
     await page.getByRole('button',{name:'Save',exact:true}).click();await page.locator('.alert.danger[role="alert"]').waitFor();
     assert.equal(await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).inputValue(),'https://');
-    assert.equal(await page.getByRole('button',{name:'Retry original save acknowledgment',exact:true}).count(),0);assert.equal(invalidDraftWrites,0);assert.deepEqual(await readDraft(),beforeInvalid);page.off('request',invalidMonitor);
+    assert.equal(await page.getByRole('button',{name:'Retry original save acknowledgment',exact:true}).count(),0);assert.equal(invalidDraftWrites,0);assert.deepEqual(await readDraft(),beforeInvalid);
+    const validation=page.getByRole('alert').filter({hasText:'Complete block 4 before saving:'});
+    await page.getByRole('button',{name:'Undo',exact:true}).focus();await page.keyboard.press('Enter');await saved();
+    await validation.waitFor({state:'hidden'});assert.equal(await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).inputValue(),beforeInvalid.spec.sections[3].href);assert.equal(invalidDraftWrites,0);assert.deepEqual(await readDraft(),beforeInvalid);
+    await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).fill('https://');await page.getByRole('button',{name:'Save',exact:true}).click();await validation.waitFor();
+    // A separate preview failure must survive Undo while resolved field validation disappears.
+    const previewEndpoint=origin+'/v1/emails/'+doc.id+'/preview';
+    await page.route(previewEndpoint,route=>route.fulfill({status:503,json:{error:{code:'FIXTURE_PREVIEW_ERROR',message:'Owned preview unavailable'}}}));
+    await block('body').getByRole('textbox',{name:'Body text',exact:true}).fill('Temporary preview failure trigger');await page.getByRole('alert').filter({hasText:'Owned preview unavailable'}).waitFor();
+    await page.getByRole('button',{name:'Undo',exact:true}).click();await page.getByRole('button',{name:'Undo',exact:true}).click();await saved();
+    await page.getByRole('alert').filter({hasText:'Owned preview unavailable'}).waitFor();await validation.waitFor({state:'hidden'});assert.equal(invalidDraftWrites,0);assert.deepEqual(await readDraft(),beforeInvalid);
+    await page.unroute(previewEndpoint);await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).fill('https://');await page.getByRole('button',{name:'Save',exact:true}).click();await validation.waitFor();page.off('request',invalidMonitor);
+    console.log('Keyboard Undo restores acknowledged fields and retires validation feedback without writes; unrelated preview failure retained PASS.');
     await block('cta').getByRole('textbox',{name:'Destination URL',exact:true}).fill('https://example.com/corrected');await save();
     assert.equal((await readDraft()).spec.sections[3].href,'https://example.com/corrected');
     await page.getByRole('link',{name:'Emails',exact:true}).click();await page.waitForURL(origin+'/app/emails');await page.goBack();await outline.waitFor();

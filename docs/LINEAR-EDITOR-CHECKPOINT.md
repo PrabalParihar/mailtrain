@@ -21,12 +21,12 @@ REQ-015/019 remain Partial/development. Complex layout editing, complete keyboar
 
 Full GA baseline, all 65 requirements and all 13 release gates remain in force. Provider/accounts, production operations, consent/legal and independent acceptance require their named prerequisites in PRODUCTION-LAUNCH-CHECKLIST.md. Paused collaboration and its qualification remain excluded. No schema, API route, access policy, asset admission or provider configuration was changed.
 
-## Deferred minor review findings
+## Original minor review findings — corrected subsequently
 
 - Outline also shows the existing simulated-viewport controls and label; they affect Preview rather than the linear form. Clarify the label/visibility in a later UI polish change.
 - Undo from invalid fields back to the acknowledged spec can leave a stale validation alert until manual Save clears it. The draft is correctly marked saved and remains usable; retire only the resolved validation alert in a later polish change.
 
-Neither finding blocks this bounded workflow qualification. They do not establish complete accessibility acceptance.
+Both original failures were reproduced and corrected in the subsequent ordinary editor feedback change; see EDITOR-FEEDBACK-CHECKPOINT.md for native regression evidence and delivery. The original review observations above are retained as history. These corrections do not establish complete accessibility acceptance.
 
 ## CI compatibility closure
 

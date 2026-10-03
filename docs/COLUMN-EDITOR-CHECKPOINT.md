@@ -20,3 +20,5 @@ REQ-015/019 remain Partial. Full accessibility/assistive technology/physical-dev
 All 65 requirements and 13 release gates remain in force with no whole requirement/gate accepted. Paused collaboration and flagged qualification are unchanged. No paid commitments, real messages, AI generation, transport, billing, provider configuration or production deployment occurred.
 
 Fresh independent static review of immutable `9c95dc89d578f1f5148cf559daba763563bda205` found no new material issue or publication blocker and no new minor finding. The two inherited Outline minors remain deferred: simulation controls shown in Outline and resolved validation feedback after Undo until manual Save. No fix pass was needed. Production startup refusal was checked: full GA evidence remains incomplete. Final preservation/publication/CI is reported in delivery.
+
+The two inherited Outline minor findings above were subsequently reproduced and corrected in the ordinary editor feedback change; see EDITOR-FEEDBACK-CHECKPOINT.md. The review statement above remains historical evidence for its named immutable candidate.
