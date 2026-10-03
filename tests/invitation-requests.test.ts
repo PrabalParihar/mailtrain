@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {assertRouteMethod} from '../src/server/http';
 import assert from 'node:assert/strict';
 import {InvitationRequestInput,InvitationCreateInput,InvitationPlanningContext,invitationPlanningStatus,invitationRefusal} from '../src/domain/invitation-requests';
 const id='11111111-1111-4111-8111-111111111111';
@@ -18,4 +19,17 @@ test('option2 cannot advertise sent accepted reserved or credential-enabled plan
  assert.deepEqual(InvitationPlanningContext.parse(ctx),ctx);
  for(const patch of [{acceptance_enabled:true},{delivery_enabled:true},{seats_reserved:1},{credentials_created:true}])assert.equal(InvitationPlanningContext.safeParse({...ctx,...patch}).success,false);
  assert.equal(invitationRefusal('accept').code,'INVITATION_ACCEPTANCE_DISABLED');assert.equal(invitationRefusal('send').code,'INVITATION_DELIVERY_DISABLED');
+});
+
+test('every accepted planning request UUID is reachable through its scoped item lifecycle',()=>{
+ const ids=[...Array.from({length:8},(_,n)=>`11111111-1111-${n+1}111-8111-111111111111`),'00000000-0000-0000-0000-000000000000','ffffffff-ffff-ffff-ffff-ffffffffffff'];
+ for(const id of ids){
+  assert.equal(InvitationCreateInput.safeParse({request_id:id,email:'id@example.test',role:'Editor'}).success,true);
+  for(const command of ['', 'history'])assert.doesNotThrow(()=>assertRouteMethod(['invitation-requests',id,...(command?[command]:[])],'GET'));
+  for(const command of ['update','withdraw','reopen','send','accept'])assert.doesNotThrow(()=>assertRouteMethod(['invitation-requests',id,command],'POST'));
+ }
+ for(const id of ['bad','11111111-1111-9111-8111-111111111111'])assert.throws(()=>assertRouteMethod(['invitation-requests',id],'GET'),/not found/);
+ assert.throws(()=>assertRouteMethod(['invitation-requests',ids[6],'withdraw'],'GET'),/method is not allowed/);
+ assert.throws(()=>assertRouteMethod(['invitation-requests',ids[6],'history','extra'],'GET'),/not found/);
+ assert.throws(()=>assertRouteMethod(['emails',ids[6]],'GET'),/not found/,'Other route families keep their existing admission.');
 });

@@ -1,16 +1,17 @@
 import {z} from 'zod';
 const version=z.number().int().min(1).max(2147483647);
+export const InvitationRequestId=z.uuid();
 export const InvitationRole=z.enum(['Admin','Editor','Viewer','Billing']);
 export const InvitationRequestInput=z.object({
  email:z.string().trim().min(1).max(254).pipe(z.email()),role:InvitationRole,
  notes:z.string().max(4000).default(''),review_due_at:z.iso.datetime({offset:true}).refine(value=>Number.isFinite(Date.parse(value))).nullable().default(null),
 }).strict();
-export const InvitationCreateInput=InvitationRequestInput.extend({request_id:z.uuid()});
+export const InvitationCreateInput=InvitationRequestInput.extend({request_id:InvitationRequestId});
 export const InvitationUpdateInput=InvitationRequestInput.extend({expected_version:version});
 export const InvitationStateInput=z.object({expected_version:version}).strict();
-export const InvitationRequestRecord=z.object({workspace_id:z.uuid(),id:z.uuid(),email:z.email(),role:InvitationRole,notes:z.string().max(4000),review_due_at:z.iso.datetime({offset:true}).nullable(),state:z.enum(['draft','withdrawn']),version,created_by:z.string(),updated_by:z.string(),created_at:z.iso.datetime({offset:true}),updated_at:z.iso.datetime({offset:true})}).strict();
+export const InvitationRequestRecord=z.object({workspace_id:z.uuid(),id:InvitationRequestId,email:z.email(),role:InvitationRole,notes:z.string().max(4000),review_due_at:z.iso.datetime({offset:true}).nullable(),state:z.enum(['draft','withdrawn']),version,created_by:z.string(),updated_by:z.string(),created_at:z.iso.datetime({offset:true}),updated_at:z.iso.datetime({offset:true})}).strict();
 export const InvitationRequestView=InvitationRequestRecord.extend({planning_status:z.enum(['draft','withdrawn','review_due']),observed_at:z.iso.datetime({offset:true}),delivery_enabled:z.literal(false),acceptance_enabled:z.literal(false),credentials_created:z.literal(false),seats_reserved:z.literal(0)});
-export const InvitationRequestHistory=z.object({workspace_id:z.uuid(),id:z.uuid(),request_id:z.uuid(),version,command:z.enum(['created','updated','withdrawn','reopened']),snapshot:InvitationRequestRecord,created_by:z.string(),created_at:z.iso.datetime({offset:true})}).strict();
+export const InvitationRequestHistory=z.object({workspace_id:z.uuid(),id:z.uuid(),request_id:InvitationRequestId,version,command:z.enum(['created','updated','withdrawn','reopened']),snapshot:InvitationRequestRecord,created_by:z.string(),created_at:z.iso.datetime({offset:true})}).strict();
 export const InvitationPlanningContext=z.object({workspace_id:z.uuid(),workspace_name:z.string(),actor_id:z.string(),actor_role:z.enum(['Owner','Admin']),delivery_enabled:z.literal(false),acceptance_enabled:z.literal(false),credentials_created:z.literal(false),seats_reserved:z.literal(0),prerequisites:z.array(z.string()).min(1).max(10)}).strict();
 export const InvitationCommandResult=z.object({request:InvitationRequestView,changed:z.boolean()}).strict();
 export const INVITATION_PREREQUISITES=[

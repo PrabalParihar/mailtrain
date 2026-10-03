@@ -3,7 +3,7 @@ import {useEffect,useRef,useState}from'react';
 import {InvitationPlanningContext,InvitationCommandResult,InvitationRequestView,INVITATION_PREREQUISITES,type InvitationRequest,type InvitationHistory,type InvitationContext,type InvitationFields}from'../domain/invitation-requests';
 import {api,ApiError}from'./api';import{useResourcePage}from'./paged';import{editingSeat}from'../domain/memberships';
 type Form={email:string;role:InvitationFields['role'];notes:string;due:string};
-type Pending={path:string;input:Record<string,unknown>;key:string;label:string};
+type Pending={path:string;input:Record<string,unknown>;key:string;label:string;formSave?:true};
 const empty=():Form=>({email:'',role:'Editor',notes:'',due:''});
 const formFor=(r:InvitationRequest):Form=>({email:r.email,role:r.role,notes:r.notes,due:r.review_due_at?.replace(/Z$/,'')??''});
 const message=(e:unknown)=>e instanceof Error?e.message:'Planning request unavailable. Your proposed fields are retained.';
@@ -21,19 +21,19 @@ export function InvitationRequests({workspace,actor,role}:{workspace:string;acto
    const result=InvitationCommandResult.parse({request:response.request,changed:response.changed});
    if(result.request.workspace_id!==workspace)throw Error('Planning response belongs to another workspace. Keep the original command and retry.');
    if(!active.current)return;
-   pendingRef.current=null;setPending(null);setNotice(`Planning request confirmed at version ${result.request.version}. Not sent; no access granted.`);setForm(empty());setEditing(null);
+   pendingRef.current=null;setPending(null);setNotice(`Planning request confirmed at version ${result.request.version}. Not sent; no access granted.`);if(command.formSave){setForm(empty());setEditing(null);}else setEditing(current=>current?.id===result.request.id?result.request:current);
    await requests.reload();
   }catch(e){if(!active.current)return;if(e instanceof ApiError&&e.status<500){pendingRef.current=null;setPending(null);}setError(message(e));}
   finally{running.current=false;if(active.current)setBusy(false);}
  }
- function submit(){if(running.current||pendingRef.current||!context)return;try{const values={email:form.email,role:form.role,notes:form.notes,review_due_at:form.due?new Date(form.due+'Z').toISOString():null};void perform({path:editing?'invitation-requests/'+editing.id+'/update':'invitation-requests',input:editing?{...values,expected_version:editing.version}:{...values,request_id:crypto.randomUUID()},key:crypto.randomUUID(),label:editing?'save changes':'create request'});}catch(e){setError(message(e));}}
+ function submit(){if(running.current||pendingRef.current||!context)return;try{const values={email:form.email,role:form.role,notes:form.notes,review_due_at:form.due?new Date(form.due+'Z').toISOString():null};void perform({path:editing?'invitation-requests/'+editing.id+'/update':'invitation-requests',input:editing?{...values,expected_version:editing.version}:{...values,request_id:crypto.randomUUID()},key:crypto.randomUUID(),label:editing?'save changes':'create request',formSave:true});}catch(e){setError(message(e));}}
  async function reloadEditing(){if(!editing||running.current||pendingRef.current)return;running.current=true;setBusy(true);try{const r=await api<{request:InvitationRequest}>(workspace,'invitation-requests/'+editing.id,'GET',undefined,undefined,undefined,undefined,actor),latest=InvitationRequestView.parse(r.request);if(!active.current)return;setEditing(latest);setForm(formFor(latest));setError('');setNotice('Loaded current planning version. Not sent.');await requests.reload();}catch(e){if(active.current)setError(message(e));}finally{running.current=false;if(active.current)setBusy(false);}}
- const locked=busy||!!pending,formLocked=locked||!context||!requests.loaded||!!requests.error;
+ const locked=busy||!!pending,formLocked=locked||!context||!requests.loaded||!!requests.error||editing?.state==='withdrawn';
  return<section className="panel invitation-planning" role="region" aria-label="Invitation planning">
   <h3>Invitation planning</h3><p>Not sent. Acceptance is disabled.</p><p className="muted">Save a proposed teammate and role for review. Planning requests create no invitation link, reserve no seats and grant no access.</p>
   <p>Workspace: {context?.workspace_name??'Loading selected workspace…'}</p>
   <form onSubmit={e=>{e.preventDefault();submit();}}>
-   <h4>{editing?'Edit planning request':'New planning request'}</h4>
+   <h4>{editing?'Edit planning request':'New planning request'}</h4>{editing?.state==='withdrawn'&&<p role="status">This request is withdrawn. Your proposed fields are retained. Reopen it to save them, or cancel editing.</p>}
    <label>Recipient email (unverified)<input type="email" dir="ltr" required maxLength={254} disabled={formLocked} value={form.email} onChange={e=>setForm({...form,email:e.target.value})}/></label>
    <label>Proposed role<select disabled={formLocked} value={form.role} onChange={e=>setForm({...form,role:e.target.value as Form['role']})}>{(['Admin','Editor','Viewer','Billing'] as const).map(r=><option key={r} disabled={r==='Billing'&&role!=='Owner'}>{r}</option>)}</select></label>
    <p className="small muted">{editingSeat(form.role)} proposed editing seat. No seat is reserved. Owner, Admin and Editor count as editing roles; no plan capacity is approved.</p>
