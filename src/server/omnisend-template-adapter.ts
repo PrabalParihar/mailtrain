@@ -1,6 +1,7 @@
 // Unmounted transport. A future verified OAuth/account admission supplies the
 // token and durable callbacks. This module does not implement an export queue.
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import type { OmnisendArtifact } from '../domain/omnisend-export';
 import { OMNISEND_API_REVISION, OMNISEND_IMPORT_BODY_LIMIT, OMNISEND_MAPPING_VERSION } from '../domain/omnisend-export-contracts';
 
@@ -8,7 +9,7 @@ const IMPORT_URL = 'https://api.omnisend.com/api/email-templates/import';
 const RESOURCE_PREFIX = 'https://api.omnisend.com/api/email-templates/';
 const MAX_RESPONSE = 5 * 1024 * 1024 - 1;
 const SHA256 = /^[a-f0-9]{64}$/;
-const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+const UUID = z.uuid();
 const REMOTE_ID = /^[a-f0-9]{24}$/i;
 
 export type OmnisendTemplateResult = {
@@ -36,7 +37,7 @@ function wellFormed(value: string) {
 }
 function validateArtifact(a: OmnisendArtifact) {
   if (!a || a.destination !== 'omnisend' || a.mapping_version !== OMNISEND_MAPPING_VERSION || a.api_revision !== OMNISEND_API_REVISION || a.remote_export_enabled !== false ||
-    typeof a.revision_id !== 'string' || !UUID.test(a.revision_id) ||
+    !UUID.safeParse(a.revision_id).success ||
     typeof a.source_artifact_hash !== 'string' || !SHA256.test(a.source_artifact_hash) ||
     typeof a.html !== 'string' || typeof a.text !== 'string' || !wellFormed(a.html) || !wellFormed(a.text) ||
     Buffer.byteLength(a.html, 'utf8') > OMNISEND_IMPORT_BODY_LIMIT || Buffer.byteLength(a.text, 'utf8') > OMNISEND_IMPORT_BODY_LIMIT ||

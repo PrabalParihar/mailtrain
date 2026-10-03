@@ -38,7 +38,7 @@ Files create src/server/omnisend-template-adapter.ts, tests/omnisend-template-ad
 ### Task3: Root integration and qualification
 Modify src/server/esp-export-review.ts, src/ui/editor.tsx, src/ui/klaviyo-export.tsx, scripts/generate-api.ts,public/openapi.json,sdk/schema.d.ts,tests/esp-export.test.ts,package.json,.github/workflows/verify.yml; create scripts/smoke-omnisend-export.ts. Existing122operations and earlier mapping behavior preserved; strictdest/media/mapping unions expand. Show exact honest Omnisend import notice and selector; generation fences allselected intervals. Saved worker joint spec+quality review precedes wholeintegrationgate.
 - [x] Run actualrootHTTP/ChromiumRED then all third-destination and both earlier fixtures incl initialfreeze away/back/error/download/navigation/mobileness.
-- [ ] Implement integration/contracts/CI/docs, then fullconfiguredsuite/lint/type/API/build/Linuxchecks.
-- [ ] Freeze immutablewholebaseline-to-candidate patch; one mostcapable whole reviewer; iffindings onecompleteworker +onescopedrereview.
+- [x] Implement integration/contracts/CI/docs, then fullconfiguredsuite/lint/type/API/build/Linuxchecks.
+- [x] Freeze immutablewholebaseline-to-candidate patch; one mostcapable whole reviewer; iffindings onecompleteworker +onescopedrereview.
 - [ ] Guarded canonical sync/buildchecks/both prior+thirdbrowser/original109/221/private/hash preservation; restoreowned apps/keepunrelated.
 - [ ] Commit completehandoffs/reviews/ledger/rulings/evidence to checkpoint before removing only thisplan's scratch. Product/fullGA remains pending.
