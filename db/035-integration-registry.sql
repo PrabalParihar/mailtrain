@@ -17,24 +17,32 @@ CREATE FUNCTION public.mailcraft_integration_text_valid(value text,bound integer
  AND value~U&'[^ \0009-\000D\00A0\1680\2000-\200A\2028\2029\202F\205F\3000\FEFF]',false)
 $$;
 
+-- Pinned z.uuid() parity: RFC versions 1-8/variant 8-b, plus nil/max.
+-- PostgreSQL canonicalizes accepted uuid values to lowercase text.
+CREATE FUNCTION public.mailcraft_integration_uuid_valid(value uuid)RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path=pg_catalog,public AS $$
+ SELECT coalesce(value::text~'^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$',false)
+$$;
+
 CREATE TABLE public.integration_connections(
- workspace_id uuid NOT NULL REFERENCES public.workspaces(id),id uuid NOT NULL,
+ workspace_id uuid NOT NULL REFERENCES public.workspaces(id)CHECK(public.mailcraft_integration_uuid_valid(workspace_id)),id uuid NOT NULL CHECK(public.mailcraft_integration_uuid_valid(id)),
  provider text NOT NULL CHECK(provider IN('klaviyo','mailchimp','hubspot','brevo','omnisend')),
  external_account_id text NOT NULL CHECK(public.mailcraft_integration_text_valid(external_account_id,255)),
  auth_mode text NOT NULL CHECK(auth_mode IN('oauth','api_key')),
  region text NOT NULL CHECK(public.mailcraft_integration_text_valid(region,48)),
- credential_reference uuid NOT NULL,credential_version integer NOT NULL DEFAULT 1 CHECK(credential_version>0),
+ credential_reference uuid NOT NULL CHECK(public.mailcraft_integration_uuid_valid(credential_reference)),credential_version integer NOT NULL DEFAULT 1 CHECK(credential_version>0),
  record_version integer NOT NULL DEFAULT 1 CHECK(record_version>0),
  state text NOT NULL DEFAULT 'unverified'CHECK(state IN('unverified','revoked')),
  can_export boolean NOT NULL DEFAULT false CHECK(can_export=false),verified_at timestamptz CHECK(verified_at IS NULL),
  created_by text NOT NULL,created_at timestamptz NOT NULL DEFAULT clock_timestamp(),updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),revoked_at timestamptz,
- PRIMARY KEY(workspace_id,id),CHECK((state='revoked')=(revoked_at IS NOT NULL))
+ PRIMARY KEY(workspace_id,id),CHECK((state='revoked')=(revoked_at IS NOT NULL)),
+ CHECK(record_version=credential_version+CASE WHEN state='revoked'THEN 1 ELSE 0 END),
+ CHECK(created_at<=updated_at),CHECK(revoked_at IS NULL OR revoked_at=updated_at)
 );
 CREATE UNIQUE INDEX integration_active_account ON public.integration_connections(workspace_id,provider,external_account_id)WHERE state='unverified';
 CREATE TABLE public.integration_connection_history(
- workspace_id uuid NOT NULL,connection_id uuid NOT NULL,record_version integer NOT NULL CHECK(record_version>0),
+ workspace_id uuid NOT NULL CHECK(public.mailcraft_integration_uuid_valid(workspace_id)),connection_id uuid NOT NULL CHECK(public.mailcraft_integration_uuid_valid(connection_id)),record_version integer NOT NULL CHECK(record_version>0),
  event text NOT NULL CHECK(event IN('registered','rotated','revoked')),
- credential_reference uuid NOT NULL,credential_version integer NOT NULL CHECK(credential_version>0),
+ credential_reference uuid NOT NULL CHECK(public.mailcraft_integration_uuid_valid(credential_reference)),credential_version integer NOT NULL CHECK(credential_version>0),
  actor text NOT NULL,recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  PRIMARY KEY(workspace_id,connection_id,record_version),
  FOREIGN KEY(workspace_id,connection_id)REFERENCES public.integration_connections(workspace_id,id)
@@ -59,7 +67,7 @@ GRANT UPDATE(credential_reference,credential_version,record_version,state,update
 CREATE FUNCTION public.mailcraft_integration_authorize(w uuid)RETURNS text LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 DECLARE actor text:=current_setting('app.user_id',true); ws_status text; member public.memberships%ROWTYPE;
 BEGIN
- IF w IS NULL THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
+ IF w IS NULL OR NOT public.mailcraft_integration_uuid_valid(w)THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
  IF w::text IS DISTINCT FROM current_setting('app.workspace_id',true)OR actor IS NULL OR actor=''OR actor LIKE 'api-key:%'THEN
   RAISE EXCEPTION 'CONNECTION_PERMISSION_DENIED';
  END IF;
@@ -110,14 +118,14 @@ BEGIN
    IS DISTINCT FROM ROW(OLD.workspace_id,OLD.id,OLD.provider,OLD.external_account_id,OLD.auth_mode,OLD.region,OLD.created_by,OLD.created_at)THEN RAISE EXCEPTION 'CONNECTION_IMMUTABLE';END IF;
   IF OLD.state='revoked'THEN RAISE EXCEPTION 'CONNECTION_REVOKED';END IF;
   IF OLD.record_version=2147483647 OR NEW.record_version<>OLD.record_version+1 THEN RAISE EXCEPTION 'CONNECTION_VERSION_CONFLICT';END IF;
+  NEW.updated_at:=greatest(clock_timestamp(),OLD.updated_at);
   IF NEW.state='revoked'THEN
    IF NEW.credential_reference IS DISTINCT FROM OLD.credential_reference OR NEW.credential_version<>OLD.credential_version THEN RAISE EXCEPTION 'CONNECTION_IMMUTABLE';END IF;
-   NEW.revoked_at:=clock_timestamp();
+   NEW.revoked_at:=NEW.updated_at;
   ELSIF NEW.state='unverified'THEN
    IF OLD.credential_version=2147483647 OR NEW.credential_version<>OLD.credential_version+1 OR NEW.revoked_at IS NOT NULL THEN RAISE EXCEPTION 'CONNECTION_VERSION_CONFLICT';END IF;
    IF EXISTS(SELECT FROM public.integration_connection_history h WHERE h.workspace_id=OLD.workspace_id AND h.connection_id=OLD.id AND h.credential_reference=NEW.credential_reference)THEN RAISE EXCEPTION 'CONNECTION_CREDENTIAL_REUSED';END IF;
   ELSE RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
-  NEW.updated_at:=clock_timestamp();
  END IF;
  RETURN NEW;
 END$$;
@@ -134,7 +142,7 @@ CREATE TRIGGER integration_capture AFTER INSERT OR UPDATE ON public.integration_
 CREATE FUNCTION public.mailcraft_register_integration(w uuid,id uuid,provider text,account text,mode text,region text,credential uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE c public.integration_connections%ROWTYPE; actor text;
 BEGIN
- IF w IS NULL OR id IS NULL OR credential IS NULL OR provider IS NULL OR provider NOT IN('klaviyo','mailchimp','hubspot','brevo','omnisend')
+ IF w IS NULL OR id IS NULL OR credential IS NULL OR NOT public.mailcraft_integration_uuid_valid(w)OR NOT public.mailcraft_integration_uuid_valid(id)OR NOT public.mailcraft_integration_uuid_valid(credential)OR provider IS NULL OR provider NOT IN('klaviyo','mailchimp','hubspot','brevo','omnisend')
  OR mode IS NULL OR mode NOT IN('oauth','api_key')OR account IS NULL OR NOT public.mailcraft_integration_text_valid(account,255)
  OR region IS NULL OR NOT public.mailcraft_integration_text_valid(region,48)THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
  actor:=public.mailcraft_integration_authorize(w);
@@ -154,7 +162,7 @@ END$$;
 CREATE FUNCTION public.mailcraft_read_integration(w uuid,id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE c public.integration_connections%ROWTYPE;
 BEGIN
- IF w IS NULL OR id IS NULL THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
+ IF w IS NULL OR id IS NULL OR NOT public.mailcraft_integration_uuid_valid(w)OR NOT public.mailcraft_integration_uuid_valid(id)THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
  PERFORM public.mailcraft_integration_authorize(w);
  SELECT * INTO c FROM public.integration_connections x WHERE x.workspace_id=w AND x.id=mailcraft_read_integration.id FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'CONNECTION_NOT_FOUND';END IF;
@@ -163,7 +171,7 @@ END$$;
 CREATE FUNCTION public.mailcraft_rotate_integration(w uuid,id uuid,expected integer,credential uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE c public.integration_connections%ROWTYPE;
 BEGIN
- IF w IS NULL OR id IS NULL OR credential IS NULL OR expected IS NULL OR expected<=0 THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
+ IF w IS NULL OR id IS NULL OR credential IS NULL OR NOT public.mailcraft_integration_uuid_valid(w)OR NOT public.mailcraft_integration_uuid_valid(id)OR NOT public.mailcraft_integration_uuid_valid(credential)OR expected IS NULL OR expected<=0 THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
  PERFORM public.mailcraft_integration_authorize(w);
  SELECT * INTO c FROM public.integration_connections x WHERE x.workspace_id=w AND x.id=mailcraft_rotate_integration.id FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'CONNECTION_NOT_FOUND';END IF;
@@ -176,7 +184,7 @@ END$$;
 CREATE FUNCTION public.mailcraft_revoke_integration(w uuid,id uuid)RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE c public.integration_connections%ROWTYPE;
 BEGIN
- IF w IS NULL OR id IS NULL THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
+ IF w IS NULL OR id IS NULL OR NOT public.mailcraft_integration_uuid_valid(w)OR NOT public.mailcraft_integration_uuid_valid(id)THEN RAISE EXCEPTION 'CONNECTION_INPUT_INVALID';END IF;
  PERFORM public.mailcraft_integration_authorize(w);
  SELECT * INTO c FROM public.integration_connections x WHERE x.workspace_id=w AND x.id=mailcraft_revoke_integration.id FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'CONNECTION_NOT_FOUND';END IF;
@@ -190,7 +198,7 @@ END$$;
 GRANT CREATE ON SCHEMA public TO mailcraft_integration_admin;
 DO $$DECLARE f record;BEGIN
  FOR f IN SELECT oid::regprocedure AS signature FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN(
- 'mailcraft_integration_text_valid','mailcraft_integration_authorize','mailcraft_integration_output','mailcraft_integration_immutable','mailcraft_integration_guard','mailcraft_integration_capture',
+ 'mailcraft_integration_text_valid','mailcraft_integration_uuid_valid','mailcraft_integration_authorize','mailcraft_integration_output','mailcraft_integration_immutable','mailcraft_integration_guard','mailcraft_integration_capture',
  'mailcraft_register_integration','mailcraft_read_integration','mailcraft_rotate_integration','mailcraft_revoke_integration')LOOP
   EXECUTE format('ALTER FUNCTION %s OWNER TO mailcraft_integration_admin',f.signature);
   EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC,mailcraft_runtime',f.signature);

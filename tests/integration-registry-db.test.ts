@@ -22,6 +22,8 @@ function redacted(value:Record<string,unknown>,b:Binding,state='unverified'){
  assert.equal(JSON.stringify(value).includes(b.account),false);assert.equal(JSON.stringify(value).includes(b.credential),false);
  for(const key of ['created_at','updated_at'])assert.ok(Number.isFinite(Date.parse(value[key] as string)));
  assert.equal(value.revoked_at===null,state==='unverified');
+ assert.equal(value.record_version,(value.credential_version as number)+(state==='revoked'?1:0));
+ if(state==='revoked')assert.equal(value.revoked_at,value.updated_at);
 }
 async function history(f:Fixture,id:string){return(await f.db.query('SELECT * FROM integration_connection_history WHERE workspace_id=$1 AND connection_id=$2 ORDER BY record_version',[f.p.workspace,id])).rows;}
 async function waitBlocked(db:pg.Pool,pid:number){
@@ -149,4 +151,26 @@ test('registry locks authority before waiting for the connection, blocking revoc
   const revokerPid=(await revoker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;revoked=revoker.query("UPDATE memberships SET status='revoked' WHERE workspace_id=$1",[f.p.workspace]);await waitBlocked(f.db,revokerPid);assert.ok((await f.db.query('SELECT $1::int=ANY(pg_blocking_pids($2)) AS held',[readerPid,revokerPid])).rows[0].held);
   await holder.query('COMMIT');await readPending;await revoked;await assert.rejects(read(f,b.id),fixed('CONNECTION_PERMISSION_DENIED'));assert.equal((await history(f,b.id)).length,1);
  }finally{await holder.query('ROLLBACK');await readPending;await revoked;holder.release();revoker.release();}
+}));
+
+
+test('registry enforces pinned strict UUID parity for every typed identity and credential',async()=>sourceDatabase(async f=>{
+ const b=binding(),invalid=['12345678-1234-9234-8234-123456789abc','12345678-1234-4234-7234-123456789abc'];
+ for(const uuid of invalid){
+  await assert.rejects(register(f,{...b,id:uuid}),fixed('CONNECTION_INPUT_INVALID'));
+  await assert.rejects(register(f,{...b,credential:uuid}),fixed('CONNECTION_INPUT_INVALID'));
+  for(const signature of ['mailcraft_read_integration($1,$2)','mailcraft_revoke_integration($1,$2)','mailcraft_rotate_integration($1,$2,1,$3)'])await assert.rejects(f.tx(c=>c.query('SELECT '+signature,signature.startsWith('mailcraft_rotate')?[f.p.workspace,uuid,b.credential]:[f.p.workspace,uuid])),fixed('CONNECTION_INPUT_INVALID'));
+  await f.db.query("INSERT INTO workspaces(id,name)VALUES($1,'owned non-RFC identity')",[uuid]);await f.db.query("INSERT INTO memberships(workspace_id,user_id,role)VALUES($1,$2,'Owner')",[uuid,f.p.user]);
+  for(const signature of ['mailcraft_read_integration($1,$2)','mailcraft_revoke_integration($1,$2)','mailcraft_rotate_integration($1,$2,1,$3)','mailcraft_register_integration($1,$2,$3,$4,$5,$6,$7)'])await assert.rejects(f.tx(async c=>{await c.query("SELECT set_config('app.workspace_id',$1,true)",[uuid]);return c.query('SELECT '+signature,signature.startsWith('mailcraft_register')?[uuid,b.id,b.provider,b.account,b.mode,b.region,b.credential]:signature.startsWith('mailcraft_rotate')?[uuid,b.id,b.credential]:[uuid,b.id]);}),fixed('CONNECTION_INPUT_INVALID'));
+ }
+ assert.equal((await f.db.query('SELECT count(*)::int AS n FROM integration_connections')).rows[0].n,0);
+ const originals:Binding[]=[];
+ for(let version=1;version<=8;version++)for(const variant of ['8','9','a','b']){
+  const rawId=randomUUID(),rawCredential=randomUUID(),id=rawId.slice(0,14)+version+rawId.slice(15,19)+variant+rawId.slice(20),credential=rawCredential.slice(0,14)+version+rawCredential.slice(15,19)+variant+rawCredential.slice(20),account=b.account+version+variant;
+  const item={...b,id,credential,account};const registered=await register(f,item);redacted(registered,item);assert.equal(registered.id[14],String(version));assert.equal(registered.id[19],variant);originals.push(item);
+ }
+ for(const uuid of ['00000000-0000-0000-0000-000000000000','ffffffff-ffff-ffff-ffff-ffffffffffff']){const item={...b,id:uuid,credential:uuid==='00000000-0000-0000-0000-000000000000'?'ffffffff-ffff-ffff-ffff-ffffffffffff':'00000000-0000-0000-0000-000000000000',account:b.account+uuid};redacted(await register(f,item),item);}
+ const uppercase={...binding(),id:randomUUID().toUpperCase(),credential:randomUUID().toUpperCase()};const normalized={...uppercase,id:uppercase.id.toLowerCase()};redacted(await register(f,uppercase),normalized);assert.equal((await read(f,uppercase.id)).id,normalized.id);
+ const first=originals[0];for(const uuid of invalid)await assert.rejects(rotate(f,first.id,1,uuid),fixed('CONNECTION_INPUT_INVALID'));
+ assert.equal((await read(f,first.id)).record_version,1);assert.equal((await history(f,first.id)).length,1);
 }));
