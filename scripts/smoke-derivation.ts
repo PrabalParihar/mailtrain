@@ -4,6 +4,7 @@ import pg from 'pg';
 import env from '@next/env';
 import { digest } from '../src/server/audit';
 import { chromium } from 'playwright';
+import { build } from 'esbuild';
 env.loadEnvConfig(process.cwd());
 const origin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:3000';
 if (process.env.LOCAL_DEVELOPMENT !== 'true' || !['127.0.0.1', 'localhost'].includes(new URL(origin).hostname)) throw new Error('Local derivation fixtures only');
@@ -82,13 +83,35 @@ try {
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await page.getByRole('status').filter({ hasText: 'Saved' }).waitFor();
     await page.locator('.derived-panel').getByText(/Source changed\. This draft remains intact/).waitFor({ timeout: 5000 });
-    // A stale offline backup must retain its spec, but not replace fresh server lineage.
+    // Actor-unbound legacy bytes remain retained and must never replace current work.
     const savedChild = (await call('emails/' + frenchId)).j.email;
-    await page.evaluate(({ workspace, child }) => localStorage.setItem('mailcraft.draft.' + workspace + '.' + child.id, JSON.stringify({ ...child, spec: { ...child.spec, subject: 'Recovered child edits' }, lineage: { ...child.lineage, source_status: 'current' } })), { workspace: w, child: savedChild });
+    const legacyKey = 'mailcraft.draft.' + w + '.' + frenchId;
+    const legacyBytes = JSON.stringify({ ...savedChild, spec: { ...savedChild.spec, subject: 'Unbound legacy child edits' }, lineage: { ...savedChild.lineage, source_status: 'current' } });
+    await page.evaluate(({ key, bytes }) => localStorage.setItem(key, bytes), { key: legacyKey, bytes: legacyBytes });
+    await page.reload();
+    await page.getByLabel('Subject', { exact: true }).filter({ visible: true }).waitFor();
+    assert.equal(await page.getByLabel('Subject', { exact: true }).inputValue(), savedChild.spec.subject);
+    await page.getByText('An older recovery copy is retained on this browser. It is not associated with your current account and has not been installed.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(key => localStorage.getItem(key), legacyKey), legacyBytes);
+    await page.locator('.derived-panel').getByText(/Source changed\. This draft remains intact/).waitFor({ timeout: 5000 });
+    // Use the actual validated writer and native IndexedDB under this actor/document.
+    const recoveryBundle = await build({ stdin: { contents: "import {writeSourceDraftRecovery,readSourceRecovery} from './src/ui/source-recovery-store';globalThis.derivationRecovery={writeSourceDraftRecovery,readSourceRecovery};", resolveDir: process.cwd(), loader: 'ts' }, bundle: true, platform: 'browser', format: 'iife', write: false });
+    await page.addScriptTag({ content: recoveryBundle.outputFiles[0].text });
+    const recoveryScope = { workspace: w, actor: user, email: frenchId };
+    const recoveryDraft = { id: savedChild.id, title: savedChild.title, doc_version: savedChild.doc_version, spec: { ...savedChild.spec, subject: 'Recovered child edits' }, lineage: { ...savedChild.lineage, source_status: 'current' } };
+    await page.evaluate(async ({ scope, draft }) => {
+      const recovery = (globalThis as unknown as { derivationRecovery: Pick<typeof import('../src/ui/source-recovery-store'), 'writeSourceDraftRecovery' | 'readSourceRecovery'> }).derivationRecovery;
+      await recovery.writeSourceDraftRecovery(scope, draft);
+      const retained = await recovery.readSourceRecovery(scope);
+      if (retained.draft?.spec.subject !== draft.spec.subject) throw Error('Actual account-scoped recovery did not commit the draft');
+      if (Object.keys(await recovery.readSourceRecovery({ ...scope, actor: scope.actor + '-other' })).length) throw Error('A different actor could read this recovery draft');
+    }, { scope: recoveryScope, draft: recoveryDraft });
     await page.reload();
     await page.getByLabel('Subject', { exact: true }).filter({ visible: true }).waitFor();
     assert.equal(await page.getByLabel('Subject', { exact: true }).inputValue(), 'Recovered child edits');
     await page.locator('.derived-panel').getByText(/Source changed\. This draft remains intact/).waitFor({ timeout: 5000 });
+    assert.equal(await page.evaluate(key => localStorage.getItem(key), legacyKey), legacyBytes, 'Account-scoped recovery must preserve the original legacy bytes');
+    console.log('Actual actor-scoped IndexedDB recovery preserves local spec with fresh server lineage; legacy bytes retained/refused and foreign actor isolated PASS.');
   }
   await page.reload();
   await page.locator('.derived-panel').getByText(/Source changed\. This draft remains intact/).waitFor();
