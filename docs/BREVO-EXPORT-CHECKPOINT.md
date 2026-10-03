@@ -602,3 +602,188 @@ Native Mac /tmp/lettercape-brevo-export-native, branchcodex/brevo-export, upstre
   }
 }
 ```
+
+## Whole local-development review closure before canonical qualification
+
+ONE immutable baseline7ae→candidateb7f70f950c95a4972c74f4def33a9fcc70da6e7a review passes0Critical/0Important/0Minor. No correction/scopedre-review needed, no extra review wave. Sourcecode unchanged after full727configuredtests/type/lint/build/API122 and all4actualbrowser qualification. Linux candidate source-label-bound/UID1001/networknone/fourmappingcontracts/twoendpoints/editorassets/privateexcluded checks pass; completeGAstartup intentionally refusesexit1. Canonicalqualification pending; no real ESP/account/authmode/native/client/production success.
+
+## Complete whole reviewer report — retained verbatim
+
+# Brevo immutable whole-slice review
+
+Verdict: PASS within the requested immutable local-development slice. Critical: 0. Important: 0. Minor: 0. No concrete findings and no corrective worker requested by this review. This is the ONE whole review of this artifact, independently evaluated after the separate Task1/Task2 reviews.
+
+## Artifact and review boundary
+
+Reviewed on native Darwin in `/private/tmp/lettercape-brevo-export-native` (alias `/tmp/lettercape-brevo-export-native`), branch `codex/brevo-export`. Baseline is closed corrected Omnisend `7ae416aa41aec7221b7eda40a95a929245f28eb1`; candidate and observed HEAD are `b7f70f950c95a4972c74f4def33a9fcc70da6e7a`. Exact binary diff `/tmp/lettercape-brevo-whole.diff` SHA256 is `092076f1ec69302bf8132bb78cdce00a606f35658e9c09a6510f11eae0111b7b`. Read-only regeneration with `git diff --binary <baseline> <candidate>` matched the supplied artifact byte for byte. All 27 changed tracked files matched candidate HEAD blobs byte for byte; the complete identity inventory is below. Tracked files were clean at opening and closing inspection; `tooling/openapi/node_modules` is untracked and excluded. This is not a whole-tree-clean claim.
+
+Read the supplied whole-review brief; AGENTS.md; installed Next route-handler and use-client guides; complete design and plan; the entire 604-line BREVO-EXPORT-CHECKPOINT including both complete worker handoffs, joint separate-task review, ledger, rulings, briefs, failures and qualification evidence; all four pinned official create/get/auth/oauth materializations; all production changes, generated-contract changes, new tests and actual-browser fixture; and relevant unchanged validation, editor, authority and routing context. No predecessor finding was waived. The prior task reviews are evidence, not a substitute for this independent assessment.
+
+## Findings
+
+Critical: none. Important: none. Minor: none.
+
+No bounded injected probe was needed: source inspection and the exact saved executable evidence resolved the reviewed questions. No test, browser, build or provider execution was performed in this review.
+
+## Compiler and browser contract assessment
+
+`src/domain/brevo-export.ts:37-49` invokes the frozen validator unchanged before destination-specific work. Its narrow catch translates only exact EXPORT_STATIC_BLOCKED with a nonempty blocking list consisting entirely of SUBJECT_REQUIRED. Mixed static errors, source identity/integrity, raw/custom source, private assets and footer failures retain precedence. Baseline byte comparison independently confirmed preservation of `src/domain/frozen-export-source.ts`, `src/domain/esp-export.ts`, `src/domain/mailchimp-export.ts` and `src/domain/omnisend-export.ts`.
+
+The subject is copied exactly and checked for nonblank content, well-formed UTF16, controls and the local 200-unit bound. It participates in SHA256(JSON.stringify([mapping, API, source, subject, HTML, text])). Canonical source slot counts and exact href counts restrict replacement to legal footers; other curly/Liquid/percent/Mailchimp/square delimiters refuse. The source HTML title also contains the subject, so authored subject syntax is included in the token scan. HTML and local plaintext each use the exclusive decimal 1,000,000 UTF8-byte guard; JSON serialization overhead is deliberately not an Omnisend-style total-body limit. This matches the approved conservative policy.
+
+`brevoReview` removes HTML, text and subject before strict parsing. The browser-pure schema fixes constants, UUID/hash shapes, remote=false, transformation count and all seven blockers in order. Browser imports refer only to that contract. Tests observe exact source/hash/mapping preservation, recursive JSONB ordering and full manifest identity, token refusals, subject-only versus mixed-error precedence, metadata privacy and ASCII/accent/Tokyo/surrogate-pair boundaries. Their retained scaffold RED and fixture corrections are explicitly accounted for.
+
+## Unmounted transport assessment
+
+`src/server/brevo-draft-adapter.ts:35-47,141-153` validates strict artifact keys, UUID, constants, exact hashes, subject and format bounds, trimmed local name, positive safe-integer sender, token and dependency/signal shape before marking submission. Parsed content, name, subject, sender, token and callbacks/fetch/signal dependencies are captured before the marker await. Ordinary asynchronous caller mutation cannot change the submitted payload or persistence callback.
+
+The sole create request targets fixed HTTPS Brevo v3, rejects redirects and submits exactly name, sender:{id}, subject and htmlContent. No audience, scheduling, AB/best-time, remote content URL, template, send, test or update request is made. There is no POST retry. Only a trusted 201 with a positive safe-integer numeric ID becomes a normalized decimal remote ID. The persistence callback precedes the exact-ID GET; optional receipt corruption does not erase a trusted ID, and persistence/readback/network/abort failures thereafter preserve it.
+
+The shared 30-second HTTP budget, 5MiB-1 declared/streamed response cap, fatal UTF8 decoding, abort races and discarded/late-response cancellation are implemented and covered by injected tests. Durable callback completion/deadline and actual persistence remain future-caller requirements; this primitive does not promise an overall callback-inclusive deadline. Fixed result/error codes omit provider messages, credentials and content. Undocumented or malformed create outcomes and duplicate/processing/sent/already-processed 400 ambiguity remain outcome_unknown. Other documented rejection mappings and bounded 429 retry-after do not produce automatic retries.
+
+Safe readback checks exact ID/name/subject/sender/HTML, draft/classic, a valid round-tripping documented timestamp shape, testSent=false, strictly known empty recipient arrays, absent/empty scheduling and absent/false AB/best-time. Content verification therefore means exact readback HTML bytes under these checks. Every result keeps native_fidelity_verified=false and destination_url=null. The API resource URL and unsolicited/social share links cannot become a management handoff or trigger further requests. `rg` over product source finds the exported transport only in its own module; it is not mounted by routes or UI.
+
+## Root integration, API, fixture and documentation assessment
+
+`src/server/esp-export-review.ts:17-35` adds Brevo to the existing strict destination allowlist and compiler/review dispatch. It retains current edit plus emails:export authority in the tenant transaction, immutable revision loading, request abort checks, audit, no-store/nosniff headers, inert attachment CSP and source/destination/format receipts. Existing routing remains GET-only. Unknown/repeated query fields fail closed. Source inspection of withPrincipal/current-authority and tenant setup preserves the inherited RLS/current-authority boundary; saved actual HTTP evidence exercises the boundary without a review-time DB call.
+
+The editor adds the fourth discriminated review schema and union while preserving selection generations, initial-freeze checks, actor/workspace/email/lifecycle/source fences and checked download receipts/bytes. The panel adds the fourth selector and local subject/sender/HTML-limit notices while continuing to state remote unavailability. The new browser fixture exercises exact subject-inclusive hashing and absent content fields, missing/unsafe subject rejection and correction, all four mappings, repeated-click admission, stale results/errors/downloads, initial-freeze round trips, navigation, Viewer denial and 390px layout. The three earlier fixtures only replace now-supported Brevo with HubSpot in their unsupported-destination assertion.
+
+OpenAPI/generator/SDK expose the matching fourth schema, query union and mapping receipt. Independent parsed comparison against baseline found exactly the same 122 (path, method, operationId) identities. Saved api:check confirms generation consistency. CI adds the owned Brevo HTTP/browser fixture in the existing sequential fixture stage before shared dev startup; package wiring matches it. Documentation retains candidate/pending qualification status, all 65 requirements, all 13 gates, zero whole-product acceptance and 43 Partial / 17 undelivered / 5 roadmap. REQ-040 remains Partial.
+
+## Evidence actually verified
+
+Recomputed every saved evidence entry's byte count and SHA256: 29/29 logs matched `/tmp/lettercape-brevo-candidate-evidence.json`; 4/4 public documents matched `/tmp/lettercape-brevo-doc-materialization.json`. Manifest hashes are respectively `9c9edf8dcfc24352798acb64992e665495531335a2219581173d773932ce34a7` and `eb03f3b903668453f271fd82b051493dfbc550519616fafb163f043506224b32`.
+
+Saved final configured test output records 727 tests, 727 pass, zero fail/cancelled/skipped/todo. Saved build output completes Next 16.3.8 production compilation, TypeScript and route generation; API output records 122 matching operations; type/lint logs contain no diagnostics. Successful process exit status for those saved runs is attested by the retained root checkpoint, not a new execution by this reviewer. Saved actual-browser output records Brevo 7, Omnisend 6, Mailchimp 6 and Klaviyo 4 groups, cleanup and zero instrumented external calls/page errors. Mobile pixel inspection is root's retained evidence, not a new image inspection by this reviewer.
+
+Read saved root RED showing 422 versus expected 200 for Brevo, generated-contract RED showing the missing fourth mapping, and subsequent 15/15 API-contract GREEN. Worker counts were independently read from saved logs: compiler initial RED 38/61, corrected RED 38/60, initial GREEN 59/60, final GREEN 60/60, earlier regression 90/90; transport RED 0/37, fixture failure 40/41, contextual-duplicate RED 41/42, final GREEN 42/42. Intermediate scaffold/fixture/shell failures remain documented; none is represented as a current candidate failure or silently discarded.
+
+## Provider, inherited and remaining limits
+
+Pinned official create/get/auth/OAuth documents support the reviewed field and error contracts. Their content was already materialized; no network access or mutable latest-document substitution was used. API-key access is a documented unmounted primitive. Private-organisation-only OAuth does not approve a customer SaaS connection mode. No actual provider/account/grant/sender existence, entitlement, native-client rendering, native fidelity, management link, encrypted grant store, durable remote job or launch success is established. No minimum paid tier is inferred from premium AB/best-time errors. Decimal HTML, local name/subject bounds and strict timestamp acceptance can conservatively reject otherwise usable provider inputs; that is an explicit bounded policy, not proof of provider limits.
+
+Linux image/startup checks, guarded main/Desktop canonical synchronization, original data/private-file preservation and fresh canonical qualification remain root-owned separate work. This report neither runs nor certifies them. Earlier shared behavior and unresolved full-product/account gates remain inherited context; no concrete new inherited defect was established here. Remote export remains disabled, all 65/all 13 gates remain in force and zero whole capabilities are accepted.
+
+Review actions were read-only source/artifact/context/log inspections plus writing this report. No source, Git/index, private environment, database, provider, network, broad-test/browser/build, send/spend/push/deploy or subagent mutation occurred. The sole requested deliverable is `/tmp/lettercape-brevo-whole-review.md`.
+
+## Verified changed-file identities
+
+| Path | Bytes | Candidate HEAD/live SHA256 |
+| --- | ---: | --- |
+| `.github/workflows/verify.yml` | 12364 | `a748b4d5a16f138929fe30c7490183d3ce982330f238f6ce4e80056c2720d1fe` |
+| `README.md` | 7469 | `f7e3c1f708e863df7f168177b297b3c3912855e5e6b140bda8d8b5486dce47b1` |
+| `docs/BREVO-EXPORT-CHECKPOINT.md` | 56953 | `c480a6cec21e277bdcd6e598bca1ace744217aba5cc787957c3500aded934fd9` |
+| `docs/CAPABILITIES.md` | 18759 | `125ee676b2fb91bbab144db35f3df6d01d225476eb04acbea467f92ba82d72de` |
+| `docs/COVERAGE-CHECKPOINT.md` | 19033 | `b476af60eb6d45c265748f461c531d028fd5f255d289f95d0adba173f2721343` |
+| `docs/DELIVERY-CHECKPOINT.md` | 26805 | `c49b6d01e36843509589148ba5df92f207703c2fa1895e6e3507ca30124be62e` |
+| `docs/ESP-PROVIDER-CONTRACTS-2026-10-02.md` | 24970 | `963fdc0eb93fba1e82cb3d80d8e7586090e168131d2d610f084ae904fb9985ae` |
+| `docs/RELEASE.md` | 21939 | `15475d3c50af2d61ac504a5bd37b71cfbdcd4d82e3a40c767571a78a65b6355d` |
+| `docs/superpowers/plans/2026-10-03-brevo-export.md` | 3097 | `16ce8d1b2f8485e57ca1d51a0c14889926063004a0c0e1712e430ed36818bfca` |
+| `docs/superpowers/specs/2026-10-03-brevo-export-design.md` | 7068 | `b1138fd3aa3c479bbbd1b0abda631a22c5223325c0b8fb4457fd6f35f457675b` |
+| `package.json` | 6461 | `8f99dc9048cf946f7a9646a780c725593f25023431447c06e82a8b646bb756b7` |
+| `public/openapi.json` | 1753694 | `93f744b38996d64c4c379463972ac3b6923449c4856ec95963d931fe9397062d` |
+| `scripts/generate-api.ts` | 69193 | `132c034ddaa04f2371ded45247d6e9b7a5459bbbcbf9cbaf3a63453d6651e5c1` |
+| `scripts/smoke-brevo-export.ts` | 23188 | `3aba8c10ca6b4cdb22ae8c3645096e3c5cdb7af97d933c0bb0dba7fa042083f0` |
+| `scripts/smoke-klaviyo-export.ts` | 11406 | `07157f41e6dc6c06f6ec257793a2360a28eebcc4aed608c33088e4e1b8fcfaa0` |
+| `scripts/smoke-mailchimp-export.ts` | 18327 | `08992fffb37d08d658c1b5da7771caaa31fc8f035a5e4957dd2c4c7ad16f05fe` |
+| `scripts/smoke-omnisend-export.ts` | 19396 | `7ef414fdc8f760b9ab831190b0acf1214029fe80eac66a4bcee2bcaf98382d51` |
+| `sdk/schema.d.ts` | 1618027 | `05658f0d1f35491cd220e37e09aa5ee0c52cc52be6f0a34bad1c8b27e5c41e32` |
+| `src/domain/brevo-export-contracts.ts` | 1153 | `7a1bb256065fa847e7554e384f5504b33cb56949910ef981e3ff5320b58e0a0b` |
+| `src/domain/brevo-export.ts` | 3610 | `4c277d480f54db2c31b7fa2933a5ed7ce991a75577767d547f3a6d9bddd0a8bf` |
+| `src/server/brevo-draft-adapter.ts` | 13313 | `d95f7f20c09a563283a31ae3ec2d34c125187e6f23e1013ca9f8f5043c5ac865` |
+| `src/server/esp-export-review.ts` | 5079 | `383f27e4aa365d0ff30bb0c4e670397cee394912bfc5537ed9e93163c403e2f8` |
+| `src/ui/editor.tsx` | 71767 | `df26826e53ef5bd3658c94d4e99cf9d37153b4e30cc1d9165f07bb0dc1ec222a` |
+| `src/ui/klaviyo-export.tsx` | 3636 | `cbec03c839c7e4c03a6aef6eb7cce2097034cf361baad96f06b725f26c80df9c` |
+| `tests/brevo-draft-adapter.test.ts` | 28686 | `379189d49a2cdbe12ddeb2b59241b6e12372afb80e6f52cd2eed2212c2d9fa67` |
+| `tests/brevo-export.test.ts` | 15273 | `1f314bf04e8265f067e462c34dbba9fdbdec53b8f52d4842aaeedc4cf0298278` |
+| `tests/esp-export.test.ts` | 6657 | `00645c80b573e8066d368ba3d915ae05e3c17bb8dcb10814a7b900286ddb14ba` |
+
+## Verified saved evidence identities
+
+| Path | Bytes | SHA256 |
+| --- | ---: | --- |
+| `/tmp/lettercape-brevo-api-contract-green.log` | 1380 | `bde14c1c576abe6cbcf9dd40cb835cc9b8817bd96f43be29b8c2878f2e50a686` |
+| `/tmp/lettercape-brevo-api-contract-red.log` | 2595 | `25da93f49e6192aee989e5295e4cc16e202569992ec22af8e0aef80ad38f2fef` |
+| `/tmp/lettercape-brevo-api-generate.log` | 154 | `c91ba2dbae46f015b75801f89695e34419056add251630d9a784e4c53b3a7081` |
+| `/tmp/lettercape-brevo-api1.log` | 157 | `ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f` |
+| `/tmp/lettercape-brevo-app.log` | 16883 | `1d64eeb0d9c49f3f85001a1529d8686f9138541abb821801d68889eeaa7ea2d4` |
+| `/tmp/lettercape-brevo-build1.log` | 1340 | `1936ad7343b40a361bdfdbc96562985dce6e6f105e35f5f0ead93b60a66b64b8` |
+| `/tmp/lettercape-brevo-compiler-browser.log` | 89 | `26023eb2e3774586f848aa5fbdf9358ab06fd0fda617c51e729a9de632f50be2` |
+| `/tmp/lettercape-brevo-compiler-diff.log` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-brevo-compiler-green-initial.log` | 6311 | `d7b3a2db392a650b19f864b3ec7913240c58605dc1a6fb76f8525d55a9554d76` |
+| `/tmp/lettercape-brevo-compiler-green.log` | 5323 | `ad26f48b62df45332a6631a35d5fe2a954aee28582df67f7dd0c91744dcbb258` |
+| `/tmp/lettercape-brevo-compiler-lint.log` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-brevo-compiler-red-initial.log` | 28421 | `3edb3a9e32fccfdb5eddb91673c25c814b900528d333ca3018bbdccc7926b9f9` |
+| `/tmp/lettercape-brevo-compiler-red.log` | 22393 | `8086ae1be6b084f81029882db85978b89a39e7a2f9e2b08833bbf4f0a6af8435` |
+| `/tmp/lettercape-brevo-compiler-regression.log` | 7968 | `f2c5683ca02e2312830f78e20d44e9706421f1e106e05e344f7d72d3e7e76172` |
+| `/tmp/lettercape-brevo-compiler-type.log` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-brevo-full-suite1.log` | 74361 | `ac3a93c5ec0ec656ddf4380f89fc6473f729ab964d53128ceebfe4d23bd0a732` |
+| `/tmp/lettercape-brevo-klaviyo-browser1.log` | 584 | `84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e` |
+| `/tmp/lettercape-brevo-lint1.log` | 36 | `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746` |
+| `/tmp/lettercape-brevo-mailchimp-browser1.log` | 831 | `b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9` |
+| `/tmp/lettercape-brevo-omnisend-browser1.log` | 850 | `64d1118a8766c8483fc334fc52ca133df49273d96b3226e29167be8bf55b4e54` |
+| `/tmp/lettercape-brevo-root-browser1.log` | 982 | `1c49cdd524cb33e0e52f02a98dbe83b1b0f98ff3f331c548d00672ff4fbb12f7` |
+| `/tmp/lettercape-brevo-root-red.log` | 741 | `a67d129f0c0d277eb0177510dfe0f84b66082da99cd3507d8dc95d983b104bab` |
+| `/tmp/lettercape-brevo-transport-duplicate-red.log` | 4849 | `b2609a11a2c45a062701527aa89f8be0ec967a12b3cf0b3da8fddb8e52237013` |
+| `/tmp/lettercape-brevo-transport-green-fixture-failure.log` | 4654 | `94810fd2f11fd82173f115d26ce4bb0f382ad704b9bffeb1d1bea5790c1adc9e` |
+| `/tmp/lettercape-brevo-transport-green.log` | 4093 | `3a5b6755a408618e4b8bce585bb89a380aa668bb1b485af5c72d8a61cc1a87a0` |
+| `/tmp/lettercape-brevo-transport-lint.log` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-brevo-transport-red.log` | 29664 | `cae744202c8a85f0989e8d05f25f89817aa6263fa522b637817dc0ccd33bce9f` |
+| `/tmp/lettercape-brevo-transport-type.log` | 0 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-brevo-type1.log` | 45 | `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6` |
+| `/tmp/lettercape-brevo-create.md` | 15667 | `55beb9bfd816303e594a2707c38c4715cd678d43e88f4343d4f8fd2948134b95` |
+| `/tmp/lettercape-brevo-get.md` | 20282 | `12b88f8aeb1073df9e2e4d729210d316a5d910623c621cbe5e9cd632d8eb647b` |
+| `/tmp/lettercape-brevo-auth.md` | 1416 | `535e9d04a33165762dc6d37c5c8040d5ba2c9235bfc4a6ac96dfb2b920920d53` |
+| `/tmp/lettercape-brevo-oauth.md` | 4678 | `0bb73ab496758c046afe336bdbb070a5fd571860f48bb10b05c848ebe495d638` |
+
+## Complete current planledger and exhaustive rulings
+
+# SDD ledger — docs/superpowers/plans/2026-10-03-brevo-export.md
+
+| Pair/task | Interface/consistency | Outcome |
+|1/2|BrevoArtifact subject+6tuplehash, constants, exact4keyPOST|Aligned explicit; transport fixture can scaffold until compiler arrives.|
+|1/3|Strict browser review strips subject/html/text,7blockers|Root unions/API, no node browserimports.|
+|2/3|Unmounted primitive only|No connection/admission inferred.|
+|1|Source hash/subject/privacy and HTMLfieldbudget|Sharedvalidator unchanged, exactsubject bound; all old mapping tests unchanged.|
+|2|201numericID, safeGET(emptyaudience/draft) vs400duplicate|No retry/false management URL, nativefidelity alwaysfalse.|
+|3|Predecessor correction/canonical/private boundaries|Separateworktree includes frozenO candidate; root must integrate closed corrected successor before qualifying.|
+
+Ruling: standing continuous independent implementation/parallel focused workers replaces routine approval menus and default sequential SDD for disjoint files; costs integration/preference rework, no provider/spend/publication authority inferred.
+Ruling: new Brevo worktree starts from frozen Omnisend candidate during its ONE correction; integrate closed corrected successor before root qualification/canonical; costs a local ancestry merge and possible docs conflicts, earlier finding never waived.
+Ruling: strict HTML UTF8bytes<1000000 interprets provider less-than1MB conservatively; name255/subject200 local bounded values, not invented provider length claims; costs possible boundary/long-name rejection until account qualification.
+Ruling: frozen exact subject joins destination hash but is omitted from browser metadata; empty/unsafe subject blocks localBrevo preparation; costs additional hash protocol/mapping and correcting incomplete email subjects.
+Ruling: API-key transport is an unmounted documented contract only; current private-only OAuth does not approve SaaS connectionmode. ExactsafeHTMLGET may contentverifybytes but never nativefidelity or management handoff; costs blockedactivation/nativehandoff until compatible approvedauth/sender/account/client/link proof.
+
+Ruling: sharedvalidator already rejects empty subject via static lint. Translate only exact subject-only EXPORT_STATIC_BLOCKED after unchanged validation and nonempty all-SUBJECT_REQUIRED lint evidence; structural/integrity and mixed blockers retain original precedence. Costs bounded repeat static lint on subject-only failures; avoids a misleading promised unreachable Brevo error without shared-validator changes. Compilerworker asked; root inspected actual src/domain/preflight.ts:152 and authorized narrow mapping.
+
+RootTask3 actualRED captured422unsupportedBrevo vs200expected at firstownedHTTPrequest; generated fixture cleanup completes on error. Currentrootfixture clone retains three-destination scaffolding, must expand fourth Omnisend assertion and subject refusal beforeGREEN. Compiler has exact3filecommit90c5dc8/60ownedGREEN+90priorcompilerregression; transport41ownedGREEN/scopedtype/lint, final reports/commits pending.
+
+Both workers complete:compiler90c5dc8247416de7d07aab16ea2b11161216448f60owned+90priorcompilerGREEN; transportb7d3447d679653b0560b383480899820348c3aea42GREEN with contextual400duplicate regression, scopedtype/lint/diff pass. Root brief shorthand scratch path was ambiguous and workers wrote only own reports to root scratch/. Root copied byteidentical completed reports to thisplan scratch, verified hashes then removed only those2owned files/emptydirectory before imagecontext; no productcode/unrelatedfiles changed. Joint taskreview pending.
+
+SeparateTask1 andTask2spec/qualityreview PASS/no findings; fullreport/tmp/lettercape-brevo-tasks-review.md SHA256b4950ce3b48855854c4fa077dd299c88b33136068b0152218785ad38472a107f. Integrated finalOmnisend canonical7ae evidence ancestor at3494dd7 beforequalification. Root fourthroute/UI/strictAPI union/CI and subjectmessages integrated; earlier3 fixtures unsupported literal changed Brevo→HubSpot because Brevo is now locally implemented. InitialactualBrevo422RED retained; generatedcontract RED/GREEN and expanded4mapping/subjectbrowserfixture next.
+
+RootTask3candidate qualification complete:727/727configuredtests/0fail/cancel/skip/fulltype/lint/build/API122 pass. ActualBrevo7+Omnisend6+Mailchimp6+Klaviyo4HTTP-Chromiumgroups/ownedcleanup/zeroinstrumentedexternal/pageerrors PASS, sourceprivacy/exactsubjectsixhash/missing+unsafe subject/correction+review/repeatedclick/initialfreezeABA/heldreview+download fourmapping rounds/navigation/Viewer/390 tested. PixelBrevo390 inspected/readable wrapped notices/digests/controls/nohorizontaloverflow. Root actual422unsupportedRED and generatedAPI3vs4enumRED retained;15APItestGREEN afterregen. No prod/account/remotedraft success. Whole/Linux/canonical pending.
+
+ONE immutable whole Brevo review baseline7ae416aa41aec7221b7eda40a95a929245f28eb1->candidateb7f70f950c95a4972c74f4def33a9fcc70da6e7a, patchSHA092076f1ec69302bf8132bb78cdce00a606f35658e9c09a6510f11eae0111b7b PASS/0Critical/0Important/0Minor. No correction/scopedre-review requested or needed; no additionalwhole review. CandidateLinux imagec8a5fdd/config3de5dd26 sourceb7f UID1001/networknone/fourmappingcontracts/twoendpoints/assets/privateexclusion/startuprefused1PASS. Executablecode unchanged after727fullsuite/type/lint/build/API122/actualall4browser qualification. Canonicalguarded sync/qualification next, keepownedapps paused through fixtures toavoid established samecwdNextlock.
+
+## Linux local candidate evidence
+
+```json
+{
+  "head": "b7f70f950c95a4972c74f4def33a9fcc70da6e7a",
+  "image": "lettercape-brevo-check:candidate",
+  "image_id": "sha256:c8a5fddbc47bebace4b8f6da9f1cc091f311d2ecff109b9f8d920d9ceff4b2f5",
+  "platform": "linux/amd64",
+  "source_label_bound": true,
+  "uid": 1001,
+  "network": "none",
+  "asset_probe_exit": 0,
+  "startup_exit": 1,
+  "closed_startup": true,
+  "private_exclusions": true,
+  "four_destination_contracts": true,
+  "deployment": false,
+  "oci_config_digest": "sha256:3de5dd262a349d92ff5a5cea84a76a44b00b43b30189faa7795fa107c6a6681d"
+}
+```

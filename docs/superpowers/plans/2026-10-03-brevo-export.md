@@ -23,6 +23,6 @@ Own new src/server/brevo-draft-adapter.ts,tests/brevo-draft-adapter.test.ts. Con
 Own sharedroutes/UI/generator/generatedschema/existingroute tests/package/CI/new scripts/smoke-brevo-export.ts/docs.
 - [x] Integrate corrected CLOSED Omnisend canonical successor into isolated Brevo branch before full qualification.
 - [x] ActuallocalHTTP/ChromiumRED/implementation/contractregen122/GREEN/subjectfailure/allfourinterruption/hash/mapping/mobile/Viewer and earlierthree browser regressions.
-- [ ] Joint separateTask1/2spec+quality review; fullconfiguredtests/type/lint/API/build/Linux qualification.
-- [ ] ONE immutablewhole review; ONE completefixworker +ONE scopedreview if findings.
+- [x] Joint separateTask1/2spec+quality review; fullconfiguredtests/type/lint/API/build/Linux qualification.
+- [x] ONE immutablewhole review; ONE completefixworker +ONE scopedreview if findings.
 - [ ] Guardedcanonical/sourcehash/private/original109/221 qualification; restoreonlyownedapps, preserve unrelated. Full reports/ledger/rulings retained committed checkpoint before deletingonlyplan scratch. No public readiness inferred.
