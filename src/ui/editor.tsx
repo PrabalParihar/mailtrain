@@ -4,7 +4,10 @@ import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/es
 import{MailchimpReview as MailchimpReviewSchema,type MailchimpReview}from'../domain/mailchimp-export-contracts';
 import{OmnisendReview as OmnisendReviewSchema,type OmnisendReview}from'../domain/omnisend-export-contracts';
 import{BrevoReview as BrevoReviewSchema,type BrevoReview}from'../domain/brevo-export-contracts';
-type Destination='klaviyo'|'mailchimp'|'omnisend'|'brevo';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview|BrevoReview;
+import{HubSpotReview as HubSpotReviewSchema,type HubSpotReview,type HubSpotFooterSettingsData}from'../domain/hubspot-footer-contracts';
+import{snapshotHubSpotSettings,hubspotSettingsDigest,sameHubSpotSettings,requestHubSpotReview,hubspotArtifactRequest,hubspotErrorMessage}from'./hubspot-preparation';
+type Destination='klaviyo'|'mailchimp'|'omnisend'|'brevo'|'hubspot';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview|BrevoReview|HubSpotReview;
+function emptyHubSpotSettings():HubSpotFooterSettingsData{return {company_name:'',company_street_address_1:'',company_street_address_2:'',company_city:'',company_state:'',company_zip:'',company_country:''};}
 import {LocaleSourceComparison} from './locale-source-comparison';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
@@ -81,7 +84,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [revision, setRevision] = useState<Frozen | null>(null),
     [report, setReport] = useState<Report | null>(null),
     [destination,setDestination]=useState<Destination>('klaviyo'),
-    [destinationPreparation,setDestinationPreparation]=useState<{review:DestinationReview;anchor:Anchor;workspace:string;actor:string;email:string}|null>(null),
+    [hubspotSettings,setHubSpotSettings]=useState(()=>({workspace,actor,email:id,values:emptyHubSpotSettings()})),
+    [destinationPreparation,setDestinationPreparation]=useState<{review:DestinationReview;anchor:Anchor;workspace:string;actor:string;email:string;generation:number;settings?:Readonly<HubSpotFooterSettingsData>}|null>(null),
     [busy, setBusy] = useState(''),
     [conflict, setConflict] = useState<Doc | null>(null),
     [aiPrompt, setAiPrompt] = useState(''),
@@ -102,7 +106,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     editorActive = useRef(false),
     exportController = useRef<AbortController | null>(null),
     destinationRef=useRef<Destination>('klaviyo'),
-    destinationSelectionGeneration=useRef(0);
+    destinationSelectionGeneration=useRef(0),
+    hubspotSettingsRef=useRef(hubspotSettings.values);
   const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert','asset'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
@@ -114,7 +119,12 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     storage = 'mailcraft.draft.' + workspace + '.' + id;
   const recoveryWrites=useRef<Promise<void>>(Promise.resolve()),pendingUncertain=useRef(false);
   const lifecycle=useRef(crypto.randomUUID()),saveEpoch=useRef(0),pendingSave=useRef<SourceSaveCommand|null>(null),scopeRef=useRef({workspace,actor,email:id});
-  useLayoutEffect(()=>{scopeRef.current={workspace,actor,email:id};});
+  useLayoutEffect(()=>{
+    if(scopeRef.current.workspace!==workspace||scopeRef.current.actor!==actor||scopeRef.current.email!==id){
+      destinationSelectionGeneration.current++;exportController.current?.abort();hubspotSettingsRef.current=emptyHubSpotSettings();
+    }
+    scopeRef.current={workspace,actor,email:id};
+  });
   function sameContext(scope:{workspace:string;actor:string;email:string},life:string){return editorActive.current&&scopeRef.current.workspace===scope.workspace&&scopeRef.current.actor===scope.actor&&scopeRef.current.email===scope.email&&lifecycle.current===life;}
   function saveContext(spec:EmailSpec=live.current!.spec):SourceSaveContext{return {...scopeRef.current,lifecycle:lifecycle.current,epoch:saveEpoch.current,baseVersion:live.current!.doc_version,spec};}
   function preserveLocal(draft:Doc){const scope={...scopeRef.current},life=lifecycle.current;const snapshot=structuredClone(draft);recoveryWrites.current=recoveryWrites.current.catch(()=>{}).then(()=>writeSourceDraftRecovery(scope,snapshot));void recoveryWrites.current.catch(()=>{if(sameContext(scope,life))setError('Local draft recovery is unavailable. Keep this tab open until the draft is saved.');});}
@@ -158,7 +168,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     editorActive.current = true;
     const scope={workspace,actor,email:id},life=lifecycle.current;
     void (async()=>{
-      await Promise.resolve();if(!mounted)return;setDoc(null);setConflict(null);setError('');setHasPendingSave(false);
+      await Promise.resolve();if(!mounted)return;setDoc(null);setConflict(null);setError('');setHasPendingSave(false);setDestinationPreparation(null);
+      hubspotSettingsRef.current=emptyHubSpotSettings();setHubSpotSettings({...scope,values:hubspotSettingsRef.current});
       const r=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
       if(!mounted||!sameContext(scope,life))return;
       // Read recovery before mounting dependent forms; a server-only first mount
@@ -354,11 +365,12 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       undo.current=[...undo.current.slice(-49),structuredClone(baseline.current.spec)];setUndoCount(undo.current.length);install(response.email);pendingSave.current=null;setHasPendingSave(false);await removeSourceRecovery({...scopeRef.current},{draft:true,command:true,expectedDraft:{docVersion:command.baseVersion,specHash:command.specHash},expectedCommandKey:command.key});setReport(null);setRevision(null);
     }catch(error){if(pendingSave.current){pendingUncertain.current=true;setStatus('Save failed · original command retained');}if(error instanceof ApiError&&error.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);setConflict(checkedDoc(server.email));}setError(error instanceof Error?error.message:String(error));throw error;}finally{busyRef.current='';setBusy('');}
   }
-  async function freeze(expectedActor?:string) {
-    if(expectedActor&&scopeRef.current.actor!==expectedActor)return null;
+  async function freeze(expectedActor?:string,canStart?:()=>boolean,contextCurrent?:()=>boolean) {
+    if((expectedActor&&scopeRef.current.actor!==expectedActor)||(canStart&&!canStart()))return null;
     if (!(await flush())) {
       return null;
     }
+    if(canStart&&!canStart())return null;
     if (dirtyAt.current) {
       setError('Finish the current edits before freezing a revision.');
       return null;
@@ -373,8 +385,9 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       {},
       current.doc_version,undefined,undefined,expectedActor,
     );
+    if(contextCurrent&&!contextCurrent())return null;
     if (!matches(origin)) {
-      setError(
+      if(!canStart||canStart())setError(
         'The draft changed during freezing. The older checkpoint is in history; freeze the current draft again.',
       );
       return null;
@@ -387,30 +400,57 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if(destinationRef.current===next)return;
     destinationSelectionGeneration.current++;destinationRef.current=next;exportController.current?.abort();setDestination(next);setDestinationPreparation(null);setError('');
   }
+  function changeHubSpotSettings(field:keyof HubSpotFooterSettingsData,value:string){
+    if(!roleRef.current||hubspotSettingsRef.current[field]===value)return;
+    // Invalidate before state scheduling, including during the initial freeze.
+    destinationSelectionGeneration.current++;exportController.current?.abort();
+    hubspotSettingsRef.current={...hubspotSettingsRef.current,[field]:value};
+    setHubSpotSettings({...scopeRef.current,values:hubspotSettingsRef.current});
+    setDestinationPreparation(null);setError('');
+  }
   async function reviewDestination(){
     const scope={...scopeRef.current},life=lifecycle.current,selectedDestination=destinationRef.current,selectionGeneration=destinationSelectionGeneration.current;
-    const selected=()=>destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===selectedDestination;
+    let settings:Readonly<HubSpotFooterSettingsData>|undefined,controller:AbortController|undefined;
+    const selected=()=>destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===selectedDestination&&(!settings||sameHubSpotSettings(settings,hubspotSettingsRef.current));
+    const contextCurrent=()=>sameContext(scope,life);
+    const fresh=()=>!controller?.signal.aborted&&selected()&&contextCurrent();
     try{
-      const r=revision&&matches(revision.anchor)?revision:await freeze(scope.actor);
-      if(!r||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
-      const controller=new AbortController();exportController.current=controller;
-      try{const result=await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination='+selectedDestination,'GET',undefined,undefined,undefined,controller.signal,scope.actor);
-        if(controller.signal.aborted||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
-        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):selectedDestination==='mailchimp'?MailchimpReviewSchema.parse(result.review):selectedDestination==='omnisend'?OmnisendReviewSchema.parse(result.review):BrevoReviewSchema.parse(result.review);
-        if(review.revision_id!==r.id||review.source_artifact_hash!==r.artifact_hash)throw Error('The destination receipt belongs to a different frozen version. Review again.');
-        setDestinationPreparation({review,anchor:r.anchor,...scope});
-      }finally{if(exportController.current===controller)exportController.current=null;}
-    }catch(error){if(selected()&&sameContext(scope,life)&&!(error instanceof DOMException&&error.name==='AbortError')){setDestinationPreparation(null);setError(error instanceof Error?error.message:'Destination preparation unavailable.');}}
+      // Validation and exact cloning happen before any freeze/checkpoint awaits.
+      if(selectedDestination==='hubspot')settings=snapshotHubSpotSettings(hubspotSettingsRef.current);
+      const r=revision&&matches(revision.anchor)?revision:await freeze(scope.actor,selectedDestination==='hubspot'?()=>selected()&&contextCurrent():undefined,selectedDestination==='hubspot'?contextCurrent:undefined);
+      if(!r||!fresh()||!matches(r.anchor))return;
+      controller=new AbortController();exportController.current=controller;
+      const result=settings
+        ?await requestHubSpotReview(scope,r.id,settings,controller.signal)
+        :await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination='+selectedDestination,'GET',undefined,undefined,undefined,controller.signal,scope.actor);
+      if(!fresh()||!matches(r.anchor))return;
+      const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):selectedDestination==='mailchimp'?MailchimpReviewSchema.parse(result.review):selectedDestination==='omnisend'?OmnisendReviewSchema.parse(result.review):selectedDestination==='brevo'?BrevoReviewSchema.parse(result.review):HubSpotReviewSchema.parse(result.review);
+      if(review.revision_id!==r.id||review.source_artifact_hash!==r.artifact_hash)throw Error('The destination receipt belongs to a different frozen version. Review again.');
+      if(review.destination==='hubspot'){
+        const digest=await hubspotSettingsDigest(settings);
+        if(!fresh()||!matches(r.anchor))return;
+        if(review.settings_digest!==digest)throw Error('The HubSpot settings receipt differs from the explicit comparison. Review again.');
+      }
+      if(!fresh()||!matches(r.anchor))return;
+      setDestinationPreparation({review,anchor:r.anchor,...scope,generation:selectionGeneration,...(settings?{settings}:{})});
+    }catch(error){if(fresh()&&!(error instanceof DOMException&&error.name==='AbortError')){setDestinationPreparation(null);setError(selectedDestination==='hubspot'?hubspotErrorMessage(error):error instanceof Error?error.message:'Destination preparation unavailable.');}}
+    finally{if(controller&&exportController.current===controller)exportController.current=null;}
   }
   async function downloadDestination(format:'html'|'txt'){
     const scope={...scopeRef.current},life=lifecycle.current,current=destinationPreparation,selectionGeneration=destinationSelectionGeneration.current;
-    if(!current||current.review.destination!==destinationRef.current||current.workspace!==scope.workspace||current.actor!==scope.actor||current.email!==scope.email||!matches(current.anchor))return;
+    if(!current||current.generation!==selectionGeneration||current.review.destination!==destinationRef.current||current.workspace!==scope.workspace||current.actor!==scope.actor||current.email!==scope.email||!matches(current.anchor))return;
+    if(current.review.destination==='hubspot'&&(!current.settings||!sameHubSpotSettings(current.settings,hubspotSettingsRef.current)))return;
     const controller=new AbortController();exportController.current=controller;
-    const fresh=()=>!controller.signal.aborted&&destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===current.review.destination&&sameContext(scope,life)&&matches(current.anchor);
+    const fresh=()=>!controller.signal.aborted&&destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===current.review.destination&&sameContext(scope,life)&&matches(current.anchor)&&(!current.settings||sameHubSpotSettings(current.settings,hubspotSettingsRef.current));
     try{
-      const response=await fetch('/v1/email-revisions/'+current.review.revision_id+'/destination-artifact?destination='+current.review.destination+'&format='+format,{signal:controller.signal,headers:{'X-Workspace-Id':scope.workspace,'X-Actor-Id':scope.actor}});
+      let response:Response;
+      if(current.review.destination==='hubspot'){
+        const request=hubspotArtifactRequest(scope,current.review.revision_id,current.settings,format,current.review.destination_hash,controller.signal);
+        if(!fresh())return;
+        response=await fetch(request.url,request.init);
+      }else response=await fetch('/v1/email-revisions/'+current.review.revision_id+'/destination-artifact?destination='+current.review.destination+'&format='+format,{signal:controller.signal,headers:{'X-Workspace-Id':scope.workspace,'X-Actor-Id':scope.actor}});
       if(!fresh())return;
-      if(!response.ok){const body=await response.json();if(fresh())throw Error(body.error?.message??'Destination download unavailable.');return;}
+      if(!response.ok){const body=await response.json();if(fresh())throw current.review.destination==='hubspot'?new ApiError(body.error?.code??'REQUEST_FAILED','HubSpot download unavailable.',response.status):Error(body.error?.message??'Destination download unavailable.');return;}
       const expected=format==='html'?current.review.html_sha256:current.review.text_sha256;
       if(response.headers.get('X-Artifact-Hash')!==current.review.destination_hash||response.headers.get('X-Source-Artifact-Hash')!==current.review.source_artifact_hash||response.headers.get('X-Content-SHA256')!==expected||response.headers.get('X-Remote-Export-Enabled')!=='false'||response.headers.get('X-Destination-Mapping')!==current.review.mapping_version)throw Error('Destination download receipt differs from the reviewed version. Review again.');
       if(!response.body)throw Error('Destination download is empty.');
@@ -421,7 +461,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       const actual=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(b=>b.toString(16).padStart(2,'0')).join('');if(!fresh())return;
       if(actual!==expected)throw Error('Destination download integrity failed. No file was adopted.');
       const url=URL.createObjectURL(new Blob([bytes],{type:format==='html'?'text/html':'text/plain'})),link=document.createElement('a');link.href=url;link.download=current.review.destination+'-prepared-'+current.review.revision_id+'.'+format;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    }catch(error){if(fresh())setError(error instanceof Error?error.message:'Destination download unavailable.');}
+    }catch(error){if(fresh()){if(current.review.destination==='hubspot')setDestinationPreparation(null);setError(current.review.destination==='hubspot'?hubspotErrorMessage(error):error instanceof Error?error.message:'Destination download unavailable.');}}
     finally{if(exportController.current===controller)exportController.current=null;}
   }
   async function act(name: string, fn: () => Promise<void>) {
@@ -1053,7 +1093,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </div>
         </section>
       )}
-      <DestinationExportPanel destination={destination} onDestination={chooseDestination} canEdit={editRole} blocked={!!busy||!!conflict} review={destinationPreparation&&destinationPreparation.review.destination===destination&&destinationPreparation.workspace===workspace&&destinationPreparation.actor===actor&&destinationPreparation.email===id&&destinationPreparation.anchor.epoch===renderEpoch&&destinationPreparation.anchor.version===doc.doc_version&&destinationPreparation.anchor.spec===JSON.stringify(doc.spec)?destinationPreparation.review:null} onReview={()=>void act('destination-review',reviewDestination)} onDownload={format=>void act('destination-download',()=>downloadDestination(format))}/>
+      <DestinationExportPanel hubspotSettings={hubspotSettings.workspace===workspace&&hubspotSettings.actor===actor&&hubspotSettings.email===id?hubspotSettings.values:emptyHubSpotSettings()} onHubSpotSettings={changeHubSpotSettings} destination={destination} onDestination={chooseDestination} canEdit={editRole} blocked={!!busy||!!conflict} review={destinationPreparation&&destinationPreparation.review.destination===destination&&destinationPreparation.workspace===workspace&&destinationPreparation.actor===actor&&destinationPreparation.email===id&&destinationPreparation.anchor.epoch===renderEpoch&&destinationPreparation.anchor.version===doc.doc_version&&destinationPreparation.anchor.spec===JSON.stringify(doc.spec)?destinationPreparation.review:null} onReview={()=>void act('destination-review',reviewDestination)} onDownload={format=>void act('destination-download',()=>downloadDestination(format))}/>
       <section className="panel export-panel">
         <div>
           <h2>Export a frozen version</h2>
