@@ -25,13 +25,13 @@ Own db/035-integration-registry.sql and tests/integration-registry-db.test.ts on
 
 ### Task 2: Strict domain and redacted server wrappers
 Own src/domain/integration-registry.ts,src/server/integration-registry.ts,tests/integration-registry.test.ts,tests/integration-registry-store-db.test.ts. Consume exactTask1 SQLinterfaces only after reviewed. Exports schemas/wrappers in spec; no routes/providercalls. Report .superpowers/sdd/integration-registry/task-2-report.md.
-- [ ] Meaningful executable RED against permissive scaffold before strict implementation; include unknown-secretfields/readinesstrue/malformedUUID/versions/controls/surrogate/blocker/timestamp/foreign current authority.
-- [ ] Implement strict zod schemas and parameterized wrappers; unit malformed inputs issue zero SQL, extra/private DBoutput rejected, errors not rendered with payloads.
-- [ ] Actual owned DBwrapper register/replay/rotation/revocation/rollback/newconnectionreadback persists private history; cross-tenant/current authority denied; no operations/outbox/usage/providerIO.
-- [ ] Scoped unit/DB/type/lint/diff, exact4filecommit and full report. No subagents.
+- [x] Meaningful executable RED against permissive scaffold before strict implementation; include unknown-secretfields/readinesstrue/malformedUUID/versions/controls/surrogate/blocker/timestamp/foreign current authority.
+- [x] Implement strict zod schemas and parameterized wrappers; unit malformed inputs issue zero SQL, extra/private DBoutput rejected, errors not rendered with payloads.
+- [x] Actual owned DBwrapper register/replay/rotation/revocation/rollback/newconnectionreadback persists private history; cross-tenant/current authority denied; no operations/outbox/usage/providerIO.
+- [x] Scoped unit/DB/type/lint/diff, exact4filecommit and full report. No subagents.
 
 ### Task 3: Root delivery and review
 Own docs/checkpoint/plan/package/CI only if meaningful entrypoint needed; no new public endpoints. Tasks separate spec+quality reviews, then full qualification and ONE immutable whole review; if findings ONE completeworker and ONE scopedre-review then explicit residualrulings. Retain full reports/briefs/currentledger/rulings verbatim in committed canonicalcheckpoint. Guarded local sync with original/private preservation, no publicreadiness. Canonical build/browser while ownedapps paused, restore after fixtures.
-- [ ] Taskreviews and fullconfigured tests/type/lint/API122/build/Linux and prior4actualbrowser journeys.
-- [ ] ONE whole review/one completefix+scopedifnecessary; preserve full findings/evidence.
+- [x] Taskreviews and fullconfigured tests/type/lint/API122/build/Linux and prior4actualbrowser journeys.
+- [x] ONE whole review/one completefix+scopedifnecessary; preserve full findings/evidence.
 - [ ] Guarded canonical sync/qualification/codeequivalence/privateoriginal checks/reportsretention/onlyown scratch cleanup; continue independent GAwork.
