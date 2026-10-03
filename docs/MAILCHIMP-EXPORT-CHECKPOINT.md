@@ -261,3 +261,281 @@ No transport correction is requested by this review.
 ## Remaining work and review boundary
 
 No blocker remains within these two worker tasks. Product integration, whole-tree qualification, and the planned single immutable whole review remain root's responsibility. The seven explicit compiler blockers continue to be honest unresolved product prerequisites; passing these task reviews does not clear them. No fullGA/native/provider/client acceptance is inferred from saved tests or this source inspection.
+
+## Immutable whole review (verbatim)
+
+# Immutable Mailchimp whole-slice review
+
+## Verdict
+
+Minor correction requested: **0 Critical, 0 Important, 1 Minor finding**. The implemented local preparation and unmounted transport foundation otherwise satisfy the reviewed design. The one finding is a confirmed destination-selection cancellation gap during the initial freeze, with a missing regression for that stage of the workflow.
+
+This verdict is limited to the immutable development slice. It does not accept full GA, provider behavior, native content fidelity, OAuth, account eligibility, durable product jobs, or any of the Full65 BaselineA/all13 gates. Zero whole requirements/gates remain accepted.
+
+## Identity, scope, and method
+
+- Worktree: `/tmp/lettercape-mailchimp-export-native`.
+- Baseline: `eaa1f85f24be1e910e833d4a05fd17ee69f4ab38`.
+- Candidate: `aa9e9ac043ef629e729913fdff8c37621f06dd7e`; independently confirmed as HEAD.
+- Artifact: `/tmp/lettercape-mailchimp-whole.diff`.
+- Independently verified SHA256: `b81fca12a72066495b55db7937d2e813fce8debb7060d39c5d43323da86ade3d`. Regenerating the binary baseline-to-candidate diff produced the same hash.
+- Read-only comparison of all 27 changed live files against candidate Git blobs matched byte-for-byte. There were no tracked worktree differences. The existing untracked `tooling/openapi/node_modules` was left untouched.
+- Read `AGENTS.md`, the design, plan, complete checkpoint with worker reports/review/rulings, the entire changed implementation/test/documentation surface, generated API/SDK changes, and relevant unchanged editor lifecycle, router and authority code.
+- Scope included shared-source extraction, Mailchimp compiler/contracts, transport, route integration, generated API/SDK, editor selection and downloads, browser fixtures, CI and documentation. Earlier worker passes were evidence, not exclusions from this review.
+- Read saved qualification evidence instead of repeating broad checks. Performed one bounded in-memory probe using the exact candidate editor functions to verify the finding below. No actual network/provider requests, database operations, source/Git/index/private environment mutations, deployment, sends, push, or subagents. This report is the only file written.
+
+## Findings
+
+### M1 — Minor: a destination round trip during freezing revives the cancelled review
+
+**Location:** `src/ui/editor.tsx:383` and `src/ui/editor.tsx:388`–`393`; regression gap at `scripts/smoke-mailchimp-export.ts:44`–`48`.
+
+**Trigger:** Open an editor with no reusable frozen revision, select Mailchimp, and start Review Mailchimp preparation. While the initial save/checkpoint (`freeze`) is still pending, change the destination to Klaviyo and then back to Mailchimp. Let the original freeze complete.
+
+**Observed behavior and cause:** `chooseDestination` clears the displayed preparation and aborts `exportController.current`, but the review controller is only created after `await freeze(scope.actor)`. During that await there is no controller for this review to abort. The `selected()` guard only compares the destination string. Returning to Mailchimp makes it true again, so the original review issues its GET and installs a preparation without a new review action. The same guard can also allow an old failure to reappear after the round trip.
+
+The design explicitly requires selection changes to invalidate old review adoption. A selection interval is not uniquely identified by its destination string. This is a bounded cancellation/UX defect: the existing scope, source and hash checks still constrain the adopted artifact, and this path creates no remote template. It is therefore Minor rather than an integrity or authorization finding.
+
+**Concrete evidence:** A read-only Node probe extracted the exact `chooseDestination` and `reviewDestination` functions from candidate `src/ui/editor.tsx`, transpiled them in memory with the installed TypeScript compiler, held a mocked `freeze` promise, and supplied a mocked local review API. The one-way selection change produced `requests: []` and `adopted: 0`. The Mailchimp → Klaviyo → Mailchimp round trip before releasing freeze produced:
+
+```json
+{
+  "requests": ["email-revisions/r/destination-review?destination=mailchimp"],
+  "adopted": 1
+}
+```
+
+This is an executable control-flow probe, not a claim that an additional browser run occurred. The saved browser fixture holds an already-dispatched destination-review GET; that exercises the later controller-bound stage and cannot detect this earlier gap.
+
+**Remediation:** Give each destination selection interval a monotonically increasing generation, capture it when review begins, and require it to match after freeze, after review response, and in error adoption. Alternatively, establish an operation cancellation token before freeze and retain it through the whole review operation. Keep completed immutable checkpoints in history; cancellation need not delete them. Add a focused regression that holds the initial save/checkpoint, switches away and back, then releases it and verifies that no old review is requested/adopted and a fresh explicit review works.
+
+No other actionable Critical, Important or Minor findings were identified.
+
+## Strengths and requirements assessment
+
+### Frozen compiler and contracts
+
+The shared validator preserves the baseline Klaviyo validation sequence and refusal behavior: string/byte bounds, revision/hash shape, raw/custom refusal, private/registered asset refusal, legal footer requirements, versioned recompilation, exact source bytes/hash and deep manifest comparison, and blocking static checks. Recursive JSONB object-key reordering remains accepted while arrays, fields and values remain bound. Klaviyo retains its prior token mapping and hash construction after extraction.
+
+The Mailchimp mapper only replaces canonical legal-footer unsubscribe slots with `*|UNSUB|*`, checks counts and exact HTML href slots, refuses authored native/foreign/unknown delimiters, preserves all other bytes, and retains per-format limits. Destination identity binds mapping/API/source/HTML/text; each format has a UTF-8 digest. Review metadata is strict, contains no HTML/plaintext, and exposes all seven unresolved blockers with remote export fixed false. Tests cover byte identity, Unicode, nested footers, integrity corruption, unsupported source/assets/tokens and strict metadata rather than merely checking example strings.
+
+### Conservative unmounted transport
+
+The adapter is not mounted by application code. Validated bounded `usN` input determines a fixed HTTPS Mailchimp origin; callers cannot supply a URL. It captures validated HTML/name/token, requires a submission marker, performs only one name/html POST, and requires remote-ID persistence before the exact-ID GET. It has no retry, update, campaign, audience, assignment or send operation. Companion plaintext is not transmitted.
+
+Numeric create identity is independent of optional create metadata. Supplied self-link assertions are checked, links are never followed, and trusted IDs survive persistence and subsequent readback failures. Metadata mismatch, malformed readback, cancellation and transport errors retain that ID once established. Unknown create acceptance stays unknown. Results and thrown marker errors are sanitized; redirects are refused; response streaming and transport work are bounded, including signal-ignoring injected fetchers.
+
+Even exact GET metadata returns `needs_attention/EXPORT_TEMPLATE_CONTENT_UNVERIFIED`, `content_verified:false`, and `destination_url:null`. `share_url` and unsolicited HTML are not treated as fidelity or management-link evidence. The verified supplied official schema supports this conservative choice.
+
+### Routes, generated interfaces, and UI
+
+Shared GET dispatch and current edit plus `emails:export` authority remain intact, including current-authority checks in the resource transaction, strict destination/format query admission and RLS-backed revision reads. No new database schema or remote operation path is introduced. Downloads include bounded exact content, source/destination/content receipts, mapping identity, attachment filenames, no-store, nosniff and sandbox CSP. Audit records identify revision actions without copying content.
+
+OpenAPI and SDK expose the two destination literals and strict discriminated review union, both mapping versions, both media formats and receipt headers. The saved API drift check reports 122 matching operations. The old named Klaviyo schema remains available.
+
+Klaviyo is the default selection and retains its established labels. Mailchimp is explicitly Classic HTML and discloses Standard-or-higher, native content/management-link limitations, local plaintext and disabled remote export before review. Scope/lifecycle/content/source-hash guards and checked download hashes protect adoption; selection aborts active review/download fetches. M1 is the remaining gap before a review fetch exists. The saved 390px screenshot shows wrapped receipts, readable warnings and fitting buttons.
+
+### Fixtures, CI, and documentation
+
+The added browser fixture exercises real owned HTTP/Chromium flows, source preservation, scope/authority/query refusal, freeze double clicks, downloads, error/retry, local edits, navigation, destination selection, native mapping differences, mobile layout and Viewer denial. CI invokes both destination fixtures sequentially. Updating the old unsupported-destination check from newly implemented Mailchimp to Brevo is appropriate and does not weaken production validation.
+
+Documentation consistently retains development/partial status, disabled remote export and outstanding product/provider prerequisites. There is no fabricated successful export or gate acceptance. Small dense style and the retained `klaviyo-export.tsx` filename follow existing code organization and do not justify separate findings.
+
+## Qualification evidence independently checked
+
+All 16 checkpoint-listed log SHA256 values matched their saved files, including retained RED attempts. Inspected final evidence records:
+
+- Configured suite: 556 tests, 556 pass, zero failures/cancellations/skips.
+- Build, lint and TypeScript checks completed successfully as recorded.
+- Generated API/SDK drift check: 122 operations matched.
+- Mailchimp actual HTTP/Chromium: five reported groups plus owned fixture cleanup passed.
+- Klaviyo actual HTTP/Chromium: four reported groups plus owned fixture cleanup passed.
+- Compiler focused qualification: saved 79-pass run; transport focused qualification: saved 25-pass run. Behavioral RED and subsequent correction evidence are retained in the checkpoint.
+- Qualified 493-file snapshot: 492 live file digests match; only `README.md` differs from that earlier snapshot. README matches the immutable candidate blob and contains the packaging/checkpoint summary. There is no executable-byte snapshot mismatch.
+- Official schema `/tmp/lettercape-mailchimp-marketing-schema.json`: SHA256 `374046a5209daa8d68cdb5dd7e0244fcf214928af4321ff539755849641b9a21`; supplied excerpt confirms name/html POST, documented 200 numeric identity, metadata-only GET, editable-section default content and sharing URL semantics.
+- Late parent-supplied Linux evidence was read before closing this report: `/tmp/lettercape-mailchimp-linux-candidate-proof.json` binds candidate `aa9e9ac` to image ID `sha256:e80b0980be7a2f4c1a639cd2e35441dcd90b1bf82cd3811a26b65d8b4138879a`, network `none`, deployment false. The saved assets log reports UID1001, both destination routes, exact media/receipts, Mailchimp review and private-file exclusion; exit0. The saved startup log records the intended closed-production refusal, exit1: full GA evidence is incomplete. The parent reports an initial obsolete-layout asset probe failed and was corrected without source changes; this review does not mislabel that earlier attempt as passing. A final tracked-diff check remained empty.
+
+These records establish local qualification of the reviewed candidate to their stated extent. They do not turn mocks into provider acceptance and do not cover the pre-fetch round-trip cancellation finding.
+
+## Deferred observations and remaining boundaries
+
+OAuth/encrypted connection grants, eligible Standard+ account admission, durable submission/export orchestration, real provider/client conformance, uploaded-HTML fidelity and a verified management deep link remain explicitly unimplemented or unqualified. Durability callbacks are caller contracts, not a durable ledger. The transport budget does not bound caller database callbacks. These are disclosed boundaries of this development slice, not hidden corrections requested here.
+
+Canonical sync/qualification and exact-current remote CI are not established by this read-only whole review. The parent owns subsequent packaging and qualification. Correct M1 and perform the planned scoped verification/re-review; no additional broad or provider exercise is requested by this report.
+
+## Candidate Linux and preservation evidence
+
+Candidate aa9e9ac043ef629e729913fdff8c37621f06dd7e image lettercape-mailchimp-check:candidate; manifest-list/imageID sha256:e80b0980be7a2f4c1a639cd2e35441dcd90b1bf82cd3811a26b65d8b4138879a; OCIconfig sha256:008d2ffe487064ec2d9260a6851836e3685307b813dfc1d2b5be6dfddc3e95d7. Network-none UID1001 actualAPI122 dual destination/media/receipts/generated editor-assets/private exclusions probe passed, production startup closed exit1. Initial author probe used obsolete upstream Monaco path and failed; only probe changed to inspect generated manifest and all assets. Initial compound command mistakenly wrote asset_probe_exit0 despite that earlier probe failure; obsolete proof is retained and superseded by sequential checked-returncode proof /tmp/lettercape-mailchimp-linux-candidate-proof.json. No source code or release gate changed.
+
+Main and actual home/Desktop clean at baseline eaa1f85 before review/fix/sync. Fresh read-only original109emails SHA25695d2d1cd1822bab9b78601321d99db238f2298ba245b9b3b209d257063a4a172 and221revisions SHA256a600901eefd05fae90e155eb30f2aece3f9a0236dcd0b91ccfb0f938666294d4 match prior original column digests; private file metadata remains unchanged. No private contents read/copied/printed/hashed by preservation tooling.
+
+- `/tmp/lettercape-mailchimp-linux-build-candidate.log`: `27fb2ab51851ddb69a5e2ccd395a66912cceae0d45a747d06c80a16fa4436b7f`
+- `/tmp/lettercape-mailchimp-linux-assets-candidate.log`: `482ff4448c52eb426d7c53b358bd8488e38584a0f74f40d40f286a67709cd3e9`
+- `/tmp/lettercape-mailchimp-linux-assets-qualified.log`: `545e6b1cf538f17432814feb0eb90fa7b479ca53bc67f630c7bf1bcc764ad4a3`
+- `/tmp/lettercape-mailchimp-linux-startup-qualified.log`: `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754`
+
+## Complete whole correction handoff (verbatim)
+
+# M1 complete correction report
+
+Status: complete; sole whole-review M1 corrected as one patch. Parent owns the single scoped re-review and subsequent integration checks.
+
+Baseline: `aa9e9ac043ef629e729913fdff8c37621f06dd7e`.
+Commit: `51fd0f15c605034059680c89244c787ae3b128d2`.
+Owned committed files: `src/ui/editor.tsx`, `scripts/smoke-mailchimp-export.ts` only.
+
+## Correction
+
+Each actual destination change increments a ref-backed monotonically increasing selection generation. A review captures that generation before awaiting initial freeze. The shared selection guard now checks both destination and generation after freeze, after the review response, and before adopting errors. Returning to the same destination therefore cannot revive the old review operation. Existing checkpoint completion, frozen revision reuse, immutable history, request abortion, scope/lifecycle/source/hash checks and remote-export-disabled behavior are preserved.
+
+The added actual owned HTTP/Chromium regression starts with two new editor emails having zero revisions and no reusable freeze. It holds each real initial checkpoint response after the checkpoint is persisted, switches Mailchimp -> Klaviyo -> Mailchimp, then releases it. Both the successful response and a simulated lost/failing response assert zero stale Mailchimp review requests, zero preparation adoption, zero stale checkpoint-error adoption and one retained history checkpoint. A fresh explicit review succeeds. The successful case reuses the acknowledged freeze with no new POST; the failed-response case issues an idempotent checkpoint replay and retains the same single revision. Existing fixture groups remain intact, including the later controller-bound selection/download interruptions, authority/query checks, byte/hash downloads, local edits, navigation, mobile and Viewer checks. Final fixture reports zero instrumented external requests/page errors and successful owned app/database cleanup.
+
+## Read and scope
+
+Read fix brief, whole-review M1, repository `AGENTS.md`, pertinent installed `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md`, editor/fixture dependencies, and systematic-debugging/test-driven-development/verification-before-completion skill guidance. Followed the explicit instruction to run only the covering fixture and scoped checks; no full suite or broad build. No subagents/reviewer dispatch, provider requests, user database work, private-environment inspection, push or deployment. The existing trusted fixture configuration loading was authorized by parent and retained its loopback/database-name guard. No private file contents or connection credentials were inspected or reported.
+
+## Exact commands and outcomes
+
+All commands ran in `/tmp/lettercape-mailchimp-export-native`.
+
+1. Before production changes: `npm run smoke:mailchimp-export > /tmp/lettercape-mailchimp-fix-red.log 2>&1`. Initial sandbox execution exited 1 with sanitized `connect EPERM 127.0.0.1:55439`; preserved as `/tmp/lettercape-mailchimp-fix-red-sandbox.log`. No automatic approval rejection occurred.
+2. Repeated the identical command with the authorized sandbox escalation for owned loopback/database/Chromium access. Exit 1 was meaningful behavioral RED: `Cancelled initial freeze must issue zero stale destination reviews`, actual 1 versus expected 0, at added browser assertion. Prior original fixture groups passed. No production fix existed at this RED.
+3. After generation correction: `npm run smoke:mailchimp-export > /tmp/lettercape-mailchimp-fix-green.log 2>&1` with owned-runtime escalation. First attempt exited 1 at a test expectation: fresh explicit failed-response review retained 1 revision instead of the expected 2. Preserved as `/tmp/lettercape-mailchimp-fix-green-checkpoint-count.log`. Inspection of existing `src/ui/api.ts` established that 5xx/lost-response commands retain their session idempotency key; the fresh review correctly replayed the already committed checkpoint. This was a fixture-count assumption, not a production failure. Revised the fixture to assert replay POST count and retained single history checkpoint. No additional production change was made.
+4. Repeated the identical GREEN command with owned-runtime escalation. Exit 0. All six reported browser/HTTP groups and owned app/database cleanup passed, including the new successful/failing initial-freeze group and all original groups.
+5. `./node_modules/.bin/tsc --noEmit --project /tmp/lettercape-mailchimp-fix-tsconfig.json > /tmp/lettercape-mailchimp-fix-type.log 2>&1`. Exit 0, empty output. Temporary config extends repository `tsconfig.json`, disables incremental writes, uses the repository alias/typeRoots, and includes only `next-env.d.ts`, `src/ui/editor.tsx` and `scripts/smoke-mailchimp-export.ts` plus their imported dependencies. The config is retained for reproducibility.
+6. `./node_modules/.bin/eslint src/ui/editor.tsx scripts/smoke-mailchimp-export.ts > /tmp/lettercape-mailchimp-fix-lint.log 2>&1`. Exit 0, empty output.
+7. `git diff --check -- src/ui/editor.tsx scripts/smoke-mailchimp-export.ts`. Exit 0, empty output. Reviewed complete owned diff before commit.
+8. `git add -- src/ui/editor.tsx scripts/smoke-mailchimp-export.ts && git commit -m 'fix(editor): invalidate destination review throughout initial freeze' && git rev-parse HEAD && git status --short`. Exit 0. Two owned files committed at the SHA above. Parent-owned checkpoint documentation and pre-existing untracked `tooling/openapi/node_modules` were excluded.
+
+## Evidence SHA256
+
+| File | SHA256 |
+| --- | --- |
+| `/tmp/lettercape-mailchimp-fix-red.log` | `ffebba2882b697c12fcc8d1cb0781400a9626117fdb4168656654f9d22e73b26` |
+| `/tmp/lettercape-mailchimp-fix-green.log` | `b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9` |
+| `/tmp/lettercape-mailchimp-fix-type.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-mailchimp-fix-lint.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `/tmp/lettercape-mailchimp-fix-red-sandbox.log` | `89ee558ea3b5dbe48c2f7dcbfe533ab63cfa9dd0bbe0db5e272144b34a77ad3b` |
+| `/tmp/lettercape-mailchimp-fix-green-checkpoint-count.log` | `80ebd16bf7a67e8a908049f84f7a5ef72ff80af04e6d65da3abaacbeb1638c5f` |
+| `/tmp/lettercape-mailchimp-fix-tsconfig.json` | `cf31baaf9419208dd8eb71992295628137cc1d6f6e1d2d3a7aea44555793b3a5` |
+
+Hashes computed with `shasum -a 256` on the listed evidence/config files. Empty logs are supported by observed successful process exits, not inferred from their digest.
+
+## Concerns and boundaries
+
+No remaining blocker for this correction. Parent scoped re-review/integration qualification remains pending. Full65/All65, BaselineA/all13 and zero accepted whole requirements/gates remain unchanged; provider/product acceptance stays closed. This report makes no full-GA, provider fidelity, OAuth/eligibility, durable job or management-link claim. The owned fixture uses local authority/data plus intercepted local responses only.
+
+## Single scoped re-review (verbatim)
+
+# Single scoped re-review of the complete M1 correction
+
+## Verdict
+
+**M1 ADDRESSED.** No new actionable breakage was identified within the complete two-file correction (0 Critical, 0 Important, 0 Minor new findings). This closes the sole finding from the immutable whole-slice review to the stated local scope. It does not accept any whole product/provider requirement or gate.
+
+## Independently verified identity
+
+- Execution environment: native `Darwin`; worktree resolves to `/private/tmp/lettercape-mailchimp-export-native` (the supplied `/tmp` alias).
+- Original candidate: `aa9e9ac043ef629e729913fdff8c37621f06dd7e`.
+- Correction HEAD: `51fd0f15c605034059680c89244c787ae3b128d2`, independently confirmed with `git rev-parse HEAD`.
+- Immutable artifact: `/tmp/lettercape-mailchimp-fix.diff`, independently verified SHA256 `955fcc610664b44fe88222ac9648164e4414ac19dc11ef7d3d7c234f480f5bad`.
+- Regenerated `git diff --binary` between the two supplied commits equals the artifact byte-for-byte and has the same SHA256. The complete committed correction contains exactly `scripts/smoke-mailchimp-export.ts` and `src/ui/editor.tsx`.
+- Each changed file was independently reconstructed from the immutable patch and its original-candidate blob. The reconstruction, correction HEAD blob, and live file all match byte-for-byte.
+
+| Changed file | Independently verified patch/HEAD/live SHA256 |
+| --- | --- |
+| `scripts/smoke-mailchimp-export.ts` | `f2ac02bfb68927943593494613942591af6653f7d3e42948fd83881ba15a4491` |
+| `src/ui/editor.tsx` | `6b8d489835eccb0688d688122a4d5294286e9603fa46330baff45da7d66c4608` |
+
+The unstaged parent checkpoint documentation and existing untracked `tooling/openapi/node_modules` are outside this correction. They were not changed by this review.
+
+## Scope and method
+
+Read the scoped-review brief first, then the sole M1 in `/tmp/lettercape-mailchimp-whole-review.md`, `.superpowers/sdd/mailchimp-export/fix-brief.md`, and `fix-report.md`. Read repository `AGENTS.md`, the entire immutable correction, the corresponding live editor/fixture code, and the relevant unchanged freeze, review, download, busy/context and idempotent API behavior. Inspected and independently hashed the saved behavioral RED, final complete browser GREEN, scoped type/lint evidence, retained unsuccessful attempts and temporary type configuration.
+
+This was exactly one scoped re-review of the complete correction. No second whole review, broad checks, browser/test reruns, network/provider/database operations, source/Git/index/environment mutations, sends, deployment, push or subagents occurred. The only write was this requested report. Saved process outcomes are attributed to the correction worker's report; this reviewer independently verified their retained bytes and inspected their contents, without claiming to have rerun those processes.
+
+## Why M1 is addressed
+
+Previously a Mailchimp → Klaviyo → Mailchimp selection round trip while awaiting the first freeze revived the old review because the guard compared only the destination string, and no review controller existed yet.
+
+`src/ui/editor.tsx:103` now holds a ref-backed selection generation. `chooseDestination` at lines 384–386 increments it on every actual destination change. `reviewDestination` at lines 388–401 captures it before awaiting freeze; its shared `selected()` guard requires both the original generation and destination. The guard is used before dispatching the review after freeze (line 393), before adopting a returned review (line 396), and before adopting an exception (line 401). Returning to Mailchimp changes the generation twice, so neither the old success nor the old thrown checkpoint/review failure becomes current again. The checks do not depend on React state updates completing.
+
+The production change leaves checkpoint persistence and freeze acknowledgement intact. A completed successful freeze can still install the frozen revision before the cancelled review returns; no history checkpoint is deleted. A fresh explicit review captures the current generation and can reuse that acknowledged freeze. After a lost/failing checkpoint response, the unchanged API retains its session idempotency key on 5xx responses (`src/ui/api.ts:53`), allowing fresh explicit review to replay the already committed checkpoint. Scope, lifecycle, content/source anchoring, response receipt checks and controller abortion remain in place.
+
+The new regression at `scripts/smoke-mailchimp-export.ts:44`–64 covers both a successful initial checkpoint response and a simulated 503 after the real checkpoint has persisted. Each case starts with a new email and zero revisions; it holds the real HTTP response while switching away and back, releases it, waits for the review action to finish, and asserts zero stale review requests, zero stale preparation adoption, zero stale checkpoint-error adoption and one retained immutable checkpoint. Each then explicitly reviews again and waits for preparation: the successful-response case issues no new checkpoint POST; the failed-response case issues one idempotent replay POST and retains the same single revision. The final case expectations are consistent with the unchanged API behavior rather than weakening cancellation assertions.
+
+## Saved covering evidence
+
+All seven supplied evidence/config SHA256 values independently match the correction report:
+
+| Saved evidence | Verified SHA256 | Assessment |
+| --- | --- | --- |
+| `/tmp/lettercape-mailchimp-fix-red.log` | `ffebba2882b697c12fcc8d1cb0781400a9626117fdb4168656654f9d22e73b26` | Meaningful browser RED: stale review request count was 1, expected 0, at the new initial-freeze assertion. The first three original groups had passed. |
+| `/tmp/lettercape-mailchimp-fix-green.log` | `b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9` | Worker records exit 0; inspected log contains all six complete browser/HTTP PASS groups and owned database/app cleanup PASS. |
+| `/tmp/lettercape-mailchimp-fix-type.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | Empty scoped type log; worker records exit 0 for the retained configuration. Empty bytes alone do not prove the exit code. |
+| `/tmp/lettercape-mailchimp-fix-lint.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` | Empty two-file lint log; worker records exit 0. Empty bytes alone do not prove the exit code. |
+| `/tmp/lettercape-mailchimp-fix-red-sandbox.log` | `89ee558ea3b5dbe48c2f7dcbfe533ab63cfa9dd0bbe0db5e272144b34a77ad3b` | Retained initial loopback `EPERM`; not behavioral RED or passing qualification. |
+| `/tmp/lettercape-mailchimp-fix-green-checkpoint-count.log` | `80ebd16bf7a67e8a908049f84f7a5ef72ff80af04e6d65da3abaacbeb1638c5f` | Retained unsuccessful initial GREEN attempt: expected two history revisions, observed one. Corrected fixture expectation agrees with the existing idempotent replay implementation. |
+| `/tmp/lettercape-mailchimp-fix-tsconfig.json` | `cf31baaf9419208dd8eb71992295628137cc1d6f6e1d2d3a7aea44555793b3a5` | Extends repository configuration, disables incremental writes, includes both changed files plus next-env/imported dependencies and repository alias/type roots. |
+
+The final GREEN retains authority/scope/query refusal and exact native download receipts, editor freeze/double-click and download behavior, error/retry/local-edit/navigation fences, the new successful/failing initial-freeze round trips, later destination-selection review/download interruptions and distinct mappings, and mobile/Viewer checks. It reports zero instrumented external calls/page errors and successful owned fixture cleanup. Its assertion ordering and awaited completion make the new stale-dispatch check meaningful for the corrected operation, rather than an assertion made while freeze is still pending.
+
+Recorded covering commands were `npm run smoke:mailchimp-export`, the retained scoped `tsc --noEmit --project /tmp/lettercape-mailchimp-fix-tsconfig.json`, and `eslint src/ui/editor.tsx scripts/smoke-mailchimp-export.ts`; the worker also records a successful owned `git diff --check`. No unchanged broad tests were repeated for this review.
+
+## New-breakage assessment and remaining boundaries
+
+No new actionable breakage was found in the generation guard or added fixture. Same-destination no-op selection remains a no-op; actual destination changes invalidate the old selection interval immediately. Fresh review admission remains usable after the cancelled operation finishes, committed checkpoint reuse/replay is preserved, and the original fixture groups remain intact. No separate observations require a new correction within these two files.
+
+No blocker remains for M1 at this scoped-review boundary. Parent integration/packaging qualification is separate. Full65/All65 and BaselineA/all13 remain entirely unaccepted: zero whole requirements/gates accepted. Provider/product readiness remains closed. This verdict makes no full-GA, real-provider fidelity, OAuth/eligibility, durable job or verified management-link claim.
+
+## Fresh corrected-source qualification
+
+One whole review found0Critical/0Important/1Minor; ONE complete correction51fd0f15c605034059680c89244c787ae3b128d2 plus ONE scoped re-review closes M1 with no new findings. Fresh corrected configured suite556/556,0fail/cancel/skip; npm run lint/typecheck/api:check/build pass (122operations). Complete corrected Mailchimp6 actualHTTP/Chromium groups+cleanup and fresh Klaviyo4 groups+cleanup pass. No mocks are real provider acceptance.
+
+Corrected Linux proof:
+
+```json
+{
+  "head": "51fd0f15c605034059680c89244c787ae3b128d2",
+  "image": "lettercape-mailchimp-check:fixed",
+  "image_id": "sha256:47a8586400e6131c2249617d785b97fad292a058387c834084015735261e458d",
+  "oci_config_from_build": "sha256:7d4774c532ab2f02e1915b519d56ed459370eae6aeff0d3516f6cc0d89f7c02e",
+  "asset_probe_exit": 0,
+  "production_startup_exit": 1,
+  "network": "none",
+  "deployment": false
+}
+```
+
+All probes execute with networknone/UID1001, validate exact dual-destination API media/receipts and generated code-editor assets, exclude private files; actual fullGA startup refuses exit1. This does not clear publication, provider or any production gate.
+
+- `/tmp/lettercape-mailchimp-suite-fixed.log`: `d07275145c881d535524b59db75f407bb41182b9621326c0c6ca8adcf4917a56`
+- `/tmp/lettercape-mailchimp-build-fixed.log`: `7f28aaa8a101066f6206ab8c242a11c5c4e00e28e6d17900ca6894ba50a615a2`
+- `/tmp/lettercape-mailchimp-lint-fixed.log`: `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
+- `/tmp/lettercape-mailchimp-api-fixed.log`: `ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f`
+- `/tmp/lettercape-mailchimp-type-fixed.log`: `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
+- `/tmp/lettercape-mailchimp-klaviyo-fixed.log`: `84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e`
+- `/tmp/lettercape-mailchimp-linux-build-fixed.log`: `2b189e7fcda21a6771df081ddb0b2993e0b84d6ba2c2aeaf0ad08c6a8b0df8a0`
+- `/tmp/lettercape-mailchimp-linux-assets-fixed.log`: `545e6b1cf538f17432814feb0eb90fa7b479ca53bc67f630c7bf1bcc764ad4a3`
+- `/tmp/lettercape-mailchimp-linux-startup-fixed.log`: `e331306af1367c23fa850fb3f6d9708b5f8bba6bf376512ce7139dd1516c5754`
+
+## Ledger additions (verbatim; earlier rulings remain exhaustive above)
+
+# SDD ledger — plan: docs/superpowers/plans/2026-10-02-mailchimp-export.md
+Preflight: compiler/adapter share only MailchimpArtifact from compiler; root routes/UI consume strict contracts. Worker file scopes disjoint. Existing Klaviyo paths unchanged until extraction/integration qualifying checks. Server node APIs stay separate from browser contracts. No provider acceptance invented.
+Ruling: user explicitly requests parallel focused workers, so disjoint compiler and transport tasks run concurrently despite default SDD sequential-implementer guidance — no shared owned files, exact interface brief and final integration review — costs integration rework if contract assumptions drift.
+Ruling: metadata-only Mailchimp API cannot prove HTML fidelity; known-ID metadata match remains needs_attention — official full schema exposes no HTML or artifact management link — costs blocked native handoff until account-tested content/deep-link evidence exists.
+Ruling: standing continuous independent-development authorization replaces routine planning/finishing approval menus — reversible local work within existing scope — costs preference rework; no procurement/provider/publication decision inferred.
+
+Task 1: complete (commits 4764f2f..a17d89b4, task spec and quality PASS, no findings).
+Task 2: complete (commits 4764f2f..1bf5dac0, task spec and quality PASS, no findings).
+Task 3: complete (root route/UI/API/dual-browser integration; task1/2 combined review clean, root integration included in final whole review).
+Task 4: in progress (556/556 configured tests; lint/type/API122/build; actual Mailchimp5 and Klaviyo4 HTTP/browser groups plus cleanup PASS; immutable whole review and canonical qualification next).
+Evidence note: old Klaviyo browser assertion treated newly-supported Mailchimp as unsupported422; actual200 was correct. Fixture now uses unsupported Brevo; original failure log retained, fresh complete Klaviyo browser pass. No production assertion was weakened.
+
+Whole review aa9e9ac:0Critical/0Important/1Minor. M1 destination ABA during initial freeze revives cancelled review. ONE complete fix dispatched for sole finding, covering held initial-checkpoint browser regression; one scoped re-review follows.
+
+Whole correction51fd0f15: M1 generation capture through initial freeze/result/error; actual RED stale request reproduced, complete6-group Mailchimp browser GREEN/scopedtype/lint pass. Sandbox EPERM and incorrect two-checkpoint fixture assumption retained and corrected without production weakening. ONE scoped re-review dispatched.
+
+Whole scoped re-review: M1 ADDRESSED,0 new findings. Corrected51fd0f15 full configured556/556/0skip, lint/type/API122/build, complete Mailchimp6 groups and Klaviyo4 groups+cleanup, Linux UID1001/networknone/API/assets/private exclusions pass; closed production startup exit1. Canonical sync/qualification remains Task4 final step.
