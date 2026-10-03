@@ -85,6 +85,7 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && ['archive', 'remix'].includes(command)) methods = ['POST'];
   }
   if(root==='operations'&&!id)methods=['GET'];
+  if(root==='operations'&&id==='report'&&!command)methods=['GET'];
   if (root === 'operations' && id && uuid.test(id)) {
     if (!command||command==='attempts') methods = ['GET'];
     else if (command === 'cancel') methods = ['POST'];

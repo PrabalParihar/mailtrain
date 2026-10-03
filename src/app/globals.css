@@ -1679,3 +1679,26 @@ td {
 @media (max-width: 767px) {
   .integration-card > .badge, .welcome-card > .badge { white-space: normal; }
 }
+
+/* Creation reports keep each bounded aggregate snapshot readable on mobile. */
+.creation-report, .creation-report .panel { min-width: 0; max-width: 100%; }
+.creation-report .panel { margin-bottom: 24px; overflow-wrap: anywhere; }
+.creation-report-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.creation-report-fields label { min-width: 0; }
+.creation-report-fields input, .creation-report-fields select { width: 100%; min-width: 0; max-width: 100%; }
+.creation-report-actions, .creation-report-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.creation-report-actions button { max-width: 100%; white-space: normal; }
+.creation-report-links a { display: inline-flex; min-height: 44px; align-items: center; }
+.creation-report-counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; margin: 24px 0; }
+.creation-report-counts > div { min-width: 0; padding: 12px; background: var(--canvas); border: 1px solid var(--line); border-radius: 8px; }
+.creation-report-counts dt { font-size: 12px; color: var(--secondary); }
+.creation-report-counts dd { margin: 8px 0 0; font-size: 22px; font-weight: 600; }
+.creation-report-empty { border-top: 1px solid var(--line); padding-top: 16px; }
+.creation-report-table { width: 100%; max-width: 100%; overflow-x: auto; margin: 20px 0; }
+.creation-report-table table { min-width: 850px; }
+.creation-report-table caption { text-align: left; padding: 8px; font-weight: 600; }
+.creation-report-table th[scope="row"] { white-space: nowrap; color: var(--ink); }
+@media (max-width: 600px) {
+  .creation-report-fields { grid-template-columns: minmax(0, 1fr); }
+  .creation-report-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}

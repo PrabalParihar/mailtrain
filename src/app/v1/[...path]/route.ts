@@ -1,3 +1,4 @@
+import {creationActivityReport} from '@/server/creation-report';
 import {submissionLedgerRoute} from '@/server/submission-ledger-route';
 import {hubspotExportResponse} from '@/server/hubspot-export-review';
 import { emailTemplateRoute } from '@/server/email-template-route';
@@ -438,6 +439,7 @@ async function handle(req: Request, ctx: Context) {
     if (root === 'operations')
       return json(
         await withPrincipal(req, method === 'GET' ? 'read' : 'edit', async (tx, p) => {
+          if(id==='report')return creationActivityReport(req,tx,p);
           if(!id)return creationPage(req,tx,p);
           const row = (await tx.query('SELECT * FROM operations WHERE id=$1', [id])).rows[0];
           if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Operation not found.');

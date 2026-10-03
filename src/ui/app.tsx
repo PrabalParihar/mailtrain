@@ -27,6 +27,7 @@ import { BrandPanel } from './brand';
 import {SenderDomainPanel} from './sender-domain';
 import { CreatePanel } from './create';
 import { EmailTemplatesPanel } from './email-templates';
+import { CreationReport } from './creation-report';
 import { Editor } from './editor';
 import { AudiencePanel, CampaignPanel, SettingsPanel } from './operations';
 import { integrations } from '@/server/adapters';
@@ -532,22 +533,7 @@ export function MailcraftApp({
             </>
           )}
           {section === 'reports' && (
-            <>
-              <div className="page-heading">
-                <div>
-                  <p className="eyebrow">EVIDENCE, NOT ASSUMPTIONS</p>
-                  <h1>Know what actually happened.</h1>
-                </div>
-              </div>
-              <div className="panel empty-state">
-                <BarChart3 size={36} />
-                <h2>No delivery events to report.</h2>
-                <p>
-                  Provider acceptance and delivery are separate. Opens are approximate technical
-                  observations, not verified human intent.
-                </p>
-              </div>
-            </>
+            <CreationReport key={workspace + ':' + actor} workspace={workspace} actor={actor} />
           )}
         </main>
         <footer className="app-footer">

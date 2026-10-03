@@ -1032,6 +1032,18 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": true
   },
+  "getCreationActivityReport": {
+    "method": "GET",
+    "path": "/v1/operations/report",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
   "listCreationOperations": {
     "method": "GET",
     "path": "/v1/operations",

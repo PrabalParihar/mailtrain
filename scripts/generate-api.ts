@@ -1,3 +1,4 @@
+import {CreationActivityReport,CreationReportWindow} from '../src/domain/creation-report';
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
 import {SubmissionLedgerInput,SubmissionLedgerView,StagedRecipientView,DeliveryHistoryView,DeliveryAttemptView} from '../src/domain/submission-ledgers';
 import {LocaleReviewInput,LocaleReviewRecord,LocaleReviewContext,LocaleReviewHistoryItem} from '../src/domain/locale-content-review';
@@ -882,6 +883,8 @@ for (const [id, command, blocked] of [
     scope: blocked ? 'emails:export' : 'emails:write',
   });
 for(const [name,item]of Object.entries({CreationOperations:'CreationSummary',CreationAttempts:'CreationAttempt'}))schemas[name+'Page']=envelope({data:array(ref(item)),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0}});
+schemas.CreationActivityReportResponse=envelope({report:fromZod(CreationActivityReport)});
+add({id:'getCreationActivityReport',path:'/v1/operations/report',method:'GET',response:'CreationActivityReportResponse',query:Object.entries(CreationReportWindow.shape).map(([name,schema])=>({name,in:'query' as const,required:true,schema:fromZod(schema)})),description:'Bounded creation activity snapshot, at most 31 UTC days within years 2000–2100; start inclusive and end exclusive. Existing operation type determines brands:read or emails:read scope. Current outcomes of operations created in the cohort, daily creation buckets in selected supported IANA timezone (at most 33 dates), completion time from created_at to completed_at for measurable successes only, including queue time. Zero samples have null percentiles; missing/invalid timestamps are counted. No private input/result, recipient identifiers, provider delivery, engagement, revenue or human journey inference. This small aggregate snapshot is not the pending asynchronous bulk/live analytics export.'});
 add({id:'listCreationOperations',path:'/v1/operations',method:'GET',response:'CreationOperationsPage',paged:true,query:[{name:'type',in:'query',required:true,schema:fromZod(CreationType)}],description:'Signed bounded creation history; scope follows required type. No private input or lease token.'});
 add({id:'listCreationAttempts',path:'/v1/operations/{id}/attempts',method:'GET',response:'CreationAttemptsPage',paged:true,description:'Immutable redacted creation attempts; scope follows the selected operation.'});
 add({
