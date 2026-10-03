@@ -73,11 +73,18 @@ export function checkHubSpotFooterComparison(
   settings:unknown,
 ):{matches:true;settings_origin:'locally_declared';account_settings_verified:false} {
   const parsedSettings=parseSettings(settings);
-  if(!Array.isArray(footers)||footers.length===0||footers.some(footer=>!footerPair.safeParse(footer).success)){
+  if(!Array.isArray(footers)||footers.length===0){
     throw new Error('EXPORT_FOOTER_REQUIRED');
   }
+  const parsedFooters:{identity:string;address:string}[]=[];
+  for(let index=0;index<footers.length;index++){
+    if(!Object.hasOwn(footers,index))throw new Error('EXPORT_FOOTER_REQUIRED');
+    const result=footerPair.safeParse(footers[index]);
+    if(!result.success)throw new Error('EXPORT_FOOTER_REQUIRED');
+    parsedFooters.push(result.data);
+  }
   const address=composeAddressValues(parsedSettings);
-  if(footers.some(footer=>footer.identity!==parsedSettings.company_name||footer.address!==address)){
+  if(parsedFooters.some(footer=>footer.identity!==parsedSettings.company_name||footer.address!==address)){
     throw new Error('HUBSPOT_FOOTER_MISMATCH');
   }
   return {matches:true,settings_origin:'locally_declared',account_settings_verified:false};

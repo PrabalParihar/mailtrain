@@ -138,6 +138,12 @@ test('comparison rejects empty, malformed, unbounded, or any mismatching footer 
   }
 });
 
+test('comparison rejects sparse footer arrays even when another slot is a matching footer', () => {
+  const footers = new Array<{identity:string;address:string}>(2);
+  footers[1] = {identity: 'Fixture Books', address: expectedAddress};
+  assert.throws(() => checkHubSpotFooterComparison(footers, settings), /^Error: EXPORT_FOOTER_REQUIRED$/);
+});
+
 test('comparison reads frozen EmailSpec footer values and never mutates the saved source', () => {
   const source = blankSpec('fixture-brand', 'Fixture Books');
   source.sections = source.sections.map(block => block.type === 'legal_footer'
