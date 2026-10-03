@@ -35,7 +35,7 @@
 
 ### Task2: Durable noncredential requests
 
-**Files:** db/039-invitation-planning.sql; src/server/invitation-requests.ts; tests/invitation-requests-db.test.ts.
+**Files:** db/039-invitation-planning.sql; src/server/invitation-requests.ts; src/server/pagination.ts (two resource identifiers); tests/invitation-requests-db.test.ts.
 **Interfaces:** createInvitationRequest(tx,p,input,key), changeInvitationRequest(tx,p,id,command,input,key), invitationRequest(tx,p,id), invitationRequestPage(req,tx,p,id?), invitationPlanningContext(tx,p). Commands return {request:InvitationRequestView,changed:boolean}.
 
 - [ ] Write real isolated-DB tests: create/update/no-op/withdraw/reopen/history/replay; CAS/active-email/reopen conflict without partial mutation; deadline/pagination/role refusal and unchanged membership/session/seat rows.
