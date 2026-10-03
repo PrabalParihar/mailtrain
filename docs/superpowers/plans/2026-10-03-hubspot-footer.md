@@ -38,4 +38,5 @@ Own scripts/smoke-hubspot-export.ts and package.json sole smokealias. Bindingdet
 ### Task 6: Whole qualification and canonical delivery
 - [x] Configuredfullsuite/type/lint/API/build/Linux/five actualjourneys.
 - [x] ONEwholeimmutable review; ONEcompletefix andONEscopedifneeded; allfindingsrulingsretained.
-- [ ] CanonicalbytecheckedFF/freshbuildbrowser/preservation/ownedappsrestore, fullverbatimreports/ledger/failures beforeonlyownscratchcleanup. Continue remainingGA.
+- [x] CanonicalbytecheckedFF/freshbuildbrowser/preservation/ownedappsrestore and fullverbatimreports/ledger/failures retained. Continue remainingGA.
+- [ ] After exhaustive final Rulings I made is delivered, remove only this owned SDD scratch; source checkout and sibling work remain.

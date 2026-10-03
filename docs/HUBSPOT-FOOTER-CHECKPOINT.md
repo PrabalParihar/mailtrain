@@ -1789,6 +1789,14 @@ Ruling: Qualify the sole final harness amendment with its actual13group covering
 
 ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-review.md M1ADDRESSED/spec+qualityAPPROVED/new0C0I0M. Singlecompletefix0c50e5f+ONEscopedreview closeswholeM1; no secondwave. All24declined boundaries explicitlyresolved/costed, current14Rulinglines andfullindividual24decisions retained. Allproduct/nonharness nonMDblobs unchangedfrom848/Linux-qualifiedb79; finalharnessactual13groups19,897ms qualified0c50. Rootcanonicaldeliverypreparednext; beforedevelopment/privates/original109/221unchanged verified.
 
+Rootcheckpoint e1adfa4bf331fae21aeb103cd37181c7b5e949a9 docs-only retains3153lines fullreports/briefs/reviews/ledger/rulings/24boundaries/evidence. Initial stageddefaultdiff-check exit2 reports7originalMarkdown two-space hard-break lines inverbatimreports; sequentialtoolorchestration committedbeforebranchingon thatreceipt. These are intentionallyoriginalreportbytes, notsourcecodeerrors; receiptpreservedandremainingdefaultsourcecheckhandledseparately.
+Ruling: Preserve the seven original Markdown hard-break lines in verbatim checkpoint reports and explicitly qualify the default whitespace receipt instead of rewriting historical report bytes. Why exact handoff retention is binding and two spaces encode the original line breaks. Cost benign whitespace-check noise in archival Markdown; source/default diff hygiene is checked separately, with a command-local whitespace rule for this archive only. No repository config altered.
+
+Firstarchive command-local whitespace attempt still enabled Git default blank-at-eol andfailedsame7hardbreaks; correctedexplicit-blank-at-eol setting, otherdocs defaultcheck0. No report bytes orrepositoryconfiguration changed. Freshcanonicalreadonlypreflight995f/clean/privateMETADATAPASS.
+
+Task6 canonicaldeliverye1adfa4bf331fae21aeb103cd37181c7b5e949a9 PASS: localonly FFmirror+actualhome/Desktop/mail614trackedSHA matches,513nonMD matchqualified0c50; freshcanonicaltype/lint/API124/build/H/B/O/M/K all9checks0/allloghashesverified. Exactprimary109emails221revisions/oldcolumn/privateMETADATAproofafterfixturesequalbeforedevelopment. Ownedappsstop8751/8754/restoredAFTERfixturesmain34577/3003,Desktop34580/3002; bothhealth200/dispatch_enabledfalse, originalrecipient74504/media74559alive expectedcommands/untargeted. Actualcanonical390 fullPNG+readableoriginal358panelviewed; fulloverviewmodeldownscaled123x2048 explicitlyqualified. PNGhashes/copiedpixels+allproofsretained. No push/deploy/provider/account/send/spend.
+Task 6: local delivery/qualification and full evidence retention complete; ownedSDD cleanup deferred until exhaustive final Rulings I made actually delivered, per skill ordering. Keep onlythisownedworkspace available for that next cleanup; no sibling orsourcecheckout deletion. FullGAremainingcode/17pending/43partial/5roadmap andexternal13gates remainopen; no whole requirementaccepted. Finaldocs-onlyclosure/localFFprooffollowswithoutchangingqualifiedcode.
+
 ## native-qualification
 
 ```json
@@ -1947,7 +1955,7 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
   "new_covering_groups": 13,
   "new_scoped_lint_type_diff": true,
   "whole_correction_review_pending": false,
-  "canonical_qualification_pending": true,
+  "canonical_qualification_pending": false,
   "deployment": false,
   "all_ga_accepted": false,
   "whole_review_counts": {
@@ -1960,7 +1968,11 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
     "important": 0,
     "minor": 0
   },
-  "whole_m1_addressed": true
+  "whole_m1_addressed": true,
+  "canonical_head": "e1adfa4bf331fae21aeb103cd37181c7b5e949a9",
+  "canonical_proof": "/tmp/lettercape-hubspot-footer-canonical-qualification.json",
+  "canonical_all_nine_checks_pass": true,
+  "owned_sdd_cleanup_pending_final_rulings_delivery": true
 }
 ```
 
@@ -2336,8 +2348,8 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
   {
     "original": "/tmp/lettercape-hubspot-footer-native/.superpowers/sdd/2026-10-03-hubspot-footer/progress.md",
     "retained": "/tmp/lettercape-hubspot-footer-task-handoffs/progress.md",
-    "bytes": 35402,
-    "sha256": "32b10cccb0664ab4464f69b951cb7dd405b6c5ec02d6433d309bd4ed2e0b85c5"
+    "bytes": 37817,
+    "sha256": "a831adfd923e831088e0c51418256622e39b34486e9a9f0fcfff01d99465a81a"
   },
   {
     "original": "/tmp/lettercape-hubspot-footer-native/.superpowers/sdd/2026-10-03-hubspot-footer/review-20ca82b..fa99bd3.diff",
@@ -2518,7 +2530,7 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
 
 ```json
 {
-  "checked_at_utc": "2026-10-03T05:43:46.780516+00:00",
+  "checked_at_utc": "2026-10-03T06:21:10.991617+00:00",
   "canonical_actual_home": "/Users/prabalpratapsingh/Desktop/mail",
   "heads": {
     "/Users/prabalpratapsingh/Documents/Codex/2026-10-01/task/mailcraft": "995f6f6d8c417b35e0fd616b2ae6864578894191",
@@ -2551,12 +2563,260 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
 }
 ```
 
+## canonical-sync-proof
+
+```json
+{
+  "head": "e1adfa4bf331fae21aeb103cd37181c7b5e949a9",
+  "canonical": "/Users/prabalpratapsingh/Desktop/mail",
+  "tracked_sha256_matches": 614,
+  "main_clean": true,
+  "canonical_clean": true,
+  "private_metadata_unchanged_readable": true,
+  "private_contents_copied_printed_or_hashed": false,
+  "local_fast_forward_only": true,
+  "deployment": false
+}
+```
+
+## canonical-qualification
+
+```json
+{
+  "run_id": "20261003T062228",
+  "head": "e1adfa4bf331fae21aeb103cd37181c7b5e949a9",
+  "qualified_code_head": "0c50e5fbace732a509bcda0fc59365820232845e",
+  "tracked_sha256_matches": 614,
+  "non_markdown_files_match_qualified_code": 513,
+  "checks": [
+    {
+      "name": "type",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-type.log",
+      "sha256": "e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-lint.log",
+      "sha256": "177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746"
+    },
+    {
+      "name": "api",
+      "command": [
+        "npm",
+        "run",
+        "api:check"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-api.log",
+      "sha256": "da3224db4e49fbd621425356012037802b42948f40ceca5c2c3654982961a201"
+    },
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-build.log",
+      "sha256": "918bb176e43f139699c9f83fe4b246b79fae3e441a2414d50bdc0dceec2e376b"
+    },
+    {
+      "name": "hubspot-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-hubspot-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-hubspot-browser.log",
+      "sha256": "139558e59855caf65f921f4651bc1c033bd13c76377ffe5088756dbdd9cf032c"
+    },
+    {
+      "name": "brevo-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-brevo-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-brevo-browser.log",
+      "sha256": "b66673982fa7af1f8cf9a0cbb56980377708fbdaa5dd1aadf9759c6ba8e288dc"
+    },
+    {
+      "name": "omnisend-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-omnisend-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-omnisend-browser.log",
+      "sha256": "6756f4ca9c989be5e1150f3b066963a7f4729c66f3f2aebc7a9385606e021817"
+    },
+    {
+      "name": "mailchimp-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-mailchimp-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-mailchimp-browser.log",
+      "sha256": "f31637df9f5fed30b4b028532e170bcd6e160ddc454fa7037afc30d6692ff05d"
+    },
+    {
+      "name": "klaviyo-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-klaviyo-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-klaviyo-browser.log",
+      "sha256": "815ba9545226eb9c5aa82b739db6d224331660fab705f6fb78b3a9a45b827b76"
+    }
+  ],
+  "deployment": false
+}
+```
+
+## canonical-pixels
+
+```json
+{
+  "canonical_head": "e1adfa4bf331fae21aeb103cd37181c7b5e949a9",
+  "browser_log": "/tmp/lettercape-hubspot-footer-canonical-20261003T062228-hubspot-browser.log",
+  "pixels": [
+    {
+      "path": "/tmp/lettercape-hubspot-footer-canonical-pixels/mobile.png",
+      "bytes": 388108,
+      "sha256": "93d401efabd9fb251594711e67a860fed6eccecb885cc1546d95b2b7e2ca5f1c"
+    },
+    {
+      "path": "/tmp/lettercape-hubspot-footer-canonical-pixels/mobile-panel.png",
+      "bytes": 149901,
+      "sha256": "ac6d88047f0540a4e81a2f260277b36c5e6c1ae38bc2d63b2bbb63fdcc47dd84"
+    }
+  ],
+  "root_pixel_inspection_pending": false,
+  "root_inspection": "Viewed actual canonical owner390 full-page overview (model downscaled390x6496 to123x2048) and readable original-resolution358px-wide HubSpot panel: seven explicit fields, unverified/local warnings, wrapped identities, local receipt and both download controls fit without apparent horizontal overflow; actual browser bounding/scroll checks passed."
+}
+```
+
+## restored-runtime-proof
+
+```json
+{
+  "checked_at_utc": "2026-10-03T06:25:29.647851+00:00",
+  "apps": [
+    {
+      "name": "main",
+      "pid": 34577,
+      "port": 3003,
+      "cwd": "/Users/prabalpratapsingh/Documents/Codex/2026-10-01/task/mailcraft",
+      "health_status": 200,
+      "health_mode": null,
+      "health_dispatch_enabled": false
+    },
+    {
+      "name": "canonical",
+      "pid": 34580,
+      "port": 3002,
+      "cwd": "/Users/prabalpratapsingh/Desktop/mail",
+      "health_status": 200,
+      "health_mode": null,
+      "health_dispatch_enabled": false
+    }
+  ],
+  "preserved_worker_identity_checks": [
+    {
+      "pid": 74504,
+      "process_exists": true,
+      "expected_command_marker_present": true,
+      "targeted_or_terminated": false
+    },
+    {
+      "pid": 74559,
+      "process_exists": true,
+      "expected_command_marker_present": true,
+      "targeted_or_terminated": false
+    }
+  ],
+  "deployment": false,
+  "dispatch_enabled": false
+}
+```
+
+## checkpoint-whitespace-receipt
+
+```json
+{
+  "head": "e1adfa4bf331fae21aeb103cd37181c7b5e949a9",
+  "original_default_exit": 2,
+  "first_override_exit": 2,
+  "original_seven_two_space_markdown_hard_breaks_preserved": true,
+  "exact_report_texts_preserved": true,
+  "checks": [
+    {
+      "name": "otherdocs-default",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "0c50e5fbace732a509bcda0fc59365820232845e",
+        "HEAD",
+        "--",
+        ".",
+        ":(exclude)docs/HUBSPOT-FOOTER-CHECKPOINT.md"
+      ],
+      "exit": 0,
+      "output": ""
+    },
+    {
+      "name": "archive-intentional-hard-breaks",
+      "command": [
+        "git",
+        "-c",
+        "core.whitespace=-blank-at-eol,blank-at-eof,space-before-tab",
+        "diff",
+        "--check",
+        "0c50e5fbace732a509bcda0fc59365820232845e",
+        "HEAD",
+        "--",
+        "docs/HUBSPOT-FOOTER-CHECKPOINT.md"
+      ],
+      "exit": 0,
+      "output": ""
+    }
+  ],
+  "repository_config_changed": false
+}
+```
+
 ## current-rulings
 
 ```json
 {
   "ledger": "/tmp/lettercape-hubspot-footer-native/.superpowers/sdd/2026-10-03-hubspot-footer/progress.md",
-  "ledger_sha256": "32b10cccb0664ab4464f69b951cb7dd405b6c5ec02d6433d309bd4ed2e0b85c5",
+  "ledger_sha256": "a831adfd923e831088e0c51418256622e39b34486e9a9f0fcfff01d99465a81a",
   "rulings": [
     {
       "line": 5,
@@ -2627,9 +2887,15 @@ ONEwhole correction review /tmp/lettercape-hubspot-footer-whole-correction-revie
       "line": 243,
       "verbatim": "Ruling: Qualify the sole final harness amendment with its actual13group covering smoke/scopedlint/type/diff plus exactGitblob invariance of everyother nonMarkdown file against848test/Linux-qualifiedb79f, retaining originalproof/image HEADlabels ratherthan implyreruns. Why onlytest scheduling changed andwhole review explicitlyrequestscoveringchecks, notunrelatedqualification repeats. Cost evidenceis attributedacrosstwo exactHEADs; anymissed harnesscouplingwouldrequirefurtherqualification. Freshcanonicaltype/lint/API/build/allfivejourneys stillmandatory because destinationenvironment differs. Supplemental/tmp/lettercape-hubspot-footer-final-qualification.json recordsattribution; scopedreview/canonicalpending.",
       "order": 14
+    },
+    {
+      "line": 248,
+      "verbatim": "Ruling: Preserve the seven original Markdown hard-break lines in verbatim checkpoint reports and explicitly qualify the default whitespace receipt instead of rewriting historical report bytes. Why exact handoff retention is binding and two spaces encode the original line breaks. Cost benign whitespace-check noise in archival Markdown; source/default diff hygiene is checked separately, with a command-local whitespace rule for this archive only. No repository config altered.",
+      "order": 15
     }
   ],
-  "plan_complete": false
+  "canonical_delivery_complete": true,
+  "own_cleanup_pending_final_rulings_delivery": true
 }
 ```
 
