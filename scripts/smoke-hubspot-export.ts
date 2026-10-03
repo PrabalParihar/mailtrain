@@ -547,24 +547,25 @@ try {
                     const response=await fetch(${JSON.stringify(endpoint(sensitivityRevision,'artifact'))},{method:'POST',headers:${JSON.stringify({...headers,'Content-Type':'application/json'})},body:JSON.stringify(${JSON.stringify({settings,format:'html',expected_destination_hash:sensitivityReceipt.destination_hash})})});
                     if(!response.ok)throw Error('Owned delayed sensitivity artifact unavailable');
                     const blob=await response.blob();
-                    window.__ownedDelayedHubSpotFile={release:()=>setTimeout(()=>{
+                    window.__ownedDelayedHubSpotFile={release:()=>{
                         const url=URL.createObjectURL(blob),link=document.createElement('a');
                         link.href=url;link.download='hubspot-prepared-delayed-sensitivity.html';link.click();
                         delete window.__ownedDelayedHubSpotFile;setTimeout(()=>URL.revokeObjectURL(url),1000);
-                    },50)};
+                    }};
                     return response.headers.get('x-content-sha256');
                 })()`);
                 assert.equal(actualSHA,sensitivityReceipt.html_sha256);
                 const pending=page.waitForEvent('download');
+                // The real Blob stays behind this held browser gate until the controller
+                // has verified the unchanged consumer-side baseline.
+                assert.equal(downloads,baseline,'No intentional download may arrive before the held Blob is released');
                 await page.evaluate('window.__ownedDelayedHubSpotFile.release()');
-                // Reproduces the reviewed race: the immediate producer-side test passes.
-                assert.equal(downloads,baseline);
                 const delayed=await pending,path=await delayed.path();assert.ok(path);
                 assert.equal(await delayed.failure(),null);
                 assert.equal(sha(await readFile(path)),actualSHA);
                 assert.throws(()=>sensitivityGuard.check(),/Forbidden delayed HubSpot download/);
                 assert.equal(sensitivityGuard.forbidden.length,1);
-                sensitivityEvidence={baseline,immediate_count:baseline,delayed_count:downloads,guard_rejected:true,actual_bytes_sha256:actualSHA,events:sensitivityGuard.events};
+                sensitivityEvidence={baseline,pre_release_count:baseline,pre_release_count_barrier:true,delayed_count:downloads,guard_rejected:true,actual_bytes_sha256:actualSHA,events:sensitivityGuard.events};
             } finally {
                 sensitivityGuard.close();
             }
