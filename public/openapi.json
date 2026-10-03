@@ -24943,7 +24943,7 @@
       "get": {
         "operationId": "reviewDestinationRevision",
         "summary": "review destination revision",
-        "description": "Current edit/export authority required. Locally compiled immutable Klaviyo preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.",
+        "description": "Current edit/export authority required. Locally compiled immutable Klaviyo or Mailchimp Classic preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.",
         "security": [
           {
             "apiKey": []
@@ -24979,7 +24979,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "klaviyo"
+                "klaviyo",
+                "mailchimp"
               ]
             }
           }
@@ -24997,7 +24998,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/KlaviyoReviewResponse"
+                  "$ref": "#/components/schemas/DestinationReviewResponse"
                 }
               }
             }
@@ -25256,7 +25257,7 @@
       "get": {
         "operationId": "downloadDestinationRevision",
         "summary": "download destination revision",
-        "description": "Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.",
+        "description": "Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.",
         "security": [
           {
             "apiKey": []
@@ -25292,7 +25293,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "klaviyo"
+                "klaviyo",
+                "mailchimp"
               ]
             }
           },
@@ -25311,7 +25313,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.",
+            "description": "Locally prepared frozen Klaviyo or Mailchimp Classic HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.",
             "headers": {
               "X-Request-Id": {
                 "schema": {
@@ -25342,7 +25344,10 @@
               "X-Destination-Mapping": {
                 "schema": {
                   "type": "string",
-                  "const": "klaviyo-html-1"
+                  "enum": [
+                    "klaviyo-html-1",
+                    "mailchimp-classic-html-1"
+                  ]
                 }
               },
               "X-Remote-Export-Enabled": {
@@ -25365,7 +25370,7 @@
                 "schema": {
                   "type": "string"
                 },
-                "description": "attachment; filename=\"klaviyo-prepared-{revision_id}.{format}\""
+                "description": "attachment; filename=\"{destination}-prepared-{revision_id}.{format}\""
               },
               "Cache-Control": {
                 "schema": {
@@ -39816,6 +39821,316 @@
           "remote_export_enabled",
           "transformations",
           "blockers"
+        ],
+        "additionalProperties": false
+      },
+      "MailchimpReview": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "const": "mailchimp"
+          },
+          "mapping_version": {
+            "type": "string",
+            "const": "mailchimp-classic-html-1"
+          },
+          "api_revision": {
+            "type": "string",
+            "const": "3.0.91"
+          },
+          "revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "source_artifact_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "destination_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "html_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "text_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "remote_export_enabled": {
+            "type": "boolean",
+            "const": false
+          },
+          "transformations": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "const": "OAUTH_CONNECTION_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "STANDARD_OR_HIGHER_UNVERIFIED"
+              },
+              {
+                "type": "string",
+                "const": "REAL_CLIENT_PREFLIGHT_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "DESTINATION_CONFORMANCE_UNVERIFIED"
+              },
+              {
+                "type": "string",
+                "const": "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "TEMPLATE_HTML_READBACK_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "MANAGEMENT_LINK_UNVERIFIED"
+              }
+            ],
+            "items": false,
+            "minItems": 7,
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "destination",
+          "mapping_version",
+          "api_revision",
+          "revision_id",
+          "source_artifact_hash",
+          "destination_hash",
+          "html_sha256",
+          "text_sha256",
+          "remote_export_enabled",
+          "transformations",
+          "blockers"
+        ],
+        "additionalProperties": false
+      },
+      "DestinationReviewResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "review": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "const": "klaviyo"
+                  },
+                  "mapping_version": {
+                    "type": "string",
+                    "const": "klaviyo-html-1"
+                  },
+                  "api_revision": {
+                    "type": "string",
+                    "const": "2026-07-15"
+                  },
+                  "revision_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "source_artifact_hash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "destination_hash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "html_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "text_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "remote_export_enabled": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "transformations": {
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "blockers": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "string",
+                        "const": "OAUTH_CONNECTION_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "ACCOUNT_ENTITLEMENT_UNVERIFIED"
+                      },
+                      {
+                        "type": "string",
+                        "const": "REAL_CLIENT_PREFLIGHT_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "DESTINATION_CONFORMANCE_UNVERIFIED"
+                      },
+                      {
+                        "type": "string",
+                        "const": "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 5,
+                    "maxItems": 5
+                  }
+                },
+                "required": [
+                  "destination",
+                  "mapping_version",
+                  "api_revision",
+                  "revision_id",
+                  "source_artifact_hash",
+                  "destination_hash",
+                  "html_sha256",
+                  "text_sha256",
+                  "remote_export_enabled",
+                  "transformations",
+                  "blockers"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "const": "mailchimp"
+                  },
+                  "mapping_version": {
+                    "type": "string",
+                    "const": "mailchimp-classic-html-1"
+                  },
+                  "api_revision": {
+                    "type": "string",
+                    "const": "3.0.91"
+                  },
+                  "revision_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "source_artifact_hash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "destination_hash": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "html_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "text_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "remote_export_enabled": {
+                    "type": "boolean",
+                    "const": false
+                  },
+                  "transformations": {
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "blockers": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "string",
+                        "const": "OAUTH_CONNECTION_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "STANDARD_OR_HIGHER_UNVERIFIED"
+                      },
+                      {
+                        "type": "string",
+                        "const": "REAL_CLIENT_PREFLIGHT_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "DESTINATION_CONFORMANCE_UNVERIFIED"
+                      },
+                      {
+                        "type": "string",
+                        "const": "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "TEMPLATE_HTML_READBACK_UNAVAILABLE"
+                      },
+                      {
+                        "type": "string",
+                        "const": "MANAGEMENT_LINK_UNVERIFIED"
+                      }
+                    ],
+                    "items": false,
+                    "minItems": 7,
+                    "maxItems": 7
+                  }
+                },
+                "required": [
+                  "destination",
+                  "mapping_version",
+                  "api_revision",
+                  "revision_id",
+                  "source_artifact_hash",
+                  "destination_hash",
+                  "html_sha256",
+                  "text_sha256",
+                  "remote_export_enabled",
+                  "transformations",
+                  "blockers"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "review"
         ],
         "additionalProperties": false
       },

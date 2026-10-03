@@ -56,6 +56,7 @@ jobs:
           npm run smoke:locale-comparison
           npm run smoke:recipient-assessments
           npm run smoke:klaviyo-export
+          npm run smoke:mailchimp-export
           npm run dev > /tmp/lettercape-dev.log 2>&1 &
           for attempt in $(seq 1 60); do
             curl --fail --silent http://127.0.0.1:3000/v1/health && break

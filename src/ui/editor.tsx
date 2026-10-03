@@ -1,6 +1,8 @@
 'use client';
-import{KlaviyoExportPanel}from'./klaviyo-export';
+import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
+import{MailchimpReview as MailchimpReviewSchema,type MailchimpReview}from'../domain/mailchimp-export-contracts';
+type Destination='klaviyo'|'mailchimp';type DestinationReview=KlaviyoReview|MailchimpReview;
 import {LocaleSourceComparison} from './locale-source-comparison';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
@@ -76,7 +78,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [showHistory, setShowHistory] = useState(false),
     [revision, setRevision] = useState<Frozen | null>(null),
     [report, setReport] = useState<Report | null>(null),
-    [klaviyo,setKlaviyo]=useState<{review:KlaviyoReview;anchor:Anchor;workspace:string;actor:string;email:string}|null>(null),
+    [destination,setDestination]=useState<Destination>('klaviyo'),
+    [destinationPreparation,setDestinationPreparation]=useState<{review:DestinationReview;anchor:Anchor;workspace:string;actor:string;email:string}|null>(null),
     [busy, setBusy] = useState(''),
     [conflict, setConflict] = useState<Doc | null>(null),
     [aiPrompt, setAiPrompt] = useState(''),
@@ -95,7 +98,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
   const epoch = useRef(0),
     busyRef = useRef(''),
     editorActive = useRef(false),
-    exportController = useRef<AbortController | null>(null);
+    exportController = useRef<AbortController | null>(null),
+    destinationRef=useRef<Destination>('klaviyo');
   const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert','asset'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
@@ -376,31 +380,36 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     setRevision(frozen);
     return frozen;
   }
-  async function reviewKlaviyo(){
-    const scope={...scopeRef.current},life=lifecycle.current;
+  function chooseDestination(next:Destination){
+    if(destinationRef.current===next)return;
+    destinationRef.current=next;exportController.current?.abort();setDestination(next);setDestinationPreparation(null);setError('');
+  }
+  async function reviewDestination(){
+    const scope={...scopeRef.current},life=lifecycle.current,selectedDestination=destinationRef.current;
+    const selected=()=>destinationRef.current===selectedDestination;
     try{
       const r=revision&&matches(revision.anchor)?revision:await freeze(scope.actor);
-      if(!r||!sameContext(scope,life)||!matches(r.anchor))return;
+      if(!r||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
       const controller=new AbortController();exportController.current=controller;
-      try{const result=await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination=klaviyo','GET',undefined,undefined,undefined,controller.signal,scope.actor);
-        if(controller.signal.aborted||!sameContext(scope,life)||!matches(r.anchor))return;
-        const review=KlaviyoReviewSchema.parse(result.review);
+      try{const result=await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination='+selectedDestination,'GET',undefined,undefined,undefined,controller.signal,scope.actor);
+        if(controller.signal.aborted||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
+        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):MailchimpReviewSchema.parse(result.review);
         if(review.revision_id!==r.id||review.source_artifact_hash!==r.artifact_hash)throw Error('The destination receipt belongs to a different frozen version. Review again.');
-        setKlaviyo({review,anchor:r.anchor,...scope});
+        setDestinationPreparation({review,anchor:r.anchor,...scope});
       }finally{if(exportController.current===controller)exportController.current=null;}
-    }catch(error){if(sameContext(scope,life)&&!(error instanceof DOMException&&error.name==='AbortError')){setKlaviyo(null);setError(error instanceof Error?error.message:'Destination preparation unavailable.');}}
+    }catch(error){if(selected()&&sameContext(scope,life)&&!(error instanceof DOMException&&error.name==='AbortError')){setDestinationPreparation(null);setError(error instanceof Error?error.message:'Destination preparation unavailable.');}}
   }
-  async function downloadKlaviyo(format:'html'|'txt'){
-    const scope={...scopeRef.current},life=lifecycle.current,current=klaviyo;
-    if(!current||!matches(current.anchor))return;
+  async function downloadDestination(format:'html'|'txt'){
+    const scope={...scopeRef.current},life=lifecycle.current,current=destinationPreparation;
+    if(!current||current.review.destination!==destinationRef.current||current.workspace!==scope.workspace||current.actor!==scope.actor||current.email!==scope.email||!matches(current.anchor))return;
     const controller=new AbortController();exportController.current=controller;
-    const fresh=()=>!controller.signal.aborted&&sameContext(scope,life)&&matches(current.anchor);
+    const fresh=()=>!controller.signal.aborted&&destinationRef.current===current.review.destination&&sameContext(scope,life)&&matches(current.anchor);
     try{
-      const response=await fetch('/v1/email-revisions/'+current.review.revision_id+'/destination-artifact?destination=klaviyo&format='+format,{signal:controller.signal,headers:{'X-Workspace-Id':scope.workspace,'X-Actor-Id':scope.actor}});
+      const response=await fetch('/v1/email-revisions/'+current.review.revision_id+'/destination-artifact?destination='+current.review.destination+'&format='+format,{signal:controller.signal,headers:{'X-Workspace-Id':scope.workspace,'X-Actor-Id':scope.actor}});
       if(!fresh())return;
       if(!response.ok){const body=await response.json();if(fresh())throw Error(body.error?.message??'Destination download unavailable.');return;}
       const expected=format==='html'?current.review.html_sha256:current.review.text_sha256;
-      if(response.headers.get('X-Artifact-Hash')!==current.review.destination_hash||response.headers.get('X-Source-Artifact-Hash')!==current.review.source_artifact_hash||response.headers.get('X-Content-SHA256')!==expected||response.headers.get('X-Remote-Export-Enabled')!=='false')throw Error('Destination download receipt differs from the reviewed version. Review again.');
+      if(response.headers.get('X-Artifact-Hash')!==current.review.destination_hash||response.headers.get('X-Source-Artifact-Hash')!==current.review.source_artifact_hash||response.headers.get('X-Content-SHA256')!==expected||response.headers.get('X-Remote-Export-Enabled')!=='false'||response.headers.get('X-Destination-Mapping')!==current.review.mapping_version)throw Error('Destination download receipt differs from the reviewed version. Review again.');
       if(!response.body)throw Error('Destination download is empty.');
       const reader=response.body.getReader(),parts:Uint8Array[]=[];let size=0;
       try{for(;;){const part=await reader.read();if(!fresh())return;if(part.done)break;size+=part.value.byteLength;if(size>2*1024*1024)throw Error('Destination download exceeded its bounded content budget.');parts.push(part.value);}}
@@ -408,7 +417,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       const bytes=new Uint8Array(size);let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.byteLength;}if(!fresh())return;
       const actual=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(b=>b.toString(16).padStart(2,'0')).join('');if(!fresh())return;
       if(actual!==expected)throw Error('Destination download integrity failed. No file was adopted.');
-      const url=URL.createObjectURL(new Blob([bytes],{type:format==='html'?'text/html':'text/plain'})),link=document.createElement('a');link.href=url;link.download='klaviyo-prepared-'+current.review.revision_id+'.'+format;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const url=URL.createObjectURL(new Blob([bytes],{type:format==='html'?'text/html':'text/plain'})),link=document.createElement('a');link.href=url;link.download=current.review.destination+'-prepared-'+current.review.revision_id+'.'+format;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }catch(error){if(fresh())setError(error instanceof Error?error.message:'Destination download unavailable.');}
     finally{if(exportController.current===controller)exportController.current=null;}
   }
@@ -1041,7 +1050,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </div>
         </section>
       )}
-      <KlaviyoExportPanel canEdit={editRole} blocked={!!busy||!!conflict} review={klaviyo&&klaviyo.workspace===workspace&&klaviyo.actor===actor&&klaviyo.email===id&&klaviyo.anchor.epoch===renderEpoch&&klaviyo.anchor.version===doc.doc_version&&klaviyo.anchor.spec===JSON.stringify(doc.spec)?klaviyo.review:null} onReview={()=>void act('klaviyo-review',reviewKlaviyo)} onDownload={format=>void act('klaviyo-download',()=>downloadKlaviyo(format))}/>
+      <DestinationExportPanel destination={destination} onDestination={chooseDestination} canEdit={editRole} blocked={!!busy||!!conflict} review={destinationPreparation&&destinationPreparation.review.destination===destination&&destinationPreparation.workspace===workspace&&destinationPreparation.actor===actor&&destinationPreparation.email===id&&destinationPreparation.anchor.epoch===renderEpoch&&destinationPreparation.anchor.version===doc.doc_version&&destinationPreparation.anchor.spec===JSON.stringify(doc.spec)?destinationPreparation.review:null} onReview={()=>void act('destination-review',reviewDestination)} onDownload={format=>void act('destination-download',()=>downloadDestination(format))}/>
       <section className="panel export-panel">
         <div>
           <h2>Export a frozen version</h2>

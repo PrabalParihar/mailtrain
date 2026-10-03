@@ -83,7 +83,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 | REQ-037 | 5.9 Abuse controls | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-039 | 5.10 A/B subject testing | PRD roadmap retained | No distinct account blocker identified; implementation/acceptance still required |
-| REQ-040 | 5.11 ESP adapters | Partial — Klaviyo local preparation/transport foundation; full five adapters remain | Real-client preview/ESP test accounts and conformance |
+| REQ-040 | 5.11 ESP adapters | Partial — Klaviyo and Mailchimp Classic local preparation/transport foundations; full five adapters remain | Real-client preview/ESP test accounts and conformance |
 | REQ-041 | 5.11 Export fidelity and downloads | Partial | Real-client preview/ESP test accounts and conformance |
 | REQ-042 | 5.12 Delivery and engagement analytics | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-043 | 5.12 Tracking and attribution | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
@@ -133,3 +133,5 @@ The exact65-row capability register is CAPABILITIES.md; gate owners/evidence rem
 Current Klaviyo independent development:498/498native tests/zero skips,122API/lint/type/build, real HTTP/Chromium frozen native preparation/download/actor/navigation/mobile qualification. REQ040 advances only toPartial; all five actual adapters/OAuth/encrypted connection/durable remote-job/native conformance still required. No entire requirement or gate accepted; see KLAVIYO-EXPORT-CHECKPOINT.md.
 
 Klaviyo one whole review/one complete correction/one scoped re-review closes2Important+1Minor with no new findings. Corrected498tests/API122/lint/type/build/realHTTP-Chromium/Linux and canonical reviewed562tracked hashes/original preservation pass. Provider adapters/connections/durable jobs/native management links/conformance and full production gates remain unfinished; see KLAVIYO-EXPORT-CHECKPOINT.md and ESP-PROVIDER-CONTRACTS-2026-10-02.md.
+
+Mailchimp development preparation adds a selected Classic HTML destination, native footer mapping, integrity-bound HTML/plaintext downloads and an unmounted conservative create/metadata-readback primitive. Both local destination browser flows pass;556/556 configured native tests and API122/lint/type/build pass. Whole review and canonical qualification are pending at this candidate. OAuth, Standard+ account eligibility, durable product export jobs, actual client/native content fidelity and management links remain open. REQ040 remains Partial;43partial/17undelivered/5roadmap, all65/all13, zero whole accepted. See MAILCHIMP-EXPORT-CHECKPOINT.md.

@@ -56,7 +56,8 @@
     "smoke:source-truth": "node --import tsx scripts/smoke-source-truth.ts && node --import tsx scripts/smoke-source-editor.ts && node --import tsx scripts/smoke-source-editor.ts --fragments",
     "worker:recipients:local": "node --import tsx scripts/recipient-assessment-worker.ts",
     "smoke:recipient-assessments": "node --import tsx scripts/smoke-recipient-assessments.ts",
-    "smoke:klaviyo-export": "node --import tsx scripts/smoke-klaviyo-export.ts"
+    "smoke:klaviyo-export": "node --import tsx scripts/smoke-klaviyo-export.ts",
+    "smoke:mailchimp-export": "node --import tsx scripts/smoke-mailchimp-export.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

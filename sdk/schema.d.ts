@@ -1352,7 +1352,7 @@ export interface paths {
         };
         /**
          * review destination revision
-         * @description Current edit/export authority required. Locally compiled immutable Klaviyo preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
+         * @description Current edit/export authority required. Locally compiled immutable Klaviyo or Mailchimp Classic preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
          */
         get: operations["reviewDestinationRevision"];
         put?: never;
@@ -1372,7 +1372,7 @@ export interface paths {
         };
         /**
          * download destination revision
-         * @description Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.
+         * @description Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.
          */
         get: operations["downloadDestinationRevision"];
         put?: never;
@@ -2274,6 +2274,85 @@ export interface components {
                 "DESTINATION_CONFORMANCE_UNVERIFIED",
                 "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
             ];
+        };
+        MailchimpReview: {
+            /** @constant */
+            destination: "mailchimp";
+            /** @constant */
+            mapping_version: "mailchimp-classic-html-1";
+            /** @constant */
+            api_revision: "3.0.91";
+            /** Format: uuid */
+            revision_id: string;
+            source_artifact_hash: string;
+            destination_hash: string;
+            html_sha256: string;
+            text_sha256: string;
+            /** @constant */
+            remote_export_enabled: false;
+            transformations: string[];
+            blockers: [
+                "OAUTH_CONNECTION_UNAVAILABLE",
+                "STANDARD_OR_HIGHER_UNVERIFIED",
+                "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                "DESTINATION_CONFORMANCE_UNVERIFIED",
+                "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
+                "TEMPLATE_HTML_READBACK_UNAVAILABLE",
+                "MANAGEMENT_LINK_UNVERIFIED"
+            ];
+        };
+        DestinationReviewResponse: {
+            /** Format: uuid */
+            request_id: string;
+            review: {
+                /** @constant */
+                destination: "klaviyo";
+                /** @constant */
+                mapping_version: "klaviyo-html-1";
+                /** @constant */
+                api_revision: "2026-07-15";
+                /** Format: uuid */
+                revision_id: string;
+                source_artifact_hash: string;
+                destination_hash: string;
+                html_sha256: string;
+                text_sha256: string;
+                /** @constant */
+                remote_export_enabled: false;
+                transformations: string[];
+                blockers: [
+                    "OAUTH_CONNECTION_UNAVAILABLE",
+                    "ACCOUNT_ENTITLEMENT_UNVERIFIED",
+                    "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                    "DESTINATION_CONFORMANCE_UNVERIFIED",
+                    "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+                ];
+            } | {
+                /** @constant */
+                destination: "mailchimp";
+                /** @constant */
+                mapping_version: "mailchimp-classic-html-1";
+                /** @constant */
+                api_revision: "3.0.91";
+                /** Format: uuid */
+                revision_id: string;
+                source_artifact_hash: string;
+                destination_hash: string;
+                html_sha256: string;
+                text_sha256: string;
+                /** @constant */
+                remote_export_enabled: false;
+                transformations: string[];
+                blockers: [
+                    "OAUTH_CONNECTION_UNAVAILABLE",
+                    "STANDARD_OR_HIGHER_UNVERIFIED",
+                    "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                    "DESTINATION_CONFORMANCE_UNVERIFIED",
+                    "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
+                    "TEMPLATE_HTML_READBACK_UNAVAILABLE",
+                    "MANAGEMENT_LINK_UNVERIFIED"
+                ];
+            };
         };
         KlaviyoReviewResponse: {
             /** Format: uuid */
@@ -26601,7 +26680,7 @@ export interface operations {
     reviewDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo";
+                destination: "klaviyo" | "mailchimp";
             };
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
@@ -26621,7 +26700,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["KlaviyoReviewResponse"];
+                    "application/json": components["schemas"]["DestinationReviewResponse"];
                 };
             };
             /** @description Safe error; preserve request ID. Business errors do not automatically retry. */
@@ -26878,7 +26957,7 @@ export interface operations {
     downloadDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo";
+                destination: "klaviyo" | "mailchimp";
                 format?: "html" | "txt";
             };
             header?: {
@@ -26892,7 +26971,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled. */
+            /** @description Locally prepared frozen Klaviyo or Mailchimp Classic HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled. */
             200: {
                 headers: {
                     "X-Request-Id"?: string;
@@ -26902,11 +26981,11 @@ export interface operations {
                     "X-Source-Artifact-Hash"?: string;
                     /** @description SHA256 of the exact UTF-8 bytes for the selected format. */
                     "X-Content-SHA256"?: string;
-                    "X-Destination-Mapping"?: "klaviyo-html-1";
+                    "X-Destination-Mapping"?: "klaviyo-html-1" | "mailchimp-classic-html-1";
                     /** @description Local preparation only; no provider export is enabled. */
                     "X-Remote-Export-Enabled"?: "false";
                     "Content-Type"?: "text/html; charset=utf-8" | "text/plain; charset=utf-8";
-                    /** @description attachment; filename="klaviyo-prepared-{revision_id}.{format}" */
+                    /** @description attachment; filename="{destination}-prepared-{revision_id}.{format}" */
                     "Content-Disposition"?: string;
                     "Cache-Control"?: "no-store";
                     "X-Content-Type-Options"?: "nosniff";

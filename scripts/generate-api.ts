@@ -1,4 +1,5 @@
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
+import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
 import {RecipientAssessmentInput,RecipientAssessmentView,RecipientObservationView}from'../src/domain/recipient-assessments';
 import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
@@ -43,6 +44,8 @@ const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
   KlaviyoReview:fromZod(KlaviyoReview),
+  MailchimpReview:fromZod(MailchimpReview),
+  DestinationReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:z.discriminatedUnion('destination',[KlaviyoReview,MailchimpReview])})),
   KlaviyoReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:KlaviyoReview})),
   EmailSourceSpec: fromZod(EmailSourceSpecSchema),
   SourceProfile: fromZod(SourceProfileSchema),
@@ -501,16 +504,16 @@ function add(d: Definition) {
   if (d.query) parameters.push(...d.query);
   const success = d.destinationDownload
     ? {
-        description:'Locally prepared frozen Klaviyo HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.',
+        description:'Locally prepared frozen Klaviyo or Mailchimp Classic HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.',
         headers:{
           'X-Request-Id':{schema:string},
           'X-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Destination artifact hash bound to source, mapping, API revision and both prepared formats.'},
           'X-Source-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Exact frozen source artifact hash reviewed before download.'},
           'X-Content-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'SHA256 of the exact UTF-8 bytes for the selected format.'},
-          'X-Destination-Mapping':{schema:{type:'string',const:KLAVIYO_MAPPING_VERSION}},
+          'X-Destination-Mapping':{schema:{type:'string',enum:[KLAVIYO_MAPPING_VERSION,MAILCHIMP_MAPPING_VERSION]}},
           'X-Remote-Export-Enabled':{schema:{type:'string',const:'false'},description:'Local preparation only; no provider export is enabled.'},
           'Content-Type':{schema:{type:'string',enum:['text/html; charset=utf-8','text/plain; charset=utf-8']}},
-          'Content-Disposition':{schema:string,description:'attachment; filename="klaviyo-prepared-{revision_id}.{format}"'},
+          'Content-Disposition':{schema:string,description:'attachment; filename="{destination}-prepared-{revision_id}.{format}"'},
           'Cache-Control':{schema:{type:'string',const:'no-store'}},
           'X-Content-Type-Options':{schema:{type:'string',const:'nosniff'}},
           'Content-Security-Policy':{schema:{type:'string',const:"sandbox; default-src 'none'"}},
@@ -802,8 +805,8 @@ add({
     },
   ],
 });
-add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'KlaviyoReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}}]});
-add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen Klaviyo attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
+add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'DestinationReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo or Mailchimp Classic preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp']}}]});
+add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
 for (const [id, command, blocked] of [
   ['preflightRevision', 'preflight', false],
   ['exportRevision', 'export', true],

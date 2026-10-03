@@ -103,3 +103,7 @@ Ask providers/account owners for: exact plan/permission matrix; complete current
 
 A guessed browser route is not a provider contract. HTML download remains useful fallback, but does not mark the native ESP acceptance gate complete.
 
+
+## Mailchimp schema follow-up (2026-10-03 UTC)
+
+The native executor subsequently resolved the full official Marketing API schema from the [official codegen repository](https://github.com/mailchimp/mailchimp-client-lib-codegen/blob/main/spec/marketing.json): version3.0.91,10769438bytes, SHA256374046a5209daa8d68cdb5dd7e0244fcf214928af4321ff539755849641b9a21. Template POST200 has a numeric ID; required body is name/html. Template GET metadata exposes no uploaded HTML; default-content is editable sections. A sharing URL does not establish a management link. The earlier full-schema access gap is resolved; account/content-fidelity/deep-link acceptance remains open. See MAILCHIMP-EXPORT-CHECKPOINT.md for local implementation and qualification.
