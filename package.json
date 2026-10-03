@@ -69,7 +69,8 @@
     "worker:submission-ledger:local": "node --import tsx scripts/run-submission-ledger.ts",
     "smoke:linear-editor": "node --import tsx scripts/smoke-linear-editor.ts",
     "smoke:column-editor": "node --import tsx scripts/smoke-column-editor.ts",
-    "smoke:invitation-planning": "node --import tsx scripts/smoke-invitation-planning.ts"
+    "smoke:invitation-planning": "node --import tsx scripts/smoke-invitation-planning.ts",
+    "smoke:revision-comparison": "node --import tsx scripts/smoke-revision-comparison.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

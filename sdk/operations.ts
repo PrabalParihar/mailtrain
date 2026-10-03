@@ -936,6 +936,18 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "compareEmailRevisions": {
+    "method": "GET",
+    "path": "/v1/revision-comparisons",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
   "recordLocaleReview": {
     "method": "POST",
     "path": "/v1/emails/{id}/locale-reviews",

@@ -1813,3 +1813,5 @@ td {
 
 .invitation-planning, .invitation-request-card { min-width: 0; overflow-wrap: anywhere; }
 .invitation-planning input, .invitation-planning select, .invitation-planning textarea { min-width: 0; max-width: 100%; }
+
+.revision-comparison{margin-block:1rem;padding:1rem;border:1px solid var(--border,#ddd);border-radius:12px;min-width:0}.revision-comparison-selectors,.revision-comparison-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.revision-comparison-selectors>*{min-width:0}.revision-comparison select{width:100%;min-width:0}.revision-change-list{padding-inline-start:1.25rem}.revision-change-list li{margin-block:1rem;min-width:0}.revision-comparison pre{white-space:pre-wrap;overflow-wrap:anywhere;unicode-bidi:isolate;font-size:.875rem;max-height:24rem;overflow:auto;min-width:0}.revision-comparison code{display:block;white-space:normal;overflow-wrap:anywhere}.revision-comparison .break-word{overflow-wrap:anywhere}@media(max-width:767px){.revision-comparison-selectors,.revision-comparison-values{grid-template-columns:minmax(0,1fr)}.revision-comparison{padding:.75rem}.revision-comparison button{min-height:44px}}

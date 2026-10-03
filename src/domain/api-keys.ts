@@ -37,6 +37,7 @@ export function scopeForResource(
   command: string | undefined,
 ): string | undefined {
   const read = method === 'GET';
+  if(root==='revision-comparisons')return read?'emails:read':'unsupported';
   if (root === 'assets') return read ? 'assets:read' : 'assets:write';
   if(root==='sender-identities') return read?'sender:read':'sender:write';
   if (root === 'brands'||root==='brand-sources') return read||command==='memory-preview' ? 'brands:read' : 'brands:write';

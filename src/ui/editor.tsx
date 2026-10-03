@@ -1,4 +1,6 @@
 'use client';
+import{RevisionComparisonPanel}from'./revision-comparison';
+import{readComparisonSelection}from'./revision-comparison-selection';
 import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
 import{MailchimpReview as MailchimpReviewSchema,type MailchimpReview}from'../domain/mailchimp-export-contracts';
@@ -112,7 +114,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     return ()=>{active=false;};
   },[]);
   const selectedRef=useRef(selected),roleRef=useRef(editRole);useLayoutEffect(()=>{selectedRef.current=selected;roleRef.current=editRole;});
-  const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id);
+  const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id,actor);
   const history = historyPage.data;
   const epoch = useRef(0),
     busyRef = useRef(''),
@@ -189,7 +191,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     editorActive.current = true;
     const scope={workspace,actor,email:id},life=lifecycle.current;
     void (async()=>{
-      await Promise.resolve();if(!mounted)return;setDoc(null);setConflict(null);setError('');setHasPendingSave(false);setDestinationPreparation(null);
+      await Promise.resolve();if(!mounted)return;try{setShowHistory(!!readComparisonSelection(scope,localStorage)?.open);}catch{setShowHistory(false);}setDoc(null);setConflict(null);setError('');setHasPendingSave(false);setDestinationPreparation(null);
       hubspotSettingsRef.current=emptyHubSpotSettings();setHubSpotSettings({...scope,values:hubspotSettingsRef.current});
       const r=await api<{email:Doc}>(workspace,'emails/'+id,'GET',undefined,undefined,undefined,undefined,actor);
       if(!mounted||!sameContext(scope,life))return;
@@ -681,6 +683,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               Load older checkpoints
             </button>
           )}
+          <RevisionComparisonPanel key={JSON.stringify([workspace,actor,id])} scope={{workspace,actor,email:id}} revisions={history} hasMore={historyPage.hasMore} loadMore={historyPage.loadMore} pagingBusy={historyPage.busy}/>
           {history.length ? (
             history.map((r) => (
               <div className="history-row" key={r.id}>

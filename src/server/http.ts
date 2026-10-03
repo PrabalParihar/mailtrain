@@ -28,6 +28,7 @@ export function assertRouteMethod(path: string[], method: string) {
   if (path.length > 3) fail(404, 'RESOURCE_NOT_FOUND', 'Route not found.');
   if (['health', 'integrations', 'usage', 'audit'].includes(root) && path.length === 1)
     methods = ['GET'];
+  if(root==='revision-comparisons'&&path.length===1)methods=['GET'];
   if (root === 'local-session' && path.length === 1) methods = ['POST'];
   if (root === 'session' && path.length === 1) methods = ['DELETE'];
   if (root === 'api-keys') {

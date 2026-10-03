@@ -1,3 +1,4 @@
+import{revisionComparisonRoute}from'@/server/revision-comparison-route';
 import {invitationRequestRoute}from'@/server/invitation-request-route';
 import {creationActivityReport} from '@/server/creation-report';
 import {submissionLedgerRoute} from '@/server/submission-ledger-route';
@@ -71,6 +72,7 @@ async function handle(req: Request, ctx: Context) {
   try {
     assertRouteMethod(path, method);
     checkOrigin(req);
+    if(root==='revision-comparisons')return json(await revisionComparisonRoute(req));
     if(root==='emails'&&id&&['draft','source-import','import-html','source-fork'].includes(command))return json(await emailSourceRoute(req,id,command as 'draft'|'source-import'|'import-html'|'source-fork'));
     if(root==='email-revisions'&&command==='download'&&new URL(req.url).searchParams.get('format')==='source'){
       const response=await revisionSourceResponse(req,id);response.headers.set('X-Request-Id',request_id);return response;
