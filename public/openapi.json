@@ -49134,8 +49134,8 @@
         "properties": {
           "email": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 254
+            "pattern": "^\\s*(?=\\S{1,254}\\s*$)(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}\\s*$",
+            "description": "Recipient email is trimmed before server validation; the trimmed address must match the shared email constraint and contain1–254 characters. Whitespace padding is accepted and not stored."
           },
           "role": {
             "type": "string",
@@ -49183,8 +49183,8 @@
         "properties": {
           "email": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 254
+            "pattern": "^\\s*(?=\\S{1,254}\\s*$)(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}\\s*$",
+            "description": "Recipient email is trimmed before server validation; the trimmed address must match the shared email constraint and contain1–254 characters. Whitespace padding is accepted and not stored."
           },
           "role": {
             "type": "string",

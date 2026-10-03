@@ -1,4 +1,4 @@
-import {InvitationCreateInput,InvitationUpdateInput,InvitationStateInput,InvitationRequestView,InvitationRequestHistory,InvitationPlanningContext}from'../src/domain/invitation-requests';
+import {INVITATION_EMAIL_INPUT_PATTERN,InvitationCreateInput,InvitationUpdateInput,InvitationStateInput,InvitationRequestView,InvitationRequestHistory,InvitationPlanningContext}from'../src/domain/invitation-requests';
 import {CreationActivityReport,CreationReportWindow} from '../src/domain/creation-report';
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
 import {SubmissionLedgerInput,SubmissionLedgerView,StagedRecipientView,DeliveryHistoryView,DeliveryAttemptView} from '../src/domain/submission-ledgers';
@@ -323,6 +323,10 @@ schemas.LocaleSourceComparisonResponse=envelope({comparison:ref('LocaleSourceCom
 schemas.LocaleReviewResponse=envelope({review:ref('LocaleReviewRecord')});
 schemas.LocaleReviewHistoryResponse=envelope({context:ref('LocaleReviewContext'),data:array(ref('LocaleReviewHistoryItem')),total_count:{type:'integer',minimum:0},has_more:{type:'boolean'},next_cursor:nullable(string)});
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
+for(const name of ['InvitationCreateInput','InvitationUpdateInput']){
+  const properties=schemas[name].properties as Record<string,Schema>;
+  properties.email={type:'string',pattern:INVITATION_EMAIL_INPUT_PATTERN,description:'Recipient email is trimmed before server validation; the trimmed address must match the shared email constraint and contain1–254 characters. Whitespace padding is accepted and not stored.'};
+}
 schemas.InvitationCommandResponse=envelope({request:ref('InvitationRequestView'),changed:{type:'boolean'}});
 schemas.InvitationRequestResponse=envelope({request:ref('InvitationRequestView')});
 schemas.InvitationPlanningResponse=envelope({context:ref('InvitationPlanningContext')});

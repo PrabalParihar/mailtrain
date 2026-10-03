@@ -2748,6 +2748,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         InvitationCreateInput: {
+            /** @description Recipient email is trimmed before server validation; the trimmed address must match the shared email constraint and contain1–254 characters. Whitespace padding is accepted and not stored. */
             email: string;
             /** @enum {string} */
             role: "Admin" | "Editor" | "Viewer" | "Billing";
@@ -2759,6 +2760,7 @@ export interface components {
             request_id: string;
         };
         InvitationUpdateInput: {
+            /** @description Recipient email is trimmed before server validation; the trimmed address must match the shared email constraint and contain1–254 characters. Whitespace padding is accepted and not stored. */
             email: string;
             /** @enum {string} */
             role: "Admin" | "Editor" | "Viewer" | "Billing";

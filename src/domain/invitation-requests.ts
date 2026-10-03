@@ -1,6 +1,8 @@
 import {z} from 'zod';
 const version=z.number().int().min(1).max(2147483647);
 export const InvitationRequestId=z.uuid();
+// JSON Schema validates raw input; preserve the server's trim and post-trim bound.
+export const INVITATION_EMAIL_INPUT_PATTERN=String.raw`^\s*(?=\S{1,254}\s*$)`+z.regexes.email.source.slice(1,-1)+String.raw`\s*$`;
 export const InvitationRole=z.enum(['Admin','Editor','Viewer','Billing']);
 export const InvitationRequestInput=z.object({
  email:z.string().trim().min(1).max(254).pipe(z.email()),role:InvitationRole,

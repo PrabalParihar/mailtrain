@@ -13,6 +13,7 @@ import { BrandSchema } from '../src/domain/brand';
 import { EmailSpecSchema } from '../src/domain/email';
 import { validateRule } from '../src/domain/segments';
 import { operationRegistry } from '../sdk/operations';
+import {InvitationCreateInput,InvitationUpdateInput} from '../src/domain/invitation-requests';
 import {HubSpotReviewInput,HubSpotArtifactInput} from '../src/domain/hubspot-footer-contracts';
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 addFormats(ajv);
@@ -268,4 +269,12 @@ test('invitation contracts expose session-only planning and unconditional disabl
  assert.equal(create(example),true);
  for(const extra of ['token','redeem_url','acceptance_enabled','seats_reserved'])assert.equal(create({...example,[extra]:true}),false);
  assert.equal(create({...example,role:'Owner'}),false);
+});
+
+test('invitation email request schemas match server trimming, email validity and post-trim bounds',()=>{
+ const samples=['bad','', '   ', 'one@example.test','  Planner@Example.test  ', '\u00a0one@example.test\ufeff', 'one@example.test\n', 'two@@example.test', 'a..b@example.test', 'one@example.test other@example.test', 'one@example.test\u0000', 'a'.repeat(241)+'@example.test',' '.repeat(20)+'a'.repeat(241)+'@example.test'+' '.repeat(20),'a'.repeat(242)+'@example.test','a'.repeat(243)+'@example.test', 'ü@example.test'];
+ for(const name of ['InvitationCreateInput','InvitationUpdateInput']){
+  const check=ajv.compile(absolute(spec.components.schemas[name]) as object),schema=name==='InvitationCreateInput'?InvitationCreateInput:InvitationUpdateInput;
+  for(const email of samples){const value={email,role:'Editor',...(name==='InvitationCreateInput'?{request_id:'11111111-1111-4111-8111-111111111111'}:{expected_version:1})};assert.equal(check(value),schema.safeParse(value).success,name+' recipient normalization/validation mismatch');}
+ }
 });
