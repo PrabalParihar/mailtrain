@@ -328,8 +328,11 @@ async function decoderProof(image) {
       JSON.parse(await readFile(resolve(dir, "receipt.json"), "utf8")),
       input,
     );
-    for (const o of receipt.outputs)
+    for (const o of receipt.outputs) {
       verifyOutputBytes(await readFile(resolve(dir, o.filename)), o);
+      // Match the supervisor's verified handoff from decoder UID1001 to scanner UID100.
+      await chmod(resolve(dir, o.filename), 0o444);
+    }
     assert.deepEqual(
       (await readdir(dir)).sort(),
       [...receipt.outputs.map((o) => o.filename), "receipt.json"].sort(),

@@ -35,7 +35,7 @@ try {
   assert.equal(pngs[0].subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   const receipts = (await db.query('SELECT * FROM render_downloads WHERE workspace_id=$1', [w])).rows;
   assert.equal(receipts.length, 1);
-  assert.equal(receipts[0].renderer_version, `lettercape-local-browser-export-1-${process.platform}`);
+  assert.equal(receipts[0].renderer_version, `lettercape-local-browser-assets-export-2-${process.platform}`);
   assert.notEqual(receipts[0].renderer_version, RENDERER_VERSION);
   assert.equal(receipts[0].body_hash, bytesDigest(pngs[0]));
   const bearer = 'lc_' + randomBytes(32).toString('hex');
