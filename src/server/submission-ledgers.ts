@@ -53,8 +53,9 @@ export async function stageSubmissionLedger(tx: Tx, p: Principal, campaign: stri
   const input = SubmissionLedgerInput.parse(body);
   uuid.parse(campaign);
   await assertSubmissionAuthority(tx, p, true);
-  return keyed(tx, p, 'submission-ledger.create:' + campaign, key, campaignCanonicalJSON(input), async () => {
+  const response = await keyed(tx, p, 'submission-ledger.create:' + campaign, key, campaignCanonicalJSON(input), async () => {
     const c = (await tx.query('SELECT * FROM campaigns WHERE id=$1 FOR UPDATE', [campaign])).rows[0];
+    await assertSubmissionAuthority(tx, p, true);
     if (!c) fail(404, 'RESOURCE_NOT_FOUND', 'Campaign not found.');
     if (c.version !== input.expected_version) fail(409, 'VERSION_CONFLICT', 'The campaign configuration changed. Reload before staging.', { current_version: c.version });
     if (c.digest !== input.expected_digest) fail(409, 'DIGEST_CONFLICT', 'The campaign configuration digest changed. Reload before staging.');
@@ -77,6 +78,8 @@ export async function stageSubmissionLedger(tx: Tx, p: Principal, campaign: stri
     await tx.query('INSERT INTO submission_ledger_jobs(workspace_id,id) VALUES($1,$2)', [p.workspace, row.id]);
     return detail(tx, row.id);
   });
+  await assertSubmissionAuthority(tx, p, true);
+  return response;
 }
 function pageQuery(req: Request, state = false) {
   const seen = new Set<string>();
@@ -105,8 +108,9 @@ export async function submissionLedgerRecipients(req: Request, tx: Tx, p: Princi
 }
 export async function cancelSubmissionLedger(tx: Tx, p: Principal, id: string, key: string | null) {
   await assertSubmissionAuthority(tx, p, true); uuid.parse(id);
-  return keyed(tx, p, 'submission-ledger.cancel:' + id, key, {}, async () => {
+  const response = await keyed(tx, p, 'submission-ledger.cancel:' + id, key, {}, async () => {
     const row = (await tx.query('SELECT id,status FROM submission_ledger_jobs WHERE id=$1 FOR UPDATE', [id])).rows[0];
+    await assertSubmissionAuthority(tx, p, true);
     if (!row) fail(404, 'RESOURCE_NOT_FOUND', 'Submission ledger not found.');
     if (['queued', 'running', 'completed'].includes(row.status)) {
       await tx.query("UPDATE submission_ledger_jobs SET status='cancelled' WHERE id=$1", [id]);
@@ -114,6 +118,8 @@ export async function cancelSubmissionLedger(tx: Tx, p: Principal, id: string, k
     }
     return detail(tx, id);
   });
+  await assertSubmissionAuthority(tx, p, true);
+  return response;
 }
 async function findDelivery(tx: Tx, id: string) {
   const row = (await tx.query(`SELECT ${recipientFields} FROM ${recipientFrom} WHERE d.id=$1`, [uuid.parse(id)])).rows[0];

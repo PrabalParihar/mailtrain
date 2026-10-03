@@ -110,3 +110,92 @@ test('concurrent distinct commands create exactly one ledger and cancellation re
   assert.deepEqual(await f.tx(c => s.cancelSubmissionLedger(c, f.p, first.ledger.id, randomUUID())), cancelled);
   assert.deepEqual(await f.tx(c => s.stageSubmissionLedger(c, f.p, a.campaign, a.input, randomUUID())), cancelled);
 }));
+
+type SubmissionFixture = Parameters<Parameters<typeof sourceDatabase>[0]>[0];
+type CredentialMode = 'API key' | 'local session';
+async function credentialForLockWait(f: SubmissionFixture, mode: CredentialMode) {
+  const credential = randomUUID();
+  if (mode === 'API key') {
+    const scopes = ['campaigns:write', 'campaigns:read', 'audience:read'];
+    await f.db.query("INSERT INTO api_keys(workspace_id,id,key_hash,name,scopes,created_by,expires_at) VALUES($1,$2,$3,'Receipt expiry fixture',$4,$5,clock_timestamp()+interval '1 hour')", [f.p.workspace, credential, digest(credential), JSON.stringify(scopes), f.p.user]);
+    return { p: { ...f.p, user: 'api-key:' + credential, api_key: { id: credential, delegator: f.p.user, scopes } },
+      table: 'api_keys', column: 'id', credential };
+  }
+  const token_hash = digest(credential);
+  await f.db.query("INSERT INTO auth_sessions(token_hash,user_id,expires_at) VALUES($1,$2,clock_timestamp()+interval '1 hour')", [token_hash, f.p.user]);
+  return { p: { ...f.p, local_session: { token_hash } }, table: 'auth_sessions', column: 'token_hash', credential: token_hash };
+}
+async function commandAfterExpiredLock(f: SubmissionFixture, identity: Awaited<ReturnType<typeof credentialForLockWait>>, action: string, key: string, run: Parameters<SubmissionFixture['tx']>[0]) {
+  const blocker = await f.db.connect();
+  let pending: Promise<unknown> | undefined;
+  try {
+    await blocker.query('BEGIN');
+    await blocker.query('SELECT pg_advisory_xact_lock(hashtext($1))', [f.p.workspace + ':' + identity.p.user + ':' + action + ':' + key]);
+    const pid = (await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+    await f.db.query(`UPDATE ${identity.table} SET expires_at=clock_timestamp()+interval '2 seconds' WHERE ${identity.column}=$1`, [identity.credential]);
+    pending = f.tx(run, identity.p.user);
+    void pending.catch(() => undefined);
+    let waiting = false;
+    for (let i = 0; i < 200 && !waiting; i++) {
+      waiting = (await f.db.query("SELECT EXISTS(SELECT FROM pg_stat_activity WHERE datname=current_database() AND $1::int=ANY(pg_blocking_pids(pid)) AND query='SELECT pg_advisory_xact_lock(hashtext($1))') AS waiting", [pid])).rows[0].waiting;
+      if (!waiting) await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    assert.equal(waiting, true, 'initial authority passed and the command is waiting on its exact idempotency lock');
+    assert.equal((await f.db.query(`SELECT expires_at>clock_timestamp() AS valid FROM ${identity.table} WHERE ${identity.column}=$1`, [identity.credential])).rows[0].valid, true);
+    await blocker.query(`SELECT pg_sleep(greatest(0,extract(epoch FROM expires_at-clock_timestamp()))+0.05) FROM ${identity.table} WHERE ${identity.column}=$1`, [identity.credential]);
+    assert.equal((await blocker.query(`SELECT expires_at<=clock_timestamp() AS expired FROM ${identity.table} WHERE ${identity.column}=$1`, [identity.credential])).rows[0].expired, true);
+  } finally {
+    await blocker.query('COMMIT');
+    blocker.release();
+  }
+  return pending;
+}
+
+for (const mode of ['API key', 'local session'] as const) {
+  for (const command of ['stage', 'cancel'] as const) {
+    test(`cached ${command} receipt denies ${mode} expiry during its idempotency lock wait`, async () => sourceDatabase(async f => {
+      const s = await import('../src/server/submission-ledgers'), a = await seedSubmission(f), identity = await credentialForLockWait(f, mode), key = randomUUID();
+      const original = await f.tx(c => s.stageSubmissionLedger(c, identity.p, a.campaign, a.input, command === 'stage' ? key : randomUUID()), identity.p.user);
+      if (command === 'cancel') await f.tx(c => s.cancelSubmissionLedger(c, identity.p, original.ledger.id, key), identity.p.user);
+      const resource = command === 'stage' ? a.campaign : original.ledger.id, action = 'submission-ledger.' + (command === 'stage' ? 'create:' : 'cancel:') + resource;
+      const before = (await f.db.query('SELECT * FROM idempotency ORDER BY action,key')).rows;
+      const ledgers = (await f.db.query('SELECT * FROM submission_ledgers')).rows;
+      const jobs = (await f.db.query('SELECT * FROM submission_ledger_jobs')).rows;
+      await assert.rejects(commandAfterExpiredLock(f, identity, action, key, c => command === 'stage'
+        ? s.stageSubmissionLedger(c, identity.p, a.campaign, a.input, key)
+        : s.cancelSubmissionLedger(c, identity.p, original.ledger.id, key)), { code: 'AUTH_REQUIRED' });
+      assert.deepEqual((await f.db.query('SELECT * FROM idempotency ORDER BY action,key')).rows, before);
+      assert.deepEqual((await f.db.query('SELECT * FROM submission_ledgers')).rows, ledgers);
+      assert.deepEqual((await f.db.query('SELECT * FROM submission_ledger_jobs')).rows, jobs);
+    }));
+  }
+}
+
+for (const command of ['stage', 'cancel'] as const) {
+  test(`fresh ${command} changes roll back after local session expiry during its idempotency lock wait`, async () => sourceDatabase(async f => {
+    const s = await import('../src/server/submission-ledgers'), a = await seedSubmission(f), identity = await credentialForLockWait(f, 'local session'), key = randomUUID();
+    const original = command === 'cancel' ? await f.tx(c => s.stageSubmissionLedger(c, identity.p, a.campaign, a.input, randomUUID()), identity.p.user) : null;
+    if (original) {
+      const { processSubmissionLedgerBatch } = await import('../src/server/submission-ledger-worker');
+      await f.tx(c => processSubmissionLedgerBatch(c, f.p));
+    }
+    const resource = original?.ledger.id ?? a.campaign, action = 'submission-ledger.' + (command === 'stage' ? 'create:' : 'cancel:') + resource;
+    const tables = ['submission_ledgers', 'submission_ledger_jobs', 'deliveries', 'delivery_state_history', 'idempotency'];
+    const before = await Promise.all(tables.map(table => f.db.query('SELECT * FROM ' + table + ' ORDER BY 1,2').then(result => result.rows)));
+    await assert.rejects(commandAfterExpiredLock(f, identity, action, key, c => command === 'stage'
+      ? s.stageSubmissionLedger(c, identity.p, a.campaign, a.input, key)
+      : s.cancelSubmissionLedger(c, identity.p, resource, key)), { code: 'AUTH_REQUIRED' });
+    const after = await Promise.all(tables.map(table => f.db.query('SELECT * FROM ' + table + ' ORDER BY 1,2').then(result => result.rows)));
+    assert.deepEqual(after, before, 'fresh manifest, cancellation, history and receipt writes must roll back together');
+  }));
+}
+
+test('fresh stale-version stage denies local session expiry during its idempotency lock wait', async () => sourceDatabase(async f => {
+  const s = await import('../src/server/submission-ledgers'), a = await seedSubmission(f), identity = await credentialForLockWait(f, 'local session'), key = randomUUID();
+  const before = (await f.db.query('SELECT * FROM campaigns')).rows;
+  await assert.rejects(commandAfterExpiredLock(f, identity, 'submission-ledger.create:' + a.campaign, key,
+    c => s.stageSubmissionLedger(c, identity.p, a.campaign, { ...a.input, expected_version: 2 }, key)), { code: 'AUTH_REQUIRED' });
+  assert.deepEqual((await f.db.query('SELECT * FROM campaigns')).rows, before);
+  assert.equal((await f.db.query('SELECT count(*)::int AS n FROM submission_ledgers')).rows[0].n, 0);
+  assert.equal((await f.db.query('SELECT count(*)::int AS n FROM idempotency')).rows[0].n, 0);
+}));

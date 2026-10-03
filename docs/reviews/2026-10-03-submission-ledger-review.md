@@ -446,3 +446,156 @@ The additional keyboard adjustment at lines 389–392 uses a Playwright trial ac
 
 The broader application qualification was not reopened. The original review's limits still apply: parsed canonical-body equality is not an independent raw-wire byte comparison; queued cancellation recovery alone is not proof of materialized-row cancellation preservation; mobile evidence is scoped; provider dispatch, complete approval, paid usage, SQL/worker qualification and whole-project acceptance remain separate. Root owns the refreshed configured suite, lint, typecheck, API checks, build and subsequent whole immutable review. All 65 requirements and all 13 gates remain binding.
 
+---
+
+## Retained record: whole-review.md
+
+# Final immutable submission-ledger review
+
+Reviewed 2026-10-03. Frozen commit: `fc952eb469e3aca1f00e157483122cb724d37999`. Reviewed main ancestor: `461fa56d4b903b558ba65c809fb468ed823a22d5`. The tracked working tree was clean throughout inspection. The diff contains 39 paths: the feature commit's 37 paths (including the two retained review/controller records), plus the two earlier committed design/plan documents.
+
+**Verdict: CHANGES REQUESTED — 0 Critical / 1 Important / 0 Minor.** One additional expiry boundary requires a bounded correction before publication. No other concrete whole-slice defect was established. The previously corrected worker expiry, SDK If-Match, CLI URL, harness database-authority and second-browser-context findings remain closed.
+
+This is a source/evidence review, not a new execution qualification. I read AGENTS.md, the design and implementation plan, the complete retained review and controller-rulings documents, scratch task reports, the pre-freeze qualification manifest, all changed handwritten implementation/test files, generated contract changes, relevant existing authority/transaction/snapshot/campaign/paging helpers, and the recorded final evidence. No tests, build, app, browser session, database, provider, private configuration, commit, push or remote query was run. Only this ignored report was written. Reading and hashing public source/evidence and viewing the two recorded native screenshots were read-only actions.
+
+## Important I-1 — credential expiry during the keyed lock wait can still replay a historical receipt
+
+**Locations:** `src/server/submission-ledgers.ts:55–56` and `:107–108`; supporting control flow at `src/server/commands.ts:16–27`, `src/server/auth.ts:96–111`, and `src/server/db.ts:24–26`. The idempotency table's tenant-only policy is established by `db/001-foundations.sql:27–31`.
+
+Both new mutations check current authority and then return `keyed(...)` directly. `keyed` can block on `pg_advisory_xact_lock(hashtext(namespace))`. Once that wait ends, an existing matching receipt is returned directly from `idempotency`, without invoking the mutation callback or any ledger-table query. Neither these services nor their outer `withPrincipal`/`tenant` wrapper rechecks the credential deadline after that wait. API-key and local-session row locks prevent conflicting tuple changes from committing, but do not stop wall-clock expiry.
+
+**Concrete trigger:** first commit an ordinary stage or cancel receipt under a still-valid credential. In a second connection, hold that command's exact advisory namespace: `workspace + ':' + user + ':' + action + ':' + key`, where action is `submission-ledger.create:<campaign>` or `submission-ledger.cancel:<ledger>`. Start the original same-key replay while the credential is valid; its authority checks pass, then it waits in `keyed`. Keep the advisory lock until database wall time passes the credential's existing deadline, then release it. The frozen code reads and returns the cached receipt as a successful 201/200 despite the now-expired credential. No concurrent revocation update is needed.
+
+**Why the other controls do not close it:** ledger RLS checks current key expiry, but cached receipt replay never reads `submission_ledgers` or `deliveries`. The `idempotency` policy checks the workspace context and has no key/session deadline condition. `withPrincipal` checks before invoking the service; `tenant` commits and returns the callback result without a final authority check. The browser actor fence protects identity changes, not the deadline of the same actor's credential. The corrected worker's post-campaign-lock creator check applies to worker materialization, not this HTTP receipt path.
+
+**Impact and severity:** a request can return protected historical ledger metadata after its API key or local session expires. The cached response includes resource/configuration/snapshot identities, creator information and historical counts. This violates the slice's current-authority requirement on original receipt replay. This is Important/P2 because it is an authorization boundary gap with a concrete blocking interleaving. It is not Critical: this demonstrated path exposes no addresses or message body, adds no provider attempt, and does not authorize sending. No production compromise or actual exploitation is claimed. Source tracing establishes the missing check; I did not execute this interleaving.
+
+**Bounded correction:** retain the current pre-keyed checks, await the keyed result, reassert `assertSubmissionAuthority(tx, p, true)` in the same transaction, then return the result. Apply this to both stage and cancel so cached and fresh success paths are covered and a failed final check rolls back any new command/receipt. Existing `configureCampaign` already uses a final authority check after `keyed`, providing an established local pattern. If a post-lock check is also added inside the create callback, preserve the original receipt-before-version/digest/state ordering required by browser recovery. Do not move version validation ahead of historical receipt lookup or weaken exact command identity.
+
+**Validation suggestion:** add a native two-connection regression for each mutation. Seed an actual successful receipt, hold the exact advisory lock, start a replay using a near-expiry credential, and observe the replay waiting on the actual advisory-lock query before waiting past database wall time. Release the blocker and require `AUTH_REQUIRED`, rather than the old successful receipt; assert unchanged ledger/delivery/history/receipt counts. Exercise the API-key and local-session deadline paths, plus a still-valid replay control returning the identical receipt. Show old-source RED and corrected GREEN; retain the existing worker lock-wait regression and source-drift replay assertions. No provider, remote database, or private data is required.
+
+**Cost judgment:** low, bounded service changes plus focused native transaction regressions; no migration, public API/schema, SDK, browser command format, or dispatch policy change is necessary. The short blocking tests add fixture coordination and elapsed time, but directly test the missed authorization boundary. Root owns that correction wave and its independent scoped re-review.
+
+## Whole-slice checks without additional findings
+
+- **Storage and immutable identity:** migration 037 pins campaign/configuration/revision/artifact/snapshot and exact sorted captured members through composite tenant FKs, existing immutable source bindings, and manifest guards. Configuration uniqueness and configuration/contact uniqueness survive distinct command keys and cancellation. The database derives the lowercase SHA-256 logical key from fixed canonical UUID JSON. Historical contact IDs intentionally survive missing live contacts. Captured locale/reason/consent data comes from the frozen member array, not current eligibility or caller authority flags.
+- **Atomic worker progress:** the worker locks a queued/running job with SKIP LOCKED and materializes at most 100 members per invocation. The per-job transaction bookkeeping prevents a second batch in the same transaction from exceeding the bound. Immediate and deferred guards require exact recipient/delivery/progress equality and complete cancellation before commit. The caller owns the transaction; no partial batch/history survives rollback. Current worker membership and creator membership/key/scope checks, the repaired post-campaign-lock expiry check, and SQL wall-clock recipient admission remain intact. Paused/cancelled campaigns and revoked creators stop the remainder while preserving durable identities/history.
+- **No manufactured dispatch:** only pending/skipped/cancelled deliveries with unknown outcome and false authorization can exist. Runtime cannot write attempts or arbitrary history; attempt CHECK(false) also refuses privileged fabricated insertion. History uses the narrow NOLOGIN/non-bypass trigger role. Immutable/delete/truncate guards and transition checks prevent rewinds. No new send/provider/network/Redis/usage/frequency/outbox path is present in the staged worker or mounted service.
+- **HTTP and SDK integration:** the catch-all admits the eight specified operations before generic campaign dispatch, applies the 16 KiB body cap, performs actor checks and current manager/audience/campaign scope checks, and keys each mutation once. Fixed projections omit member arrays, addresses, HTML, payloads and credentials. Signed paging binds actor/workspace/resource/parent/filter. Static JSON comparison of the generated OpenAPI against 461fa56 found exactly eight added operations and eleven added schemas, with no semantic change to any prior operation or schema. Generated operation metadata and types match the generator. The corrected SDK independently requires explicit keys and source-command If-Match; it preserves serialized bodies/keys for supported retries and retains the source-command automatic-retry exclusion.
+- **Browser recovery and PII:** the strict bounded store records the canonical original create/cancel body and key before POST under exactly workspace/actor/campaign. The shared coordinator prevents synchronous duplicate dispatch; origin Web Locks span admission, transport, bound receipt validation, fresh detail and exact acknowledgment. Missing locks/storage fail closed. Context/version fences abort stale work and leave the original command recoverable. Only an original create POST's exact VERSION/DIGEST/STATE 409 can persist dismissal classification, after keyed receipt lookup; cancellation/auth/unknown/fresh-read errors do not acquire it. Mounted campaign transitions do not restore a rejected source version to an executable staging state. Current nonmanager markup contains no recipient or mutation surface. Native recorded pixels visibly show 130 processed, 100 unapproved pending, 30 skipped, zero attempts and false authorization/dispatch; the Viewer image shows only the permission explanation.
+- **Local process/database boundaries:** CLI validation rejects unsupported protocols, nonloopback destinations, malformed URLs and query/fragment delimiters before tenant connection. Both effective harness PostgreSQL URLs are checked for strict loopback authority and matching effective ports before fixture creation, then checked again with the generated database name before Next spawn. Runtime credentials remain separate without changing destination. The child receives a minimal environment; normal cleanup signals only its owned ChildProcess and drops only the helper's generated database. Both browser contexts register the same external-request blocker and page-error collector before pages open. The recorded intercepted RED/GREEN probes support these corrections without claiming any fake remote connection occurred.
+- **Truthful release state:** capability/checkpoint documentation retains Partial REQ-036, historical captured facts, absent current eligibility/approval, empty actual attempts, and blocked production sending. All 65 requirements and 13 gates remain binding. `release-gates.json` still has no accepted gate/evidence. Pending whole-review/canonical-publication wording is truthful for this frozen checkpoint. Intermediate fixture failures and corrected findings remain visible in the historical reports rather than being presented as final qualification.
+
+## Recorded evidence and limits
+
+The six log SHA-256 values in `pre-freeze-qualification.json` all match the supplied files. I inspected the configured suite's final 920 tests / 920 pass / 0 fail / 0 skips, including explicit native IndexedDB and media-decoder success lines, plus the native ledger/storage/worker cases. Lint and typecheck logs contain no diagnostics; API check reports 137 matching operations; the build log reaches completed route output. The startup log reports the expected refusal for incomplete full-GA evidence; expected exit 1 is recorded by the manifest/controller.
+
+`/tmp/lettercape-submission-browser/verdict.json` records PASS with 18 checks, UTC completion `2026-10-03T09:07:17.088Z`, owned PID 61145 and port 3015. Its harness hash matches the frozen script. All eight source hashes in its qualified-source manifest match the inspected files; Task 1's final source/test hashes also match. The final recorded stdout agrees with the verdict, including process/database cleanup. The harness's zero external requests/page errors covers both instrumented browser contexts. Synthetic 401/503 and seeded original conflict commands remain explicitly identified; the conflict 409s and committed-response losses use actual HTTP.
+
+These are verified retained records, not independently repeated executions. The existing 920 tests and 18 browser checks do not cover I-1's expiry during a cached-receipt advisory-lock wait. Parsed browser-body equality is supported by canonical serialization inspection; it is not an independent raw-wire byte capture. Queued browser cancellation recovery is supplemented by native materialized-recipient cancellation/history tests. Mobile screenshots and keyboard selection are scoped checks, not exhaustive accessibility qualification. No load, production identity, provider, real delivery, charged usage or whole-PRD acceptance follows from these results.
+
+Static `git diff --check 461fa56..fc952eb` reports one extra blank line at EOF in the retained review document at line 448. This is documented as trivial artifact hygiene, not an additional Minor correctness finding or a reason to broaden the correction. Removing that blank line is optional zero-behavior-cost cleanup. Earlier task-scoped diff checks predate that assembled document and are not represented here as a clean final whole-diff check.
+
+The inherited sender-navigation correction is present through reviewed ancestor 461fa56. I read `/tmp/lettercape-ci37103963077-fix/sender-navigation-report.md`, which distinguishes its actual local RED/GREEN from the failed earlier remote run. The reported remote ea4407e CI result does not qualify this candidate. No remote status was queried or inferred. Original 109/221 row-hash/private-metadata preservation, canonical synchronization, publication and exact-head terminal CI remain controller-owned and unestablished by this review. No provider/send/spend activation is authorized. After the one bounded correction and scoped re-review, root must retain those publication and full-acceptance limits.
+
+---
+
+## Retained record: whole-fix-report.md
+
+# Whole-review correction — authority after keyed lock waits
+
+Accepted I1 whole-review finding: staging and cancellation returned keyed results without a final current-authority check. Their advisory lock can wait past API-key or local-session expiry, then return cached responses or admit fresh commands. Within the same bounded correction, root confirmed that callback business errors also need current authority after blocking resource locks; a stale-version fresh command could return private current-version metadata before reaching the final check.
+
+## Exact bounded scope
+
+Changed only `src/server/submission-ledgers.ts` and `tests/submission-ledgers-db.test.ts`, plus this requested own scratch report. Both services retain their initial authority check and original keyed receipt lookup. Inside each keyed callback they now recheck `assertSubmissionAuthority(tx,p,true)` immediately after the potentially blocking campaign/job FOR UPDATE query, before resource-existence, version/digest/state responses or mutation. Both services also await the keyed result, recheck authority again and only then return it. Historical receipt lookup still precedes callback version checks; final checks protect cached responses and expiry during callback execution. No public contract, shared authorizer/helper, worker, schema, API, browser or unrelated file was changed.
+
+No commits, pushes, providers, network requests, existing service changes or original database writes were performed. All database proof used generated disposable loopback PostgreSQL fixtures through the approved `sourceDatabase` helper and restricted runtime role. This is one bounded I1 wave, including root's explicitly requested error-exit extension.
+
+## Meaningful actual PostgreSQL RED
+
+The seven new regressions use a separate connection to hold the exact command's idempotency advisory lock. A credential is valid before the waiter starts. `pg_stat_activity` and `pg_blocking_pids` prove the command has passed initial authority and is waiting on `SELECT pg_advisory_xact_lock(hashtext($1))`. Database wall time proves the credential is still valid when the advisory wait is observed, then waits precisely until expiry and proves it expired before releasing the blocker. No arbitrary fixed delay establishes admission or expiry.
+
+Initial RED command:
+
+```
+node --import tsx --test --test-name-pattern='idempotency lock wait' tests/submission-ledgers-db.test.ts
+```
+
+Before the final-check implementation: **0 passed, 6 failed, 0 skipped**, 17631.187417 ms. All failed with missing AUTH_REQUIRED rejection: cached stage/cancel × API key/local session, plus fresh stage/cancel with local sessions. These tests exercised the real production services without mocking keyed or authority.
+
+Same-wave error-exit RED after the two final checks were added:
+
+```
+node --import tsx --test --test-name-pattern='fresh stale-version stage' tests/submission-ledgers-db.test.ts
+```
+
+Result: **0 passed, 1 failed, 0 skipped**, 3106.240125 ms. Actual VERSION_CONFLICT, expected AUTH_REQUIRED, reproduced the private-version error response after session expiry. The post-resource-lock callback checks correct this error-exit path.
+
+## Final GREEN and preservation evidence
+
+Exact final scoped regression command:
+
+```
+node --import tsx --test tests/submission-ledgers.test.ts tests/submission-ledgers-db.test.ts tests/submission-ledger-worker.test.ts
+```
+
+Result: **21 passed, 0 failed, 0 skipped**, 23168.366334 ms. All prior 14 checks pass, plus all seven authority regressions. Cached stage/cancel reject with AUTH_REQUIRED for both credential types. Original idempotency responses, immutable manifests and job states compare identically as PostgreSQL rows before and after the denied replay. Fresh local-session stage and cancel reject with AUTH_REQUIRED and retain exactly the pre-command ledger, job, delivery, history and receipt rows; no expired fresh command commits mutations. The stale-version case now returns AUTH_REQUIRED and preserves the original campaign, with no ledger or receipt created.
+
+The intermediate final-check implementation also passed the six original new regressions while exercising rollback after fresh callback writes. The final post-lock callback check denies those observed expired credentials earlier, before writes or private business errors; the final check remains as the rollback guard for expiry during fresh callback execution. Fresh API writes already have current-key SQL RLS/admission checks. No permissive authorizer or test-only production path was introduced.
+
+Scoped `npx eslint src/server/submission-ledgers.ts tests/submission-ledgers-db.test.ts` and `git diff --check` both exit 0. Final diff scope: two files, 97 insertions and 2 deletions (10 service lines and 89 test lines). Parent explicitly owns configured full suite, global lint/type/API/build, actual browser and bounded fix rereview; none of those global checks was rerun or claimed here. No additional failure or remaining blocker was found. Complete PRDv2 all65/all13 remains binding, with zero whole-PRD acceptance.
+
+Final SHA256:
+
+```
+4f6890741e35d03cb536b3d36ecb2aedc969f384e4d5158b5cdcef61b8e8ef12  src/server/submission-ledgers.ts
+17feb5ecff780f81d9803f2ff11a64c4985150eff084c6999e1293cf223e5ba3  tests/submission-ledgers-db.test.ts
+```
+
+---
+
+## Retained record: whole-fix-independent-review.md
+
+# Bounded I-1 correction review
+
+Reviewed 2026-10-03. **PASS — I-1 is closed. New findings: 0 Critical / 0 Important / 0 Minor.** The final authority checks and the same-wave callback checks resolve the reported credential-expiry gap for staged-ledger creation and cancellation. No additional application correction is requested in this scope.
+
+This is only the independent scoped re-review of the single bounded correction wave, not a second whole-slice review. I inspected the two changed files against frozen `fc952eb469e3aca1f00e157483122cb724d37999`, the correction report, and the already-reviewed surrounding keyed/transaction authority behavior. No tests, build, runtime, database, browser, provider, private-data, commit or push action was performed. This report was written and the original ignored whole-review report received only the requested file-count sentence correction; its original verdict and finding remain preserved as historical evidence.
+
+## Source binding and closure
+
+Both current file hashes match the supplied final correction exactly:
+
+```text
+4f6890741e35d03cb536b3d36ecb2aedc969f384e4d5158b5cdcef61b8e8ef12  src/server/submission-ledgers.ts
+17feb5ecff780f81d9803f2ff11a64c4985150eff084c6999e1293cf223e5ba3  tests/submission-ledgers-db.test.ts
+```
+
+The tracked diff from fc952eb contains only those two files. I compared the other 37 paths in the original 39-path `461fa56..fc952eb` diff directly against Git's frozen bytes: all 37 are unchanged. This binds the original whole-review conclusions and closed scoped findings outside I-1 without reopening them. Root's later document assembly/EOF cleanup was not present during this comparison.
+
+At `src/server/submission-ledgers.ts:56–82`, create now awaits `keyed`, checks current submission authority again at line 81, and returns only after that check passes. At lines 111–122, cancel uses the same final check at line 121. Thus an existing successful receipt obtained after an advisory-lock wait cannot be returned under an expired API key or local session. A failed final check propagates through the existing caller-owned transaction, which rolls back any new ledger/cancellation/history/receipt changes before returning an error.
+
+The create callback rechecks authority immediately after campaign FOR UPDATE (line 58), before resource-existence, version/digest/state errors or mutation. Cancel rechecks immediately after job FOR UPDATE (line 113), before existence responses or cancellation. These checks cover a credential that expired while waiting for either advisory or resource locks and prevent the same-wave stale-version/private-current-version response. The final checks additionally cover expiry during successful callback execution. The initial current-authority checks remain, so unauthorized callers cannot enter the keyed lookup initially.
+
+Historical receipt lookup remains inside unchanged `keyed` and still precedes callback source/version/state validation. Successful old receipts therefore preserve the original command identity under later source drift when current authority remains valid. No route, schema, SDK behavior, recovery classification, SQL privileges, worker, dispatch policy or public response shape changed. This retains the original review's low bounded implementation-cost judgment; the extra callback checks are part of closing the same authority boundary on its error exits.
+
+## Regression evidence and its limits
+
+The new helper at `tests/submission-ledgers-db.test.ts:128–151` uses a separate connection to hold the exact idempotency namespace. It verifies the waiter through the exact production query plus `pg_blocking_pids`, proves the credential is still valid once that wait is observed, then uses database wall time to wait past its deadline and prove expiry before releasing the blocker. It calls real services through restricted runtime transactions, without mocking authority or keyed execution. Test-controlled SQL table/column choices are internal constants for API-key/local-session fixtures.
+
+The seven new cases are meaningful coverage of the missed boundary:
+
+- Four cached-receipt cases cover stage/cancel crossed with API-key/local-session expiry and require `AUTH_REQUIRED`, preserving exact stored receipt, manifest and job rows.
+- Two fresh local-session cases cover stage and cancellation of materialized work; ledger/job/delivery/history/idempotency rows must remain exactly unchanged after rejection. In the final implementation, expiry already established during the advisory wait is rejected by the callback check before writes. Therefore these final cases prove refusal and preservation, rather than independently forcing the final post-write rollback branch.
+- The stale-version create case requires `AUTH_REQUIRED` instead of `VERSION_CONFLICT`, preserves the campaign, and commits no ledger or receipt. It directly checks the same-wave business-error correction.
+
+The retained `whole-fix-report.md` records initial actual PostgreSQL RED of six failures (0 pass / 0 skipped), the later stale-version RED (0 pass / 1 failure / 0 skipped; actual VERSION_CONFLICT versus expected AUTH_REQUIRED), and final **21 pass / 0 failures / 0 skips**, duration 23168.366334 ms. The final count preserves all 14 prior scoped checks plus these seven regressions. It also records scoped lint and diff-check exit 0. These are implementer/controller execution records inspected by this reviewer, not independently rerun results. The report distinguishes the intermediate final-check implementation's rollback proof from the final earlier-admission check; this distinction is accurate by source inspection.
+
+The existing worker campaign-lock expiry regression remains unchanged. A separate new resource-lock-only race is not executed by the seven new cases; placement immediately after each FOR UPDATE establishes that coverage by source reasoning. The final tests do not independently force expiry after the callback recheck but before the final recheck; the final transaction guard's placement and the reported intermediate rollback execution support that branch. Neither limitation leaves I-1 open or warrants broader speculative changes.
+
+## Remaining controller work
+
+The original whole review is now resolved by this scoped PASS at the two hashes above. Fresh global configured-suite/lint/type/API/build and actual HTTP/Chromium requalification were controller-owned and pending at the re-review request; no result from that concurrent work is claimed here. The earlier 920/920 and 18-check records remain historical evidence for the pre-correction source, not a fresh whole qualification of these changed bytes.
+
+Canonical preservation, source publication and exact-head terminal CI remain controller-owned. The previously failed remote ea4407e run does not qualify this candidate. All 65 requirements and all 13 release gates remain binding with zero whole acceptance. Approval/current eligibility/provider attempts/real sending/paid usage/production startup are not established or activated by this correction or review.
