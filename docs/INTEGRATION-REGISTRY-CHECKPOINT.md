@@ -4,7 +4,7 @@ Qualified product code8f686578cd6fce2488bac4423f65f89feecc32c8; predecessor clos
 
 Root exactcandidate760/760configuredtests/zero skips; type/API122/build and four actual HTTP/Chromium destination journeys pass, including repeated clicks, current authority, frozen-history ABA fences, interruption, retry, navigation, integrity and390px. Original native lint exit0 had142generated-scratch-bundle warnings; precise correction retains the byte-identical bundle outside source then removes only its scratchcopy and reruns lint clean. Worker fullsuite758/760 withtwo existing native/browser skips remains distinguished. Actual isolatedPG17 abruptcrash/restart preserves committed history and rolls back pendingrotation; fixture uses ordinary uniquelyowned bridge with explicitloopbackonlyport, outboundnotdisabled, providerfetchtrap. This does not accept productionrestore/scale/network gates. Three harness failures and whole-review evidence-order finding preserved. Linuxbuildstage tests19domain cases/sourceSQLhash underUID1001/networknone; runtime existing4destinationcontracts/assets/privateabsence pass and productionstartup correctlyrefuses1. Registry modules remain unmounted and are not represented as a productionworker entrypoint.
 
-Whole review0Critical/1Important/0Minor identified proof-manifest-before-finally bug; ONEcompletecorrection and ONEscopedreview recorded below. Canonical delivery and fresh canonical qualification status are explicitly given in final delivery evidence; no remote push/deployment/new spend.
+Whole review0Critical/1Important/0Minor identified proof-manifest-before-finally bug; ONEcompletecorrection and ONEscopedreview recorded below. Canonical delivery b19f556 and fresh canonical qualification pass; final MD-only closure remains byte-checked in final delivery evidence; no remote push/deployment/new spend.
 
 ## Task1 complete report including type correction — complete retained text
 
@@ -950,6 +950,10 @@ ONEcomplete correction f0a4ea54ab9a2f3f057182164109994de5c2e71e adds only45line 
 
 ONEscopedcorrection review APPROVED/I1ADDRESSED/0residualCritical/0Important/0Minor; complete/tmp/lettercape-integration-registry-correction-review.md SHA2aea2192f0dfadd75472a6e205e1f30a73039c2f7cfcd2b791fc7bcda5ec4af9. Originalwhole0C1I0M retained; nosecondwhole/fixwave. Rootcanonicaldelivery next, acceptedproductiongatesstill0.
 
+Canonical localFFb19f passed601trackedSHA/privateMETADATA, but /tmp migrationhelper bare@next/envimport couldnotresolvefrom/tmp; failedbeforeconfigload/DBaccess. Failurelogretainedcanonical-migrate-import-failure.log/helperbeforecopy; ownedappstwofinallyrestored7861/7864, othersuntouched. Correctonlyhelperresolutionvia createRequire(actualcwd/package.json), same guardedtrustednormalconfigload. Resumerunner explicitlyrechecks601trackedbytes/cleanheads/privateMETADATA beforemigrate; no repeatFFor originalpreflight rewrite. Qualificationhelpersnewfailure doesnotchange reviewedSQL/TS or reopen wholefixwave.
+
+Task3canonical b19f556: local main+actualDesktop/mail FF601trackedfiles/503nonMDexact8f68657; additive035applied, freshcanonicaltype/lint0warnings/API122/build and Brevo7/Omnisend6/Mailchimp6/Klaviyo4HTTPChromiumgroups pass withbothownedappsSTOPPEDuntilALLfixturesfinish. Original109/221old-columndigests/privateMETADATAunchanged. Ownedappsrestoredmain8751/canonical8754 healthy/development/dispatchfalse; workers74504/74559 andunrelated91500alive. Fresh390pxcanonicalpixel inspected and copiedstable/tmp/lettercape-integration-registry-mobile.png. Import-helperfailure/copy/log preserved, noSQL/TSreviewreopened. Task3: complete (product8f68657 +evidencef0a4ea5/b19f556, wholeI1fixed/ONEscopedreviewclean). FinalMD-onlyclosuremustverify601tracked/503codeequivalence andcommittedcompleteartifacts beforeonlyownscratchcleanup. ContinueHubSpot+remainingGA; productionnotlaunched.
+
 ## Allrootcrashharnessfailures — complete retained text
 
 First attempted fixture failed at docker port after pg_isready: internal Docker network produced no published 5432 binding. No migration or seed ran and no original DB read/writes occurred. Finally ownership-checked cleanup removed only nonce6aaceab9c0ec4a76812856154a6bfa32 container/volume/network. Root cause: --internal network publishing unavailable in this Docker setup, unlike existing working loopback-owned PG fixture on ordinary bridge. Single correction: ordinary uniquely owned bridge retaining explicit127.0.0.1 ephemeral port and ownership guards; no claim of outbound network isolation. PG fixture executes only local migrations/wrappers, global provider-fetch trap; synthetic credentials only. Cost: fixture network can technically route outbound, unlike release-image networknone proof. No production network or restore qualification inferred. Traceback retained in tool transcript and this complete failure record.
@@ -1561,8 +1565,8 @@ Remaining material prerequisites: exact current schemas/scopes/auth mode/eligibl
   {
     "source": "/tmp/lettercape-integration-registry-native/.superpowers/sdd/2026-10-03-integration-registry/progress.md",
     "retained": "/tmp/lettercape-integration-registry-task-logs/progress.md",
-    "bytes": 9819,
-    "sha256": "f502b0b196f971d428e50b88fb0b3f653b1d94f14b3b1f9975c0ef6c6ec0f67d"
+    "bytes": 11310,
+    "sha256": "a80ecd90989193cfdec07ca84357ab6960c1b2e49474399b2a56435fd880ea21"
   },
   {
     "source": "/tmp/lettercape-integration-registry-native/.superpowers/sdd/2026-10-03-integration-registry/task-1-brief.md",
@@ -1770,6 +1774,200 @@ Remaining material prerequisites: exact current schemas/scopes/auth mode/eligibl
 }
 ```
 
+## Canonicalsynchronization
+
+```json
+{
+  "head": "b19f55677f2c9adc8787df4a1e4352e9352cb12d",
+  "canonical": "/Users/prabalpratapsingh/Desktop/mail",
+  "tracked_sha256_matches": 601,
+  "main_clean": true,
+  "canonical_clean": true,
+  "private_metadata_unchanged_readable": true,
+  "private_contents_copied_printed_or_hashed": false,
+  "local_fast_forward_only": true,
+  "deployment": false
+}
+```
+
+## Freshcanonicalqualification
+
+```json
+{
+  "head": "b19f55677f2c9adc8787df4a1e4352e9352cb12d",
+  "qualified_code_head": "8f686578cd6fce2488bac4423f65f89feecc32c8",
+  "tracked_sha256_matches": 601,
+  "non_markdown_files_match_qualified_code": 503,
+  "checks": [
+    {
+      "name": "type",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-type.log",
+      "sha256": "e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6"
+    },
+    {
+      "name": "lint",
+      "command": [
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-lint.log",
+      "sha256": "177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746"
+    },
+    {
+      "name": "api",
+      "command": [
+        "npm",
+        "run",
+        "api:check"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-api.log",
+      "sha256": "ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f"
+    },
+    {
+      "name": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-build.log",
+      "sha256": "e24a073a89d266169def56936b5f4c495f03b75ba3b2be794d36e32c35e2211d"
+    },
+    {
+      "name": "brevo-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-brevo-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-brevo-browser.log",
+      "sha256": "b66673982fa7af1f8cf9a0cbb56980377708fbdaa5dd1aadf9759c6ba8e288dc"
+    },
+    {
+      "name": "omnisend-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-omnisend-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-omnisend-browser.log",
+      "sha256": "6756f4ca9c989be5e1150f3b066963a7f4729c66f3f2aebc7a9385606e021817"
+    },
+    {
+      "name": "mailchimp-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-mailchimp-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-mailchimp-browser.log",
+      "sha256": "f31637df9f5fed30b4b028532e170bcd6e160ddc454fa7037afc30d6692ff05d"
+    },
+    {
+      "name": "klaviyo-browser",
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "scripts/smoke-klaviyo-export.ts"
+      ],
+      "exit": 0,
+      "log": "/tmp/lettercape-integration-registry-canonical-klaviyo-browser.log",
+      "sha256": "815ba9545226eb9c5aa82b739db6d224331660fab705f6fb78b3a9a45b827b76"
+    }
+  ],
+  "deployment": false
+}
+```
+
+## Restoredownedapps/canonicalpixel/preservation
+
+```json
+{
+  "canonical_head": "b19f55677f2c9adc8787df4a1e4352e9352cb12d",
+  "qualified_code_head": "8f686578cd6fce2488bac4423f65f89feecc32c8",
+  "apps": {
+    "main": {
+      "pid": 8751,
+      "port": 3003,
+      "health": {
+        "request_id": "e386ecf8-0505-4081-a51f-40ddb91b08ca",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    },
+    "canonical": {
+      "pid": 8754,
+      "port": 3002,
+      "health": {
+        "request_id": "ec2f3e58-52d9-40d3-b2ae-5d5a9d5927ba",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    },
+    "recipient_worker": {
+      "pid": 74504,
+      "preserved": true
+    },
+    "media_worker": {
+      "pid": 74559,
+      "preserved": true
+    },
+    "unrelated_app": {
+      "pid": 91500,
+      "preserved": true
+    }
+  },
+  "mobile_image": "/tmp/lettercape-integration-registry-mobile.png",
+  "mobile_sha256": "0a7b08b2f16af15cf95be58a2b7094973e2af5dc2a7ed6cbe54ebd624aae42cf",
+  "original109emails221revisions_preserved": true,
+  "deployment": false,
+  "dispatch_enabled": false,
+  "mobile_pixel_inspected": true
+}
+```
+
+## Originalafterproof
+
+```json
+{
+  "private_contents_copied_printed_or_hashed": false,
+  "trusted_application_config_loading": true,
+  "emails": {
+    "count": 109,
+    "sha256": "95d2d1cd1822bab9b78601321d99db238f2298ba245b9b3b209d257063a4a172"
+  },
+  "revisions": {
+    "count": 221,
+    "sha256": "a600901eefd05fae90e155eb30f2aece3f9a0236dcd0b91ccfb0f938666294d4"
+  },
+  "private_metadata": {
+    "mode": 384,
+    "size": 986,
+    "inode": "44097037",
+    "mtime_ns": "1790839723000000000"
+  }
+}
+```
+
 ## Corrected reproducible isolatedcrashharness
 
 ```
@@ -1872,4 +2070,82 @@ try{
   console.log('Actual owned PostgreSQL abrupt crash/restart preserves committed binding+history, rolls back both uncommitted state+history, restores strict read/revoke/replay with readinessfalse and zero operations/outbox/usage PASS.');
  }else throw Error('Unknown owned fixture stage');
 }finally{await pool.end();}
+```
+
+## Canonical migration helper failure and exact correction
+
+The first canonical runner synced all601trackedfiles then failed before database/config access: bare package import from /tmp did not resolve @next/env. The runner finally restored only owned apps7861/7864. Correct only the temporary helper to createRequire(actualcwd/package.json); resume checks601trackedbytes/cleanheads/privateMETADATA before applying additive035. Fresh canonical checks then passed, original109/221/private metadata remained exact and apps8751/8754 restored after ALLfixtures. No reviewed SQL/TS change, second whole review or second product fix wave.
+
+### Failedmigrationhelperbefore
+
+SHA256 02896b5cb868f2f3e3eda94d5437f53c8f042631dd120f6f0d5594e9abe22ec4.
+
+```
+import env from '@next/env';
+import {spawn} from 'node:child_process';
+env.loadEnvConfig(process.cwd());
+const url=process.env.MIGRATION_DATABASE_URL;
+if(process.env.LOCAL_DEVELOPMENT!=='true'||!url)throw Error('Owned local migration configuration required');
+const u=new URL(url);
+if(!['127.0.0.1','localhost'].includes(u.hostname)||u.port!=='55439'||u.pathname!=='/mailcraft')throw Error('Owned loopback mailcraft migration boundary required');
+const code=await new Promise<number>(resolve=>{
+ const child=spawn(process.execPath,['--import','tsx','scripts/migrate.ts'],{stdio:'inherit',env:process.env});
+ child.once('error',()=>resolve(1));child.once('exit',code=>resolve(code??1));
+});
+if(code!==0)process.exitCode=code;
+```
+
+### Correctedguardedmigrationhelper
+
+SHA256 2d8bd80a3a8e5e2ddcc3507f001a32492320d5482487b13a5464d77dbd53de2e.
+
+```
+import {createRequire} from 'node:module';
+const require=createRequire(process.cwd()+'/package.json');
+const env=require('@next/env');
+import {spawn} from 'node:child_process';
+env.loadEnvConfig(process.cwd());
+const url=process.env.MIGRATION_DATABASE_URL;
+if(process.env.LOCAL_DEVELOPMENT!=='true'||!url)throw Error('Owned local migration configuration required');
+const u=new URL(url);
+if(!['127.0.0.1','localhost'].includes(u.hostname)||u.port!=='55439'||u.pathname!=='/mailcraft')throw Error('Owned loopback mailcraft migration boundary required');
+const code=await new Promise<number>(resolve=>{
+ const child=spawn(process.execPath,['--import','tsx','scripts/migrate.ts'],{stdio:'inherit',env:process.env});
+ child.once('error',()=>resolve(1));child.once('exit',code=>resolve(code??1));
+});
+if(code!==0)process.exitCode=code;
+```
+
+### Verbatimfailedcanonicalmigrationlog
+
+SHA256 2b6755380663b1f405d01606d3484603f5f3bd20f10a55b0c5b44d52d235bd64.
+
+```
+node:internal/modules/package_json_reader:316
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@next/env' imported from /private/tmp/lettercape-integration-registry-migrate.mts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:316:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:858:18)
+    at defaultResolve (node:internal/modules/esm/resolve:990:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:718:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:735:38)
+    at nextStep (node:internal/modules/customization_hooks:189:26)
+    at resolveBaseSync (file:///Users/prabalpratapsingh/Desktop/mail/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+    at resolveDirectorySync (file:///Users/prabalpratapsingh/Desktop/mail/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+    at resolveTsPathsSync (file:///Users/prabalpratapsingh/Desktop/mail/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v24.12.0
+```
+
+### Successfuladditivecanonicalmigrationlog
+
+SHA256 1420205021db7bbe08c1269679f9549a6470f2799e88f556dd141a3481a6de93.
+
+```
+035-integration-registry applied
 ```

@@ -34,4 +34,4 @@ Own src/domain/integration-registry.ts,src/server/integration-registry.ts,tests/
 Own docs/checkpoint/plan/package/CI only if meaningful entrypoint needed; no new public endpoints. Tasks separate spec+quality reviews, then full qualification and ONE immutable whole review; if findings ONE completeworker and ONE scopedre-review then explicit residualrulings. Retain full reports/briefs/currentledger/rulings verbatim in committed canonicalcheckpoint. Guarded local sync with original/private preservation, no publicreadiness. Canonical build/browser while ownedapps paused, restore after fixtures.
 - [x] Taskreviews and fullconfigured tests/type/lint/API122/build/Linux and prior4actualbrowser journeys.
 - [x] ONE whole review/one completefix+scopedifnecessary; preserve full findings/evidence.
-- [ ] Guarded canonical sync/qualification/codeequivalence/privateoriginal checks/reportsretention/onlyown scratch cleanup; continue independent GAwork.
+- [x] Guarded canonical sync/qualification/codeequivalence/privateoriginal checks/reportsretention/onlyown scratch cleanup; continue independent GAwork.
