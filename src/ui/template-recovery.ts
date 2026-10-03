@@ -8,8 +8,9 @@ const remix=z.object({title:name,expected_version:z.literal(1),expected_artifact
 const rejectionSchema=z.discriminatedUnion('code',[
  z.object({code:z.literal('TEMPLATE_ARCHIVED'),status:z.literal(409)}).strict(),
  z.object({code:z.literal('VERSION_MISMATCH'),status:z.literal(412)}).strict(),
+ z.object({code:z.literal('ASSET_NOT_READY'),status:z.literal(409)}).strict(),
 ]);
-const schema=z.object({workspace:z.string().min(1),actor:z.string().min(1),key:uuid,path:z.string(),body:z.union([register,archive,remix]),sourceRevision:uuid.optional(),rejection:rejectionSchema.optional()}).strict().superRefine((v,c)=>{const parts=v.path.split('/'),validId=parts.length===3&&parts[0]==='templates'&&uuid.safeParse(parts[1]).success;const mutation=validId&&(parts[2]==='archive'||parts[2]==='remix');if(!(v.path==='templates'&&register.safeParse(v.body).success)&&!(validId&&parts[2]==='archive'&&archive.safeParse(v.body).success)&&!(validId&&parts[2]==='remix'&&remix.safeParse(v.body).success&&v.sourceRevision))c.addIssue({code:'custom',message:'Invalid original command'});if(v.rejection&&!mutation)c.addIssue({code:'custom',message:'Rejection does not match an eligible original command'});});
+const schema=z.object({workspace:z.string().min(1),actor:z.string().min(1),key:uuid,path:z.string(),body:z.union([register,archive,remix]),sourceRevision:uuid.optional(),rejection:rejectionSchema.optional()}).strict().superRefine((v,c)=>{const parts=v.path.split('/'),validId=parts.length===3&&parts[0]==='templates'&&uuid.safeParse(parts[1]).success;const mutation=validId&&(parts[2]==='archive'||parts[2]==='remix');if(!(v.path==='templates'&&register.safeParse(v.body).success)&&!(validId&&parts[2]==='archive'&&archive.safeParse(v.body).success)&&!(validId&&parts[2]==='remix'&&remix.safeParse(v.body).success&&v.sourceRevision))c.addIssue({code:'custom',message:'Invalid original command'});if(v.rejection&&(!mutation||(v.rejection.code==='ASSET_NOT_READY'&&parts[2]!=='remix')))c.addIssue({code:'custom',message:'Rejection does not match an eligible original command'});});
 export type TemplateCommand=z.infer<typeof schema>;
 export type TemplateScope={workspace:string;actor:string};
 export type TemplateStore=Pick<Storage,'getItem'|'setItem'|'removeItem'|'key'|'length'>;
@@ -39,10 +40,14 @@ export function validateTemplateResult(command:TemplateCommand,value:unknown):st
 // Only around the original POST: keyed service callbacks emit these after successful
 // historical receipts have been checked. Neither authority errors nor arbitrary4xx
 // establish nonexecution. The exact command must still occupy the persisted slot.
+// Remix asset refusal rolls back the enclosing tenant transaction; save/archive
+// have no equivalent asset-check contract and must not acquire this classification.
 function originalRejection(command:TemplateCommand,error:unknown){
  if(!(error instanceof ApiError)||!(/\/(archive|remix)$/.test(command.path)))return null;
  const parsed=rejectionSchema.safeParse({code:error.code,status:error.status});
- return parsed.success?parsed.data:null;
+ if(!parsed.success)return null;
+ if(parsed.data.code==='ASSET_NOT_READY'&&!command.path.endsWith('/remix'))return null;
+ return parsed.data;
 }
 const sameCommand=(a:TemplateCommand|null,b:TemplateCommand)=>JSON.stringify(a)===JSON.stringify(b);
 export type TemplateMutationSnapshot={pending:TemplateCommand|null;error:string;busy:boolean;ready:boolean};

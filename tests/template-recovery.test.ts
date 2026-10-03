@@ -80,3 +80,35 @@ test('Web Locks claim is nonqueued and refusal never invokes the mutation action
  Object.defineProperty(globalThis,'navigator',{value:{locks:{request}},configurable:true});
  try{await assert.rejects(()=>recovery.claimTemplateLock(scope,async()=>{invoked++;return 'claimed';}),/Another tab/);assert.equal(invoked,0);}finally{if(original)Object.defineProperty(globalThis,'navigator',original);else Reflect.deleteProperty(globalThis,'navigator');}
 });
+test('asset-refused original remix retains identity through reload, dismisses deliberately and permits an unrelated healthy draft',async()=>{
+ const s=new Store(),c=recovery.getTemplateCoordinator(s,scope);
+ const original=rememberTemplateCommand(s,scope,remixCommand.path,remixCommand.body,remixCommand.sourceRevision);
+ assert.equal(await c.run(undefined,async command=>{assert.deepEqual(command,original);throw new ApiError('ASSET_NOT_READY','Source image unavailable',409);},()=>true),null);
+ const rejected=c.getSnapshot().pending;assert.ok(rejected);assert.equal(rejected.rejection?.code,'ASSET_NOT_READY');
+ const {rejection,...retained}=rejected;assert.deepEqual(retained,original);assert.deepEqual(rejection,{code:'ASSET_NOT_READY',status:409});
+ const reload=new Store();reload.data=new Map(s.data);const restored=recovery.getTemplateCoordinator(reload,scope);restored.reconcile();assert.deepEqual(restored.getSnapshot().pending,rejected);
+ const healthy={path:'templates/'+template.source_email_id+'/remix',body:{...remixCommand.body,title:'Healthy draft'},sourceRevision:template.source_email_id};let sent=0;
+ await restored.run(healthy,async()=>{sent++;return {};},()=>true);assert.equal(sent,0);assert.deepEqual(readTemplateCommand(reload,scope),rejected);
+ assert.equal(await restored.dismiss(rejected),true);assert.equal(readTemplateCommand(reload,scope),null);
+ const child={email:{id:template.brand_kit_version_id,title:'Healthy draft'},revision:{id:template.id,email_id:template.brand_kit_version_id},lineage:{source_revision_id:healthy.sourceRevision}};
+ const result=await restored.run(healthy,async command=>{sent++;assert.notEqual(command.key,original.key);assert.deepEqual(command.body,healthy.body);return child;},()=>true);
+ assert.equal(sent,1);assert.equal(result?.emailId,child.email.id);assert.equal(readTemplateCommand(reload,scope),null);assert.equal(restored.getSnapshot().error,'');
+});
+test('asset refusal is dismissible only for remix409 and forged save/archive classifications fail closed',async()=>{
+ const archive={path:'templates/'+template.id+'/archive',body:{expected_version:1}};
+ for(const [input,status] of [[{path:'templates',body},409],[archive,409],[remixCommand,400],[remixCommand,401],[remixCommand,500]] as const){
+  const s=new Store(),c=recovery.getTemplateCoordinator(s,scope);await c.run(input,async()=>{throw new ApiError('ASSET_NOT_READY','Unavailable',status);},()=>true);
+  const pending=c.getSnapshot().pending;assert.ok(pending);assert.equal(pending.rejection,undefined);assert.equal(await c.dismiss(pending),false);assert.deepEqual(readTemplateCommand(s,scope),pending);
+ }
+ for(const input of [{path:'templates',body},archive]){
+  const s=new Store(),pending=rememberTemplateCommand(s,scope,input.path,input.body);s.setItem(templateSlot(scope),JSON.stringify({...pending,rejection:{code:'ASSET_NOT_READY',status:409}}));assert.throws(()=>readTemplateCommand(s,scope));
+ }
+});
+test('asset refusal cannot classify a newer command, and a historical remix success remains a validated success',async()=>{
+ const s=new Store(),c=recovery.getTemplateCoordinator(s,scope);let refuse!:(reason:unknown)=>void;
+ const request=c.run(remixCommand,async()=>new Promise((_resolve,reject)=>{refuse=reject;}),()=>true);await Promise.resolve();const original=c.getSnapshot().pending;assert.ok(original);
+ const newer={...original,key:crypto.randomUUID(),body:{...remixCommand.body,title:'Newer'}};s.setItem(templateSlot(scope),JSON.stringify(newer));refuse(new ApiError('ASSET_NOT_READY','Unavailable',409));await request;assert.deepEqual(readTemplateCommand(s,scope),newer);assert.equal(c.getSnapshot().pending?.rejection,undefined);
+ const successfulStore=new Store(),successful=recovery.getTemplateCoordinator(successfulStore,scope),historical=rememberTemplateCommand(successfulStore,scope,remixCommand.path,remixCommand.body,remixCommand.sourceRevision);
+ const child={email:{id:template.brand_kit_version_id,title:remixCommand.body.title},revision:{id:template.id,email_id:template.brand_kit_version_id},lineage:{source_revision_id:remixCommand.sourceRevision}};
+ const replay=await successful.run(undefined,async command=>{assert.deepEqual(command,historical);return child;},()=>true);assert.equal(replay?.emailId,child.email.id);assert.equal(successful.getSnapshot().pending,null);assert.equal(successful.getSnapshot().error,'');
+});

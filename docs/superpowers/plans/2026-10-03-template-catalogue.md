@@ -46,3 +46,7 @@ Own src/server/email-template-route.ts; catch-all route; method/scope/pagination
 - [ ] Run actual owned HTTP/Chromium template journey and derivation regression, including lost responses, reload/input changes/two-click/context fences, role/empty/error/navigation/mobile.
 - [ ] Run typecheck/lint/API/full configured suite/build; package each worker diff for independent task review, correct findings, then one independent whole-slice review and one correction wave/scoped verification if needed.
 - [ ] Preserve original records/private metadata, qualify canonical sync, record exact evidence and remaining gates. Commit/push non-force under direct authorization; verify exact remote SHA and terminal CI. Retain failure history, no launch/provider claims.
+
+### Bounded whole-review correction I1
+
+Permit deliberate dismissal of the exact original remix only on ASSET_NOT_READY409, in addition to the existing archive/version allowlist. Preserve rejected command identity across reload, prove zero child/successful receipt on the actual asset refusal, then dismiss and create a healthy unrelated child. Successful historical receipt replay must remain unchanged after asset removal; ambiguous/authentication/network outcomes remain pending. Worker owns recovery helper/tests; browser worker owns isolated HTTP/Chromium harness. One scoped re-review follows this correction wave; no repeated broad review.
