@@ -13,10 +13,17 @@ Two existing save-state issues exposed by this workflow are corrected: returning
 - Lost committed receipt and reload: repeated Save sends one command; retry uses identical key, If-Match and payload, with no second document version. Incomplete URL issues no draft write/pending command; correction saves successfully.
 - Browser layout/ordinary display checks: 390/320px, visible field bounds, 200% root text zoom at 720px, navigation, empty/add, raw source authority, Arabic content language/direction with LTR links, readable/copyable Viewer fields and disabled mutation controls, desktop default. This is not a new permission or security qualification.
 - Fixture browser initialization is restricted to the top frame; the existing preview sandbox remains intact. Owned app and disposable database are cleaned up; no original app/worker is restarted.
-- Final native smoke completed with all six workflow groups plus owned app/database cleanup passing, zero page errors and zero external requests. Lint, typecheck, production build and API consistency (140 operations, unchanged generated contracts) passed. Independent review, preservation and publication evidence will be appended after completion. No AI, provider, campaign, billing or production deployment success is claimed.
+- Final native smoke completed with all six workflow groups plus owned app/database cleanup passing, zero page errors and zero external requests. Lint, typecheck, production build and API consistency (140 operations, unchanged generated contracts) passed. Production startup remained closed: full GA release evidence is incomplete. A fresh independent immutable review of code commit `1d2c1dda059498843c8f8f172259b5242042400a` found zero material issues. Preservation/publication and exact-head CI are reported in delivery. No AI, provider, campaign, billing or production deployment success is claimed.
 
 ## Remaining acceptance
 
 REQ-015/019 remain Partial/development. Complex layout editing, complete keyboard/screen-reader/contrast/zoom journeys, physical device/assistive technology testing and real email-client fidelity remain open. The check is root text zoom, not a complete browser/OS zoom or WCAG certification. Untouched custom source is retained exactly; explicitly editing a native textarea may normalize its line endings.
 
 Full GA baseline, all 65 requirements and all 13 release gates remain in force. Provider/accounts, production operations, consent/legal and independent acceptance require their named prerequisites in PRODUCTION-LAUNCH-CHECKLIST.md. Paused collaboration and its qualification remain excluded. No schema, API route, access policy, asset admission or provider configuration was changed.
+
+## Deferred minor review findings
+
+- Outline also shows the existing simulated-viewport controls and label; they affect Preview rather than the linear form. Clarify the label/visibility in a later UI polish change.
+- Undo from invalid fields back to the acknowledged spec can leave a stale validation alert until manual Save clears it. The draft is correctly marked saved and remains usable; retire only the resolved validation alert in a later polish change.
+
+Neither finding blocks this bounded workflow qualification. They do not establish complete accessibility acceptance.
