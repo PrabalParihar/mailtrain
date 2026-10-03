@@ -93,7 +93,13 @@ try {
   console.log('Sender Chromium saved/invalid/lost-create/version/DNS/CAS/current-role/history/390px PASS; all DNS names reserved, no network resolver queries.');
   await context.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(key:string,value:string){if(key.startsWith('lettercape.sender-'))throw new DOMException('Owned quota fixture','QuotaExceededError');return original.call(this,key,value);};});
   await page.reload();await name.waitFor();await account.fill('Tab-only account edit');await panel.getByText(/Browser storage is unavailable/).waitFor();
-  async function visit(section:string){await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByRole('link',{name:section,exact:true}).click();}
+  async function visit(section:'Reports'|'Delivery'){
+   const toggle=page.getByRole('button',{name:'Open navigation',exact:true});await toggle.click();
+   const link=page.getByRole('link',{name:section,exact:true}),href=await link.getAttribute('href');assert.equal(href,section==='Reports'?'/app/reports':'/app/delivery');
+   await link.click();await page.waitForURL(url=>url.pathname===href);
+   await page.getByRole('heading',{name:section==='Reports'?'Know what actually happened.':'Sending starts with trust.',exact:true}).waitFor();
+   await page.locator('#workspace-navigation:not(.open)').waitFor({state:'attached'});assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+  }
   await visit('Reports');await visit('Delivery');await account.waitFor();assert.equal(await account.inputValue(),'Tab-only account edit');
   async function switchWorkspace(w:string){await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByLabel('Active brand workspace',{exact:true}).selectOption(w);await page.waitForURL(url=>url.pathname==='/app');await visit('Delivery');}
   await switchWorkspace(other);await panel.getByText('No sender drafts yet.',{exact:true}).waitFor();assert.equal(await account.inputValue(),'');await switchWorkspace(workspace);await account.waitFor();assert.equal(await account.inputValue(),'Tab-only account edit');
