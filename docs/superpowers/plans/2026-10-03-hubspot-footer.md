@@ -21,14 +21,14 @@ Own src/domain/hubspot-export.ts/tests/hubspot-export.test.ts, afterTask1review.
 - [x] Nested/Unicode/entities/repeatedtext/optional/sourceintegrity/strictreview/hash/limits/noIO/immutability57tests+207regressions/type/lint/diff exact2filecommit/fullreport; separate review0C0I0M. No DB/fullsuite/subagents.
 
 ### Task 3: Mounted POST boundary and typed API/SDK
-Own src/server/hubspot-export-review.ts, src/server/http.ts, src/server/esp-export-review.ts (fixed-message export only), src/app/v1/[...path]/route.ts, focusedHTTP/method/contract/SDK tests, scripts/generate-api.ts and exactgenerated3outputs+SDKtypefixture. Binding detailed Task3brief/rootserverdraft.
+Own src/server/hubspot-export-review.ts, src/server/http.ts, src/server/esp-export-review.ts (fixed-message export only), src/domain/api-keys.ts (two exact export-command names only), src/app/v1/[...path]/route.ts, focusedHTTP/method/contract/SDK tests, scripts/generate-api.ts and exactgenerated3outputs+SDKtypefixture. Binding detailed Task3brief/rootserverdraft.
 - [x] Strict16KiB timed/cancellable opt-inJSONreader preservingdefaults; currentauthority/tenant/abort/hash/audit-safe two POSTs.
 - [x] API124/examples/strictbody+falseflags/media/headers/typedSDKPOST privacy/retry/scopedtests/type/lint/diff; exactownedcommit/report; separateTask3spec+qualityreview.
 
 ### Task 4: Fifth editor comparison/preparation
 Own src/ui/editor.tsx/src/ui/klaviyo-export.tsx/newHubSpotform+smallbrowserhelper+meaningfultests as Task4brief. No server/source mutation.
-- [ ] Explicit7fieldlocallydeclaredsettings, mismatchrecovery and fifthselect, immutable source, strictdigest/receipt/downloadbytes.
-- [ ] Existinggenerationinitialfreeze/settings/destinationABA/scope/navigation/abort/singleadmission fences; scopedtest/bundle/type/lint/diff and separateTask4review. ActualbrowserproofTask5.
+- [x] Explicit7fieldlocallydeclaredsettings, mismatchrecovery and fifthselect, immutable source, strictdigest/receipt/downloadbytes.
+- [x] Existinggenerationinitialfreeze/settings/destinationABA/scope/navigation/abort/singleadmission fences; scopedtest/bundle/type/lint/diff and separateTask4review. ActualbrowserproofTask5.
 
 ### Task 5: Actual owned HTTP and Chromium qualification
 Own scripts/smoke-hubspot-export.ts and package.json sole smokealias. BindingdetailedTask5brief. No productcodechanges to satisfyfixture; reportconcretefailures.
