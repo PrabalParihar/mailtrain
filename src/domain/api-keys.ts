@@ -60,7 +60,7 @@ export function scopeForResource(
     ].includes(root)
   )
     return read ? 'audience:read' : 'audience:write';
-  if(root==='recipient-assessments')return read?'campaigns:read':'campaigns:write';
+  if(['recipient-assessments','submission-ledgers','deliveries'].includes(root))return read?'campaigns:read':'campaigns:write';
   if (root === 'campaigns')
     return read
       ? 'campaigns:read'

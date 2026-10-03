@@ -225,3 +225,28 @@ test('HubSpot SDK does not retry unkeyed POST network loss and respects abort be
  const waiting=new LettercapeClient({baseUrl:'https://example.test',fetch:async request=>new Promise<Response>((_,reject)=>{request.signal.addEventListener('abort',()=>{aborted=true;reject(request.signal.reason);},{once:true});inflight.abort();})});
  await assert.rejects(waiting.call('reviewHubSpotRevision',{...input,signal:inflight.signal}),{name:'AbortError'});assert.equal(aborted,true);
 });
+
+test('ledger SDK requires only the original key and preserves body across transport recovery',async()=>{
+ const seen:{key:string|null;ifMatch:string|null;body:unknown}[]=[];
+ const client=new LettercapeClient({baseUrl:'https://example.test',workspace,wait:async()=>{},fetch:async request=>{
+  seen.push({key:request.headers.get('Idempotency-Key'),ifMatch:request.headers.get('If-Match'),body:await request.json()});
+  if(seen.length===1)throw new TypeError('lost ledger response');
+  return reply(201,{request_id:'ledger-receipt',ledger:{id:workspace}});
+ }});
+ const input={expected_version:2,expected_digest:'a'.repeat(64)};
+ await client.call('stageSubmissionLedger',{path:{id:workspace},body:input,idempotencyKey:'original-ledger-key'});
+ assert.equal(seen.length,2);
+ for(const request of seen)assert.deepEqual(request,{key:'original-ledger-key',ifMatch:null,body:input});
+ await client.call('cancelSubmissionLedger',{path:{id:workspace},body:{},idempotencyKey:'original-cancel-key'});
+ assert.deepEqual(seen[2],{key:'original-cancel-key',ifMatch:null,body:{}});
+});
+test('ledger SDK refuses missing explicit keys and source commands retain their version fence',async()=>{
+ let calls=0;
+ const client=new LettercapeClient({baseUrl:'https://example.test',fetch:async()=>{calls++;return reply();}});
+ // Deliberate invalid runtime inputs prove refusal despite TypeScript callers having stricter types.
+ const unchecked=client as unknown as{call:(operation:string,input:Record<string,unknown>)=>Promise<unknown>};
+ await assert.rejects(unchecked.call('stageSubmissionLedger',{path:{id:workspace},body:{expected_version:1,expected_digest:'a'.repeat(64)}}),/original explicit command key/);
+ await assert.rejects(unchecked.call('cancelSubmissionLedger',{path:{id:workspace},body:{}}),/original explicit command key/);
+ await assert.rejects(unchecked.call('importEmailSource',{path:{id:workspace},body:'<p>source</p>',idempotencyKey:'source-key'}),/If-Match/);
+ assert.equal(calls,0);
+});

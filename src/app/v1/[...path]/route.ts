@@ -1,3 +1,4 @@
+import {submissionLedgerRoute} from '@/server/submission-ledger-route';
 import {hubspotExportResponse} from '@/server/hubspot-export-review';
 import { emailTemplateRoute } from '@/server/email-template-route';
 import{destinationReviewResponse}from'@/server/esp-export-review';
@@ -75,9 +76,14 @@ async function handle(req: Request, ctx: Context) {
     if(root==='email-revisions'&&['hubspot-review','hubspot-artifact'].includes(command))return await hubspotExportResponse(req,id,command as 'hubspot-review'|'hubspot-artifact',request_id);
     const sourceBody=root==='emails'&&method==='POST'&&(!id||command==='preview');
     if(sourceBody)await withPrincipal(req,command==='preview'?'read':'edit',async tx=>{if(id)await getEmail(tx,id);});
-    const recipientBody=root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
+    const ledgerBody=['submission-ledgers','deliveries'].includes(root)||(root==='campaigns'&&command==='submission-ledgers');
+    const recipientBody=ledgerBody||root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
     const body=recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
+    if (ledgerBody) {
+      const result = await submissionLedgerRoute(req, path, body, key);
+      return json(result, root === 'campaigns' && method === 'POST' ? 201 : 200);
+    }
     if (root === 'templates') return json(await emailTemplateRoute(req, path, body, key), method === 'POST' && command !== 'archive' ? 201 : 200);
     const version = () => {
       const raw = req.headers.get('if-match');

@@ -17,6 +17,12 @@ export function typeExamples(client: LettercapeClient) {
   // @ts-expect-error all seven explicit settings fields are required
   void client.call('reviewHubSpotRevision',{path:{id:'example'},body:{settings:{company_name:'Example'}}});
 
+  void client.call('stageSubmissionLedger',{path:{id:'example'},body:{expected_version:1,expected_digest:'a'.repeat(64)},idempotencyKey:'ledger-key'});
+  void client.call('cancelSubmissionLedger',{path:{id:'example'},body:{},idempotencyKey:'cancel-key'});
+  // @ts-expect-error ledger creation requires the original explicit command key
+  void client.call('stageSubmissionLedger',{path:{id:'example'},body:{expected_version:1,expected_digest:'a'.repeat(64)}});
+  // @ts-expect-error source import still requires the acknowledged If-Match version
+  void client.call('importEmailSource',{path:{id:'example'},body:'<p>source</p>',idempotencyKey:'source-key'});
   void client.call('importEmailSource',{path:{id:'example'},body:'\uFEFF<p>Exact</p>\r\n',idempotencyKey:'source-command',ifMatch:'"draft-1"'});
   void client.call('forkEmailSource',{path:{id:'example'},body:{expected_artifact_hash:'a'.repeat(64)},idempotencyKey:'fork-command',ifMatch:'"draft-1"',actorId:'actor'});
   void client.call('downloadRevision',{path:{id:'example'},query:{format:'source'}});

@@ -1,4 +1,5 @@
 'use client';
+import {SubmissionLedgers} from './submission-ledgers';
 import {RecipientAssessments}from'./recipient-assessments';
 import {WorkspaceCalendar} from './workspace-calendar';
 import{CampaignConfiguration}from'./campaign-configuration';
@@ -226,6 +227,7 @@ export function CampaignPanel({ workspace,role,actor }: { workspace: string;role
               Sender/provider: not configured · Tracking: off · Schedule: none
             </p>
             <RecipientAssessments key={JSON.stringify([workspace,c.id,role,actor])} workspace={workspace} id={c.id} role={role} actor={actor} version={c.version} digest={c.digest}/>
+            <SubmissionLedgers key={JSON.stringify(['submission-ledgers',workspace,c.id,role,actor])} workspace={workspace} id={c.id} role={role} actor={actor} version={c.version} digest={c.digest}/>
             <CampaignConfiguration key={workspace+':'+c.id+':'+role} workspace={workspace} id={c.id} role={role} savedState={c.state} savedVersion={c.version} onUpdate={reload}/>
             <div className="toolbar">
               <button

@@ -108,11 +108,16 @@ export function assertRouteMethod(path: string[], method: string) {
     else if (uuid.test(id) && command === 'confirm') methods = ['POST'];
     else if (uuid.test(id) && command === 'errors') methods = ['GET'];
   }
+  if (root === 'submission-ledgers' && uuid.test(id ?? '')) {
+    if (!command || command === 'recipients') methods = ['GET'];
+    else if (command === 'cancel') methods = ['POST'];
+  }
+  if (root === 'deliveries' && uuid.test(id ?? '') && (!command || ['history', 'attempts'].includes(command))) methods = ['GET'];
   if(root==='recipient-assessments'&&uuid.test(id??'')){if(!command||command==='observations')methods=['GET'];else if(command==='cancel')methods=['POST'];}
   if (root === 'campaigns') {
     if (!id) methods = ['GET', 'POST'];
     else if(id==='calendar'&&!command)methods=['GET'];
-    else if(uuid.test(id)&&command==='recipient-assessments')methods=['GET','POST'];
+    else if(uuid.test(id)&&['recipient-assessments','submission-ledgers'].includes(command))methods=['GET','POST'];
     else if(uuid.test(id)&&(!command||command==='configurations'))methods=['GET'];
     else if (
       uuid.test(id) &&

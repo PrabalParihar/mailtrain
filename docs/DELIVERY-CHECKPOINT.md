@@ -81,7 +81,7 @@ Current audience slice: Tasks1–5 complete; one whole-slice review found two Im
 | REQ-033 | 5.9 Managed SES and provider keys | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-034 | 5.9 Trial domain and warming | Not started / full capability path absent | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-035 | 5.9 Immediate schedule approval | Partial | Sender/DNS/provider accounts, signed events and consent policy |
-| REQ-036 | 5.9 Recipient jobs and logs | Partial — locally qualified preparation and logs; submission/attempt ledger pending | Sender/DNS/provider accounts, signed events and consent policy |
+| REQ-036 | 5.9 Recipient jobs and logs | Partial — assessments plus staged recipient ledger; actual submission/attempt authorization pending | Sender/DNS/provider accounts, signed events and consent policy |
 | REQ-037 | 5.9 Abuse controls | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-038 | 5.10 Campaigns calendar and UTM | Partial | No distinct account blocker identified; implementation/acceptance still required |
 | REQ-039 | 5.10 A/B subject testing | PRD roadmap retained | No distinct account blocker identified; implementation/acceptance still required |

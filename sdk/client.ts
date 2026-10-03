@@ -32,7 +32,8 @@ export type CallOptions<I extends OperationId> = {
 } & ([Path<I>] extends [never] ? { path?: never } : { path: Path<I> }) &
   ([Body<I>] extends [never] ? { body?: never } : { body: Body<I> }) &
   ((typeof operationRegistry)[I]['binaryBody'] extends true ? {uploadToken:string} : {uploadToken?:never}) &
-  ((typeof operationRegistry)[I]['explicitKey'] extends true ? {idempotencyKey:string;ifMatch:string} : object);
+  ((typeof operationRegistry)[I]['explicitKey'] extends true ? {idempotencyKey:string} : object) &
+  ((typeof operationRegistry)[I]['sourceCommand'] extends true ? {ifMatch:string} : object);
 type RequiredFields<T> = { [K in keyof T]-?: object extends Pick<T, K> ? never : K }[keyof T];
 type Args<I extends OperationId> = [RequiredFields<CallOptions<I>>] extends [never]
   ? [input?: CallOptions<I>]
@@ -138,7 +139,9 @@ export class LettercapeClient {
     if (!contract) throw new Error('Unknown documented operation');
     if (contract.explicitKey) {
       if (!input.idempotencyKey || input.idempotencyKey.length > 200)
-        throw new Error('Supply the original explicit command key for source recovery.');
+        throw new Error('Supply the original explicit command key for recovery.');
+    }
+    if (contract.sourceCommand) {
       if (!input.ifMatch || !/^(?:"draft-[1-9][0-9]*"|"[1-9][0-9]*"|[1-9][0-9]*)$/.test(input.ifMatch))
         throw new Error('Supply the original acknowledged If-Match version.');
     }

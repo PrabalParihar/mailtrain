@@ -1,4 +1,5 @@
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
+import {SubmissionLedgerInput,SubmissionLedgerView,StagedRecipientView,DeliveryHistoryView,DeliveryAttemptView} from '../src/domain/submission-ledgers';
 import {SaveEmailTemplateInput,ArchiveEmailTemplateInput,RemixEmailTemplateInput,EmailTemplateViewSchema} from '../src/domain/email-templates';
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
@@ -47,6 +48,11 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  SubmissionLedgerInput:fromZod(SubmissionLedgerInput),
+  SubmissionLedgerView:fromZod(SubmissionLedgerView),
+  StagedRecipientView:fromZod(StagedRecipientView),
+  DeliveryHistoryView:fromZod(DeliveryHistoryView),
+  DeliveryAttemptView:fromZod(DeliveryAttemptView),
   SaveEmailTemplateInput: fromZod(SaveEmailTemplateInput),
   ArchiveEmailTemplateInput: fromZod(ArchiveEmailTemplateInput),
   RemixEmailTemplateInput: fromZod(RemixEmailTemplateInput),
@@ -329,6 +335,10 @@ schemas.CampaignResponse = envelope({ campaign: ref('Campaign') });
 schemas.WorkspacePreferencesResponse=envelope({preferences:ref('WorkspacePreferences')});
 schemas.WorkspaceTimezoneResponse=envelope({preferences:ref('WorkspacePreferences'),changed:{type:'boolean'},notice:string});
 schemas.CampaignCalendarResponse=envelope({data:array(ref('CalendarEntry')),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0},month:fromZod(CalendarMonth),time_zone:string,timezone_version:{type:'integer',minimum:1},notice:string});
+schemas.SubmissionLedgerResponse=fromZod(z.strictObject({request_id:z.uuid(),ledger:SubmissionLedgerView}));
+schemas.DeliveryResponse=fromZod(z.strictObject({request_id:z.uuid(),delivery:StagedRecipientView}));
+for(const [name,item]of Object.entries({SubmissionLedgers:SubmissionLedgerView,StagedRecipients:StagedRecipientView,DeliveryHistory:DeliveryHistoryView,DeliveryAttempts:DeliveryAttemptView}))
+  schemas[name+'Page']=fromZod(z.strictObject({request_id:z.uuid(),data:z.array(item).max(100),has_more:z.boolean(),next_cursor:z.string().min(1).max(4096).nullable(),total_count:z.number().int().min(0).max(10000)}));
 schemas.RecipientAssessmentResponse=envelope({assessment:ref('RecipientAssessmentView')});
 schemas.CampaignDetailResponse=envelope({campaign:ref('CampaignConfigurationView')});
 schemas.CampaignConfigurationResponse=envelope({campaign:ref('CampaignConfigurationView'),changed:{type:'boolean'},notice:string});
@@ -423,6 +433,7 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const hubspotSettingsExample={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
 const examples: Record<string, unknown> = {
+  SubmissionLedgerInput:{expected_version:1,expected_digest:'a'.repeat(64)},
   SaveEmailTemplateInput: {name:'Example template',source_revision_id:exampleId,expected_artifact_hash:'a'.repeat(64)},
   ArchiveEmailTemplateInput: {expected_version:1},
   RemixEmailTemplateInput: {title:'New independent draft',expected_version:1,expected_artifact_hash:'a'.repeat(64)},
@@ -996,6 +1007,15 @@ add({
 add({id:'getWorkspacePreferences',path:'/v1/workspace-preferences',method:'GET',response:'WorkspacePreferencesResponse',session:true,description:'Current content-role session; display preference only.'});
 add({id:'setWorkspaceTimezone',path:'/v1/workspace-preferences/timezone',method:'POST',body:'WorkspaceTimezoneInput',example:{expected_version:1,time_zone:'UTC'},response:'WorkspaceTimezoneResponse',keyed:true,session:true,description:'Current Owner/Admin session and exact preference version. Replay acknowledges the original command and returns current preference. Campaign intent, hashes and approval remain intact; this does not schedule delivery.'});
 add({id:'getCampaignCalendar',path:'/v1/campaigns/calendar',method:'GET',response:'CampaignCalendarResponse',paged:true,scope:'campaigns:read',query:[{name:'month',in:'query',required:true,schema:fromZod(CalendarMonth)}],description:'Complete valid planned timing displayed in saved workspace timezone. Signed cursor binds actor, tenant, month and timezone version. Redacted metadata only; no accepted delivery schedule or audience-performance measurement.'});
+const ledgerDescription='Durable staged recipients from one immutable campaign configuration and frozen audience. Pending means unapproved work; authorization_issued and dispatch_enabled remain false. Current Owner/Admin audience authority and campaign+audience API scopes required before every original receipt replay. No provider attempts, send quota/frequency reservation or campaign.sent event. Runtime cannot manufacture submission acceptance/outcomes; production authorizer/provider/service identity remain unconfigured.';
+add({id:'stageSubmissionLedger',path:'/v1/campaigns/{id}/submission-ledgers',method:'POST',body:'SubmissionLedgerInput',response:'SubmissionLedgerResponse',status:201,keyed:true,explicitKey:true,scope:'campaigns:write',additionalScopes:['audience:read'],description:ledgerDescription+' Exact version/digest CAS; different verified keys return the same configuration ledger. Original keyed response is historical; retrieve detail for current staging progress. Input16KiB/max10000 sorted captured members, max100 committed rows per worker transaction.'});
+add({id:'listSubmissionLedgers',path:'/v1/campaigns/{id}/submission-ledgers',method:'GET',response:'SubmissionLedgersPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:ledgerDescription});
+add({id:'getSubmissionLedger',path:'/v1/submission-ledgers/{id}',method:'GET',response:'SubmissionLedgerResponse',scope:'campaigns:read',additionalScopes:['audience:read'],description:ledgerDescription});
+add({id:'cancelSubmissionLedger',path:'/v1/submission-ledgers/{id}/cancel',method:'POST',body:'Empty',response:'SubmissionLedgerResponse',keyed:true,explicitKey:true,scope:'campaigns:write',additionalScopes:['audience:read'],description:ledgerDescription+' Cancel unapproved staging and only pending deliveries; retain immutable identities and history. Completed materialization can be cancelled without allowing duplicate recreation.'});
+add({id:'listStagedRecipients',path:'/v1/submission-ledgers/{id}/recipients',method:'GET',response:'StagedRecipientsPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],query:[{name:'state',in:'query',schema:{type:'string',enum:['pending','skipped','cancelled']}}],description:ledgerDescription+' Contact IDs only; no addresses. Signed cursor binds parent ledger and optional state plus actor/tenant/date filters, default25/max100.'});
+add({id:'getStagedDelivery',path:'/v1/deliveries/{id}',method:'GET',response:'DeliveryResponse',scope:'campaigns:read',additionalScopes:['audience:read'],description:ledgerDescription});
+add({id:'listDeliveryHistory',path:'/v1/deliveries/{id}/history',method:'GET',response:'DeliveryHistoryPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:ledgerDescription+' Append-only captured staging/cancellation transitions; outcome remains independently unknown.'});
+add({id:'listDeliveryAttempts',path:'/v1/deliveries/{id}/attempts',method:'GET',response:'DeliveryAttemptsPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:ledgerDescription+' Actual attempt history is empty under current SQL admission. Read-only future shape does not imply provider acceptance. No create/update/transport route exists.'});
 const assessmentDescription='Historical recipient observations from an exact immutable campaign configuration and verified frozen audience. Current Owner/Admin audience authority and additional audience:read API-key scope required on every request/replay. Selected topic is assessment context only. No approval, dispatch authorization, delivery attempt, provider call, frequency reservation or send quota. Production worker identity remains unqualified; local development worker only.';
 add({id:'prepareRecipientAssessment',path:'/v1/campaigns/{id}/recipient-assessments',method:'POST',body:'RecipientAssessmentInput',response:'RecipientAssessmentResponse',status:202,keyed:true,explicitKey:true,scope:'campaigns:write',additionalScopes:['audience:read'],description:assessmentDescription+' Version and digest CAS; original keyed receipt is historical, retrieve detail for current progress. Maximum10,000 members; input16KiB.'});
 add({id:'listRecipientAssessments',path:'/v1/campaigns/{id}/recipient-assessments',method:'GET',response:'RecipientAssessmentsPage',paged:true,scope:'campaigns:read',additionalScopes:['audience:read'],description:assessmentDescription});
