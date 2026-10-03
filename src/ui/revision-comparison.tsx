@@ -3,6 +3,7 @@ import{useEffect,useLayoutEffect,useRef,useState,useCallback,useMemo}from'react'
 import{RevisionComparisonSchema,revisionComparisonRows,type RevisionComparison}from'@/domain/revision-comparison';
 import{api,ApiError}from'./api';import{readComparisonSelection,writeComparisonSelection,type ComparisonSelection,type ComparisonScope}from'./revision-comparison-selection';
 type Checkpoint={id:string;revision_no:number;subject:string;artifact_hash:string};
+const sameUUID=(first:string,second:string)=>first.toLowerCase()===second.toLowerCase();
 const empty:ComparisonSelection={before:'',after:'',open:false};
 function excerpt(value:string,peer:string,source:boolean){let start=0;if(value.length>8192&&value!==peer){let at=0;while(at<Math.min(value.length,peer.length)&&value[at]===peer[at])at++;start=Math.max(0,Math.min(at,value.length-1)-500);}let sample=value.slice(start,start+8192);if(/[\uD800-\uDBFF]$/.test(sample))sample=sample.slice(0,-1);return{value:source?JSON.stringify(sample).replaceAll('\ufeff','\\ufeff'):sample,partial:start>0||start+sample.length<value.length};}
 export function RevisionComparisonPanel({scope,revisions,hasMore,loadMore,pagingBusy}:{scope:ComparisonScope;revisions:Checkpoint[];hasMore:boolean;loadMore:()=>Promise<void>;pagingBusy:boolean}){
@@ -17,7 +18,7 @@ export function RevisionComparisonPanel({scope,revisions,hasMore,loadMore,paging
   running.current?.controller.abort();const controller=new AbortController(),generation=++epoch.current;running.current={key,controller};setBusy(true);setComparison(null);setError('');
   try{const response=await api<{comparison:RevisionComparison}>(stableScope.workspace,'revision-comparisons?'+new URLSearchParams({email_id:stableScope.email,before:value.before,after:value.after}), 'GET',undefined,undefined,undefined,controller.signal,stableScope.actor);
    if(!mounted.current||generation!==epoch.current)return;
-   const receipt=RevisionComparisonSchema.safeParse(response.comparison);if(!receipt.success||receipt.data.workspace_id!==stableScope.workspace||receipt.data.actor_id!==stableScope.actor||receipt.data.email_id!==stableScope.email||receipt.data.before.id!==value.before||receipt.data.after.id!==value.after)throw Error('Invalid comparison receipt');
+   const receipt=RevisionComparisonSchema.safeParse(response.comparison);if(!receipt.success||!sameUUID(receipt.data.workspace_id,stableScope.workspace)||receipt.data.actor_id!==stableScope.actor||!sameUUID(receipt.data.email_id,stableScope.email)||!sameUUID(receipt.data.before.id,value.before)||!sameUUID(receipt.data.after.id,value.after))throw Error('Invalid comparison receipt');
    setComparison(receipt.data);
   }catch(caught){if(mounted.current&&generation===epoch.current&&!controller.signal.aborted)setError(caught instanceof ApiError?caught.message:'Comparison could not be verified. Retry the selected checkpoints; your draft is preserved.');}
   finally{if(mounted.current&&generation===epoch.current){running.current=null;setBusy(false);}}

@@ -22,10 +22,10 @@ export function revisionComparisonRows(before:EmailSpec,after:EmailSpec):Revisio
  if(first.duplicate||second.duplicate){add('ambiguous_sections','Stored blocks with repeated IDs (whole structure comparison)','structure',before.sections,after.sections);return rows;}
  for(const id of new Set([...first.map.keys(),...second.map.keys()])){
   const a=first.map.get(id),b=second.map.get(id),label=`Block ${id}`;
-  if(!a||!b){add('node:'+id,label+(a?' removed':' added'),'structure',a?.node,b?.node);continue;}
-  add('position:'+id,label+' placement','structure',a.position,b.position);
-  for(const field of new Set([...Object.keys(a.node),...Object.keys(b.node)]))if(field!=='id'&&field!=='columns')add(`node:${id}:${field}`,label+' · '+field,field==='html'?'source':'content',Reflect.get(a.node,field),Reflect.get(b.node,field));
-  if(a.node.type==='columns'||b.node.type==='columns')add(`node:${id}:column_count`,label+' column count','structure',a.node.type==='columns'?a.node.columns.length:undefined,b.node.type==='columns'?b.node.columns.length:undefined);
+  if(!a||!b){add(JSON.stringify(['block',id,'presence']),label+(a?' removed':' added'),'structure',a?.node,b?.node);continue;}
+  add(JSON.stringify(['block',id,'position']),label+' placement','structure',a.position,b.position);
+  for(const field of new Set([...Object.keys(a.node),...Object.keys(b.node)]))if(field!=='id'&&field!=='columns')add(JSON.stringify(['block',id,'field',field]),label+' · '+field,field==='html'?'source':'content',Reflect.get(a.node,field),Reflect.get(b.node,field));
+  if(a.node.type==='columns'||b.node.type==='columns')add(JSON.stringify(['block',id,'column_count']),label+' column count','structure',a.node.type==='columns'?a.node.columns.length:undefined,b.node.type==='columns'?b.node.columns.length:undefined);
  }
  return rows;
 }
