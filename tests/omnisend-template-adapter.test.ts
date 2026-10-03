@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { blankSpec, compileEmail } from '../src/domain/email';
-import { compileOmnisendArtifact, type OmnisendArtifact } from '../src/domain/omnisend-export';
+import { compileOmnisendArtifact, omnisendReview, type OmnisendArtifact } from '../src/domain/omnisend-export';
 import { OMNISEND_API_REVISION, OMNISEND_IMPORT_BODY_LIMIT } from '../src/domain/omnisend-export-contracts';
 import { createAndInspectOmnisendTemplate } from '../src/server/omnisend-template-adapter';
 
@@ -85,6 +85,49 @@ test('complete validation refuses invalid constants/hashes/formats/source identi
     let io = 0;
     await assert.rejects(() => createAndInspectOmnisendTemplate({ ...options(a), markSubmission: async () => { io++; }, fetcher: async () => { io++; return json(metadata(), 201); }, ...change } as Parameters<typeof createAndInspectOmnisendTemplate>[0]), error => { assertPrivate(String(error)); return true; });
     assert.equal(io, 0);
+  }
+});
+
+for (const [kind, revision_id] of [
+  ['variant', '11111111-1111-1111-1111-111111111111'],
+  ['version', '11111111-1111-9111-8111-111111111111'],
+] as const) {
+  test(`correctly grouped invalid UUID ${kind} refuses before marker, requests or persistence`, async () => {
+    const a = { ...await artifact(), revision_id };
+    assert.throws(() => omnisendReview(a));
+    const io = { markers: 0, requests: 0, persisted: 0 };
+    const error = await createAndInspectOmnisendTemplate({ ...options(a),
+      markSubmission: async () => { io.markers++; },
+      persistRemoteId: async () => { io.persisted++; },
+      fetcher: async () => json(metadata(), ++io.requests === 1 ? 201 : 200),
+    }).then(() => undefined, (error: unknown) => error);
+    assert.deepEqual(io, { markers: 0, requests: 0, persisted: 0 });
+    assert.ok(error instanceof Error);
+    assert.equal(error.message, 'EXPORT_ARTIFACT_INVALID');
+  });
+}
+
+test('supported UUID versions, uppercase, nil and max keep normal compiled-artifact transport behavior', async () => {
+  const compiled = await artifact();
+  const revisionIds = [
+    ...Array.from({ length: 8 }, (_, i) => `11111111-1111-${i + 1}111-8111-111111111111`),
+    'ABCDEFAB-CDEF-4ABC-ABCD-EFABCDEFABCD',
+    '00000000-0000-0000-0000-000000000000',
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+  ];
+  for (const revision_id of revisionIds) {
+    const a = { ...compiled, revision_id }, order: string[] = [];
+    assert.equal(omnisendReview(a).revision_id, revision_id);
+    const r = await createAndInspectOmnisendTemplate({ ...options(a),
+      markSubmission: async () => { order.push('marker'); },
+      persistRemoteId: async id => { assert.equal(id, ID); order.push('id'); },
+      fetcher: async (_url, init) => { order.push(init!.method!); return json(metadata(), init?.method === 'POST' ? 201 : 200); },
+    });
+    assert.deepEqual(order, ['marker', 'POST', 'id', 'GET']);
+    assert.equal(r.code, 'EXPORT_IMPORT_CONTENT_UNVERIFIED');
+    assert.equal(r.remote_id, ID);
+    assert.equal(r.content_verified, false);
+    assert.equal(r.destination_url, null);
   }
 });
 
