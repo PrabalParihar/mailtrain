@@ -32,8 +32,8 @@ Own src/ui/editor.tsx/src/ui/klaviyo-export.tsx/newHubSpotform+smallbrowserhelpe
 
 ### Task 5: Actual owned HTTP and Chromium qualification
 Own scripts/smoke-hubspot-export.ts and package.json sole smokealias. BindingdetailedTask5brief. No productcodechanges to satisfyfixture; reportconcretefailures.
-- [ ] RealisolatedPGfixture/app HTTP/currentrole/tenant/bodyprivacy/hash/audit/SDK tests and actualallfiveeditorreview/download/retry/interrupt/ABAfences.
-- [ ] Mobile390pixels, empty/error/Viewer/noIO/newoperations-outbox-usage/sourcepreservation; completefailures/logs/type/lint/diff/exactownedcommit and separateTask5review.
+- [x] RealisolatedPGfixture/app HTTP/currentrole/tenant/bodyprivacy/hash/audit/SDK tests and actualallfiveeditorreview/download/retry/interrupt/ABAfences.
+- [x] Mobile390pixels, empty/error/Viewer/noIO/newoperations-outbox-usage/sourcepreservation; completefailures/logs/type/lint/diff/exactownedcommit and separateTask5review.
 
 ### Task 6: Whole qualification and canonical delivery
 - [ ] Configuredfullsuite/type/lint/API/build/Linux/five actualjourneys.
