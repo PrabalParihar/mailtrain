@@ -22,7 +22,7 @@ await sourceDatabase(async({db,p,brand,tx})=>{
   assert.deepEqual((await db.query('SELECT html,plaintext,artifact_hash,spec,manifest FROM revisions WHERE id=$1',[frozen.id])).rows[0],before);
   assert.equal((await context.request.post(endpoint,{headers:{...headers,Origin:origin},data:{}})).status(),405);
   for(const suffix of ['&destination=mailchimp','&unexpected=x','&format=html'])assert.equal((await context.request.get(endpoint+suffix,{headers})).status(),422);
-  assert.equal((await context.request.get(endpoint.replace('mailchimp','brevo'),{headers})).status(),422);
+  assert.equal((await context.request.get(endpoint.replace('mailchimp','hubspot'),{headers})).status(),422);
   assert.equal((await context.request.get(endpoint,{headers:{...headers,'X-Actor-Id':viewer}})).status(),409);
   assert.equal((await context.request.get(endpoint,{headers:{...headers,'X-Workspace-Id':randomUUID()}})).status(),404);
   // Real scoped bearer grants are fixture-only and never leave the loopback app.

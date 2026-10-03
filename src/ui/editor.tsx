@@ -3,7 +3,8 @@ import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
 import{MailchimpReview as MailchimpReviewSchema,type MailchimpReview}from'../domain/mailchimp-export-contracts';
 import{OmnisendReview as OmnisendReviewSchema,type OmnisendReview}from'../domain/omnisend-export-contracts';
-type Destination='klaviyo'|'mailchimp'|'omnisend';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview;
+import{BrevoReview as BrevoReviewSchema,type BrevoReview}from'../domain/brevo-export-contracts';
+type Destination='klaviyo'|'mailchimp'|'omnisend'|'brevo';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview|BrevoReview;
 import {LocaleSourceComparison} from './locale-source-comparison';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
@@ -395,7 +396,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       const controller=new AbortController();exportController.current=controller;
       try{const result=await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination='+selectedDestination,'GET',undefined,undefined,undefined,controller.signal,scope.actor);
         if(controller.signal.aborted||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
-        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):selectedDestination==='mailchimp'?MailchimpReviewSchema.parse(result.review):OmnisendReviewSchema.parse(result.review);
+        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):selectedDestination==='mailchimp'?MailchimpReviewSchema.parse(result.review):selectedDestination==='omnisend'?OmnisendReviewSchema.parse(result.review):BrevoReviewSchema.parse(result.review);
         if(review.revision_id!==r.id||review.source_artifact_hash!==r.artifact_hash)throw Error('The destination receipt belongs to a different frozen version. Review again.');
         setDestinationPreparation({review,anchor:r.anchor,...scope});
       }finally{if(exportController.current===controller)exportController.current=null;}

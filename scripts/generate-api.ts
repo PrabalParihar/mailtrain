@@ -1,6 +1,7 @@
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
 import{OmnisendReview,OMNISEND_MAPPING_VERSION}from'../src/domain/omnisend-export-contracts';
+import{BrevoReview,BREVO_MAPPING_VERSION}from'../src/domain/brevo-export-contracts';
 import {RecipientAssessmentInput,RecipientAssessmentView,RecipientObservationView}from'../src/domain/recipient-assessments';
 import{ConversionProposalInput,ConversionAcceptInput,ConversionProposalSchema}from'../src/domain/email-conversion-contracts';
 import{WorkspacePreferences,WorkspaceTimezoneInput,CalendarEntry,CalendarMonth}from'../src/domain/workspace-calendar';
@@ -47,7 +48,8 @@ const schemas: Record<string, Schema> = {
   KlaviyoReview:fromZod(KlaviyoReview),
   MailchimpReview:fromZod(MailchimpReview),
   OmnisendReview:fromZod(OmnisendReview),
-  DestinationReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:z.discriminatedUnion('destination',[KlaviyoReview,MailchimpReview,OmnisendReview])})),
+  BrevoReview:fromZod(BrevoReview),
+  DestinationReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:z.discriminatedUnion('destination',[KlaviyoReview,MailchimpReview,OmnisendReview,BrevoReview])})),
   KlaviyoReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:KlaviyoReview})),
   EmailSourceSpec: fromZod(EmailSourceSpecSchema),
   SourceProfile: fromZod(SourceProfileSchema),
@@ -512,7 +514,7 @@ function add(d: Definition) {
           'X-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Destination artifact hash bound to source, mapping, API revision and both prepared formats.'},
           'X-Source-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Exact frozen source artifact hash reviewed before download.'},
           'X-Content-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'SHA256 of the exact UTF-8 bytes for the selected format.'},
-          'X-Destination-Mapping':{schema:{type:'string',enum:[KLAVIYO_MAPPING_VERSION,MAILCHIMP_MAPPING_VERSION,OMNISEND_MAPPING_VERSION]}},
+          'X-Destination-Mapping':{schema:{type:'string',enum:[KLAVIYO_MAPPING_VERSION,MAILCHIMP_MAPPING_VERSION,OMNISEND_MAPPING_VERSION,BREVO_MAPPING_VERSION]}},
           'X-Remote-Export-Enabled':{schema:{type:'string',const:'false'},description:'Local preparation only; no provider export is enabled.'},
           'Content-Type':{schema:{type:'string',enum:['text/html; charset=utf-8','text/plain; charset=utf-8']}},
           'Content-Disposition':{schema:string,description:'attachment; filename="{destination}-prepared-{revision_id}.{format}"'},
@@ -807,8 +809,8 @@ add({
     },
   ],
 });
-add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'DestinationReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic or Omnisend HTML-import preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend']}}]});
-add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
+add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'DestinationReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic, Omnisend HTML-import or Brevo marketing-draft preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend','brevo']}}]});
+add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend','brevo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
 for (const [id, command, blocked] of [
   ['preflightRevision', 'preflight', false],
   ['exportRevision', 'export', true],

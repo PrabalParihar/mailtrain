@@ -1352,7 +1352,7 @@ export interface paths {
         };
         /**
          * review destination revision
-         * @description Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic or Omnisend HTML-import preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
+         * @description Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic, Omnisend HTML-import or Brevo marketing-draft preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
          */
         get: operations["reviewDestinationRevision"];
         put?: never;
@@ -2327,6 +2327,32 @@ export interface components {
                 "MANAGEMENT_LINK_UNVERIFIED"
             ];
         };
+        BrevoReview: {
+            /** @constant */
+            destination: "brevo";
+            /** @constant */
+            mapping_version: "brevo-campaign-html-1";
+            /** @constant */
+            api_revision: "v3";
+            /** Format: uuid */
+            revision_id: string;
+            source_artifact_hash: string;
+            destination_hash: string;
+            html_sha256: string;
+            text_sha256: string;
+            /** @constant */
+            remote_export_enabled: false;
+            transformations: string[];
+            blockers: [
+                "CONNECTION_AUTH_MODE_UNAPPROVED",
+                "ACCOUNT_ENTITLEMENT_UNVERIFIED",
+                "SENDER_UNVERIFIED",
+                "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                "DESTINATION_CONFORMANCE_UNVERIFIED",
+                "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
+                "MANAGEMENT_LINK_UNVERIFIED"
+            ];
+        };
         DestinationReviewResponse: {
             /** Format: uuid */
             request_id: string;
@@ -2401,6 +2427,31 @@ export interface components {
                     "DESTINATION_CONFORMANCE_UNVERIFIED",
                     "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
                     "IMPORT_FIDELITY_UNVERIFIED",
+                    "MANAGEMENT_LINK_UNVERIFIED"
+                ];
+            } | {
+                /** @constant */
+                destination: "brevo";
+                /** @constant */
+                mapping_version: "brevo-campaign-html-1";
+                /** @constant */
+                api_revision: "v3";
+                /** Format: uuid */
+                revision_id: string;
+                source_artifact_hash: string;
+                destination_hash: string;
+                html_sha256: string;
+                text_sha256: string;
+                /** @constant */
+                remote_export_enabled: false;
+                transformations: string[];
+                blockers: [
+                    "CONNECTION_AUTH_MODE_UNAPPROVED",
+                    "ACCOUNT_ENTITLEMENT_UNVERIFIED",
+                    "SENDER_UNVERIFIED",
+                    "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                    "DESTINATION_CONFORMANCE_UNVERIFIED",
+                    "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
                     "MANAGEMENT_LINK_UNVERIFIED"
                 ];
             };
@@ -26731,7 +26782,7 @@ export interface operations {
     reviewDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo" | "mailchimp" | "omnisend";
+                destination: "klaviyo" | "mailchimp" | "omnisend" | "brevo";
             };
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
@@ -27008,7 +27059,7 @@ export interface operations {
     downloadDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo" | "mailchimp" | "omnisend";
+                destination: "klaviyo" | "mailchimp" | "omnisend" | "brevo";
                 format?: "html" | "txt";
             };
             header?: {
@@ -27032,7 +27083,7 @@ export interface operations {
                     "X-Source-Artifact-Hash"?: string;
                     /** @description SHA256 of the exact UTF-8 bytes for the selected format. */
                     "X-Content-SHA256"?: string;
-                    "X-Destination-Mapping"?: "klaviyo-html-1" | "mailchimp-classic-html-1" | "omnisend-html-import-1";
+                    "X-Destination-Mapping"?: "klaviyo-html-1" | "mailchimp-classic-html-1" | "omnisend-html-import-1" | "brevo-campaign-html-1";
                     /** @description Local preparation only; no provider export is enabled. */
                     "X-Remote-Export-Enabled"?: "false";
                     "Content-Type"?: "text/html; charset=utf-8" | "text/plain; charset=utf-8";

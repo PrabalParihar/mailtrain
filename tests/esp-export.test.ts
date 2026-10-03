@@ -62,7 +62,7 @@ test('generated destination download describes exact media and integrity receipt
  assert.deepEqual(Object.keys(response.content).sort(),['text/html','text/plain']);
  assert.match(response.description,/Klaviyo/);assert.doesNotMatch(response.description,/image\/PDF/);
  for(const name of ['X-Artifact-Hash','X-Source-Artifact-Hash','X-Content-SHA256'])assert.equal(response.headers[name].schema.pattern,'^[a-f0-9]{64}$');
- assert.deepEqual(response.headers['X-Destination-Mapping'].schema.enum,['klaviyo-html-1','mailchimp-classic-html-1','omnisend-html-import-1']);
+ assert.deepEqual(response.headers['X-Destination-Mapping'].schema.enum,['klaviyo-html-1','mailchimp-classic-html-1','omnisend-html-import-1','brevo-campaign-html-1']);
  assert.equal(response.headers['X-Remote-Export-Enabled'].schema.const,'false');
  assert.equal(response.headers['Cache-Control'].schema.const,'no-store');
  assert.equal(response.headers['X-Content-Type-Options'].schema.const,'nosniff');
