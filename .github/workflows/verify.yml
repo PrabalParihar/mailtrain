@@ -55,6 +55,7 @@ jobs:
           # Owned fixture apps finish before the shared Next dev lock is acquired.
           npm run smoke:source-truth
           npm run smoke:locale-comparison
+          npm run smoke:locale-reviews
           npm run smoke:recipient-assessments
           npm run smoke:klaviyo-export
           npm run smoke:mailchimp-export

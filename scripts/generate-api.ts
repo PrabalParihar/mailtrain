@@ -1,5 +1,6 @@
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
 import {SubmissionLedgerInput,SubmissionLedgerView,StagedRecipientView,DeliveryHistoryView,DeliveryAttemptView} from '../src/domain/submission-ledgers';
+import {LocaleReviewInput,LocaleReviewRecord,LocaleReviewContext,LocaleReviewHistoryItem} from '../src/domain/locale-content-review';
 import {SaveEmailTemplateInput,ArchiveEmailTemplateInput,RemixEmailTemplateInput,EmailTemplateViewSchema} from '../src/domain/email-templates';
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
@@ -48,6 +49,10 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  LocaleReviewInput:fromZod(LocaleReviewInput),
+  LocaleReviewRecord:fromZod(LocaleReviewRecord),
+  LocaleReviewContext:fromZod(LocaleReviewContext),
+  LocaleReviewHistoryItem:fromZod(LocaleReviewHistoryItem),
   SubmissionLedgerInput:fromZod(SubmissionLedgerInput),
   SubmissionLedgerView:fromZod(SubmissionLedgerView),
   StagedRecipientView:fromZod(StagedRecipientView),
@@ -311,6 +316,8 @@ const comparisonDraft=object({id:uuid,title:{type:'string',maxLength:160},doc_ve
 schemas.LocaleSourceComparison=object({workspace_id:uuid,actor_id:{type:'string',minLength:1},child_id:uuid,parent:comparisonDraft,target:comparisonDraft,baseline:object({revision_id:uuid,revision_no:{type:'integer',minimum:1},source_doc_version:nullable({type:'integer',minimum:1}),spec:ref('EmailSourceSpec')},undefined,false),source_status:{type:'string',enum:['current','outdated','unknown']}},undefined,false);
 schemas.LocaleSourceComparison.description='Same-workspace original source/current parent/saved target. Server enforces lineage, child/parent identity and actual versions beyond JSON Schema; the three escaped specs share an8MiB admission bound. No translation, review or approval is implied.';
 schemas.LocaleSourceComparisonResponse=envelope({comparison:ref('LocaleSourceComparison')});
+schemas.LocaleReviewResponse=envelope({review:ref('LocaleReviewRecord')});
+schemas.LocaleReviewHistoryResponse=envelope({context:ref('LocaleReviewContext'),data:array(ref('LocaleReviewHistoryItem')),total_count:{type:'integer',minimum:0},has_more:{type:'boolean'},next_cursor:nullable(string)});
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
 schemas.MembershipCommandResponse=envelope({member:ref('Membership'),changes:array(ref('MembershipChange'))});
 schemas.MembershipSummaryResponse=envelope({summary:ref('MembershipSummary')});
@@ -433,6 +440,7 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const hubspotSettingsExample={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
 const examples: Record<string, unknown> = {
+  LocaleReviewInput:{revision_id:exampleId,source_revision_id:exampleId,expected_source_doc_version:1,outcome:'content_reviewed',note:'Manually checked the local wording; sending is not approved.'},
   SubmissionLedgerInput:{expected_version:1,expected_digest:'a'.repeat(64)},
   SaveEmailTemplateInput: {name:'Example template',source_revision_id:exampleId,expected_artifact_hash:'a'.repeat(64)},
   ArchiveEmailTemplateInput: {expected_version:1},
@@ -811,6 +819,8 @@ add({
 add({id:'prepareEmailConversion',path:'/v1/emails/{id}/conversion-proposal',method:'POST',body:'ConversionProposalInput',response:'ConversionProposalResponse',scope:'emails:write',description:'Read-only proposal pinned to the current raw source/version; explicit unsupported cases stay raw, safe complex fragments remain opaque. No Monaco/VML/universal/client-fidelity claim.'});
 add({id:'acceptEmailConversion',path:'/v1/emails/{id}/convert-to-blocks',method:'POST',body:'ConversionAcceptInput',response:'ConversionAcceptResponse',keyed:true,etag:true,scope:'emails:write',description:'Explicit layout-change acknowledgment and exact source/proposal hashes. Current authority after receipt/resource waits; atomic original raw checkpoint and new structured head. Historical exact receipts never replace current detail; recover the same body/key and original If-Match.'});
 add({id:'compareLocaleSource',path:'/v1/emails/{id}/locale-source',method:'GET',response:'LocaleSourceComparisonResponse',scope:'emails:read',description:'Read-only same-workspace original frozen source/current parent/saved locale-child comparison. Returns exact inert specs and versions; does not translate, checkpoint, review, approve or mutate source lineage.'});
+add({id:'listLocaleReviews',path:'/v1/emails/{id}/locale-reviews',method:'GET',response:'LocaleReviewHistoryResponse',scope:'emails:read',paged:true,description:'Manual content-review history and saved locale/source context. Applicability compares the frozen target version and observed source version with current drafts; never implies translation or sending approval.'});
+add({id:'recordLocaleReview',path:'/v1/emails/{id}/locale-reviews',method:'POST',body:'LocaleReviewInput',response:'LocaleReviewResponse',scope:'emails:write',keyed:true,etag:true,status:201,description:'Owner/Admin/Editor manual review of an existing checkpoint matching the acknowledged saved locale version. Pins original source revision and observed current parent version; stale context refuses. Replay the exact input/key/If-Match for historical acknowledgment. Does not mutate either draft, source lineage or send approval.'});
 add({ id: 'listEmailDerivatives', path: '/v1/emails/{id}/derivatives', method: 'GET', response: 'DerivativesPage', paged: true, scope: 'emails:read' });
 for (const [id, command, body] of [['remixRevision', 'remix', 'RemixInput'], ['createLocaleDraft', 'localize', 'LocaleDraftInput']] as const)
   add({ id, path: '/v1/email-revisions/{id}/' + command, method: 'POST', response: 'DerivationResponse', body, keyed: true, status: 201, scope: 'emails:write', description: command === 'localize' ? 'Creates a separately versioned manual locale draft linked to the frozen source. Source text is retained, not translated or reviewed; no AI/provider/send success is implied.' : 'Copies a frozen source into a separately versioned same-workspace remix with immutable source provenance. Source remains intact.' });

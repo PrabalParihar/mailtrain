@@ -804,6 +804,30 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "listLocaleReviews": {
+    "method": "GET",
+    "path": "/v1/emails/{id}/locale-reviews",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "recordLocaleReview": {
+    "method": "POST",
+    "path": "/v1/emails/{id}/locale-reviews",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
   "listEmailDerivatives": {
     "method": "GET",
     "path": "/v1/emails/{id}/derivatives",

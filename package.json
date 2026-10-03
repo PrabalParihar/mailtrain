@@ -54,6 +54,7 @@
     "smoke:media": "node scripts/smoke-media.mjs --scan",
     "smoke:assets": "node --import tsx scripts/smoke-assets.ts",
     "smoke:locale-comparison": "node --import tsx scripts/smoke-locale-comparison.ts",
+    "smoke:locale-reviews": "node --import tsx scripts/smoke-locale-reviews.ts",
     "smoke:source-truth": "node --import tsx scripts/smoke-source-truth.ts && node --import tsx scripts/smoke-source-editor.ts && node --import tsx scripts/smoke-source-editor.ts --fragments",
     "worker:recipients:local": "node --import tsx scripts/recipient-assessment-worker.ts",
     "smoke:recipient-assessments": "node --import tsx scripts/smoke-recipient-assessments.ts",

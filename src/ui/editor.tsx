@@ -9,6 +9,7 @@ import{snapshotHubSpotSettings,hubspotSettingsDigest,sameHubSpotSettings,request
 type Destination='klaviyo'|'mailchimp'|'omnisend'|'brevo'|'hubspot';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview|BrevoReview|HubSpotReview;
 function emptyHubSpotSettings():HubSpotFooterSettingsData{return {company_name:'',company_street_address_1:'',company_street_address_2:'',company_city:'',company_state:'',company_zip:'',company_country:''};}
 import {LocaleSourceComparison} from './locale-source-comparison';
+import {LocaleContentReview} from './locale-content-review';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
 import {effectiveProjectionStatus} from '@/domain/projection-status';
@@ -740,6 +741,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         if(!editorActive.current||!live.current||!editRole||busyRef.current||conflictRef.current||pendingSave.current||scopeRef.current.actor!==actor||live.current.id!==id||canonicalSpecString(live.current.spec)!==expected)return 'The editor changed or a save is unresolved. Your local translations are preserved; compare again after the current action.';
         update(EmailSourceSpecSchema.parse(next));return null;
       }}/>}
+      {doc.lineage?.kind==='locale'&&<LocaleContentReview key={'content-review:'+workspace+':'+actor+':'+id} workspace={workspace} email={id} actor={actor} version={doc.doc_version} canEdit={editRole} blocked={!!busy||!!conflict||hasPendingSave||status!=='Saved · v'+doc.doc_version} canRecord={()=>!!editorActive.current&&!!live.current&&live.current.id===id&&scopeRef.current.actor===actor&&!!roleRef.current&&!busyRef.current&&!conflictRef.current&&!pendingSave.current&&canonicalSpecString(live.current.spec)===ack.current}/>}
       <DerivedEmails workspace={workspace} id={id} sourceLocale={doc.spec.locale} lineage={doc.lineage ?? null} canEdit={editRole} busy={!!busy || !!conflict}
         onCreate={(input) => void act('derive', async () => {
           if (!(await flush()) || dirtyAt.current || !live.current) return;

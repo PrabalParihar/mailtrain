@@ -1,0 +1,19 @@
+# Manual locale content review — 2026-10-03
+
+This independent REQ-026 increment starts from qualified main `27e2872aab7be76ae3988577e1377661d2cde4ef`. It adds ordinary single-author content-review records to the existing linked-locale editor. Full Baseline A, all 65 requirements and all 13 release gates remain binding; no entire requirement or gate is accepted by this feature.
+
+Owner, Admin and Editor accounts can explicitly record **Content reviewed** or **Changes requested**, with a required note of up to 4,000 characters. Viewer accounts can inspect history. The server records the actual account; the interface does not claim a qualified translator participated. Content review never approves sending or creates a translation.
+
+A record references an immutable locale checkpoint matching the acknowledged saved draft version, the original frozen source checkpoint, and the current parent draft version observed by the reviewer. It changes neither draft, source lineage nor campaign approval. Parent and child changes are reflected as source-changed, locale-changed or both-changed applicability in subsequent history reads. The original source lineage can remain stale even when a manual content review applies to the currently observed drafts. Review notes are preserved as plain text; they are not interpreted as HTML.
+
+New GET/POST `/v1/emails/{id}/locale-reviews` operations use existing workspace authorization, CAS version and idempotency contracts. History uses the existing bounded, signed collection paging. New records require an explicit source-version match and a current locale checkpoint; stale context refuses. Replaying an exact original key/body/If-Match returns the historical acknowledgment without creating another record. Clients reread history rather than treating an old receipt as current approval.
+
+The editor requires saved content and an existing checkpoint before a new review. It retains notes on refusals and failed reads, synchronously admits one action, and rejects delayed results after a document/account/version change. Session storage keeps the scoped draft note and original unresolved review command for explicit recovery after reload; no automatic retry runs. Storage failure is disclosed and memory-held work remains available. This is browser-session recovery, not cross-device note synchronization.
+
+## Qualification and limits
+
+Ordinary feature tests cover required/bounded notes, distinct drift states, actual checkpoint persistence, unchanged source/draft content, exact replay after later edits, stale context refusals and paginated history. The browser fixture renders the real application against a disposable local database using clearly synthetic accounts and notes. It covers repeated clicks, durable reload, committed-but-lost acknowledgment and same-command recovery, stale source refusal/note retention, unsaved draft/checkpoint requirements, unavailable reads/retry, generated API response conformance, history paging, Hebrew at 390px, navigation during a delayed read, escaped note text and Viewer read-only presentation. No paid provider or real reviewer participates.
+
+The existing API definitions remain semantically unchanged; two new method operations bring the documented total to 139. Full lint, typecheck, generated API consistency, production build and exact-head CI are qualification prerequisites. Final published commit and CI outcome are reported with delivery rather than invented in advance here.
+
+AI translation proposals, qualified linguistic review, recipient locale fallback, at least 20 named locale/date/currency fixtures and real RTL/client goldens remain open. Collaboration, its separate checkout/workers and paused persistence/authority/revocation qualification are excluded. No security assessment/probe, live sending, billing or production launch occurs in this increment. All provider, legal, consent, economics and GA gates stay closed.

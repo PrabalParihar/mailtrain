@@ -14,7 +14,7 @@ const Cursor = z.object({
 });
 type Options = {
   resource:
-    'submission-ledgers' | 'staged-recipients' | 'delivery-history' | 'delivery-attempts' | 'email-templates' | 'recipient-assessments' | 'recipient-observations' | 'sender-identities' | 'sender-versions' | 'sender-dns-checks' |
+    'locale-reviews' | 'submission-ledgers' | 'staged-recipients' | 'delivery-history' | 'delivery-attempts' | 'email-templates' | 'recipient-assessments' | 'recipient-observations' | 'sender-identities' | 'sender-versions' | 'sender-dns-checks' |
     'audience-snapshots' | 'campaign-calendar' | 'campaign-configurations' | 'creation-operations' | 'creation-attempts' | 'memberships' | 'membership-changes' | 'keys' | 'brand-sources' | 'brands' | 'emails' | 'revisions' | 'contacts' | 'campaigns' | 'segments' | 'audit' | 'derivatives' | 'events' | 'webhook-endpoints' | 'webhook-deliveries' | 'webhook-attempts';
   from: string;
   fields: string;

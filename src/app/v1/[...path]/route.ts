@@ -5,6 +5,7 @@ import{destinationReviewResponse}from'@/server/esp-export-review';
 import {prepareRecipientAssessment,assessmentDetail,assessmentHistory,assessmentObservations,cancelRecipientAssessment} from '@/server/recipient-assessments';
 import {RecipientAssessmentInput} from '@/domain/recipient-assessments';
 import {localeSourceComparison} from '@/server/locale-source-comparison';
+import {localeContentReviewRoute} from '@/server/locale-content-review-route';
 import type {Block} from '@/domain/email-schema';
 import {emailConversionRoute}from'@/server/email-conversion';
 import {workspacePreferenceRoute} from '@/server/workspace-calendar';
@@ -80,6 +81,7 @@ async function handle(req: Request, ctx: Context) {
     const recipientBody=ledgerBody||root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
     const body=recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
+    if(root==='emails'&&id&&command==='locale-reviews')return json(await localeContentReviewRoute(req,id,body,key),method==='POST'?201:200);
     if (ledgerBody) {
       const result = await submissionLedgerRoute(req, path, body, key);
       return json(result, root === 'campaigns' && method === 'POST' ? 201 : 200);
