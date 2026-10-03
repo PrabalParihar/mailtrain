@@ -53,6 +53,14 @@ await sourceDatabase(async({db,p})=>{
     const cells=contents.split('\r\n')[1].split(',');const actualSnapshot={...payload.report,generated_at:cells[1]};assert.equal(contents,creationReportCSV(actualSnapshot));
     console.log('Actual durable cohort, cutoff, daily timezone, measured/missing timing, repeated click and exact snapshot CSV PASS.');
 
+    await page.getByRole('link',{name:'Email generation history',exact:true}).click();await page.waitForURL(origin+'/app/emails/new');await page.goBack();await snapshot.waitFor();
+    assert.equal(await start.inputValue(),'2026-03-08','Back navigation must retain the applied UTC start');
+    assert.equal(await end.inputValue(),'2026-03-09');assert.equal(await zone.inputValue(),'America/New_York');
+    await snapshot.getByText('20.0 seconds',{exact:true}).waitFor();
+    assert.equal(new URL(page.url()).searchParams.get('start'),'2026-03-08');
+    await page.reload();await snapshot.getByText('20.0 seconds',{exact:true}).waitFor();assert.equal(await zone.inputValue(),'America/New_York');
+    console.log('Actual creation-history link and browser Back retain applied report filters PASS.');
+
     await start.fill('2026-01-01');await apply.click();await page.getByRole('alert').filter({hasText:'up to 31 days'}).waitFor();assert.equal(await start.inputValue(),'2026-01-01');assert.equal(await csv.isEnabled(),false);
     await start.fill('2026-03-08');
     await page.route(endpoint,route=>route.fulfill({status:503,json:{error:{code:'FIXTURE_UNAVAILABLE',message:'Owned report unavailable'}}}));
@@ -71,11 +79,14 @@ await sourceDatabase(async({db,p})=>{
     await page.setViewportSize({width:1440,height:1000});
     await page.getByLabel('Active brand workspace',{exact:true}).selectOption(emptyWorkspace);await page.waitForURL(origin+'/app');await page.goto(origin+'/app/reports');await snapshot.getByRole('heading',{name:'No recorded operations in this window.'}).waitFor();
     assert.equal(await snapshot.locator('dt').filter({hasText:/^Total operations$/}).locator('+ dd').innerText(),'0');
+    let invalidReads=0;await page.route(endpoint,async route=>{invalidReads++;await route.continue();});
+    await page.goto(origin+'/app/reports?type=brand.extract&start=bad&end=2026-03-09&time_zone=UTC');await page.getByRole('alert').filter({hasText:'URL is invalid or incomplete'}).waitFor();assert.equal(invalidReads,0);assert.equal(await snapshot.count(),0);assert.equal(await csv.isEnabled(),false);await page.unroute(endpoint);
+    await page.goto(origin+'/app/reports?type=brand.extract&start=2026-03-08&end=2026-03-09&time_zone=Asia%2FKolkata');await snapshot.getByRole('heading',{name:'Brand extraction snapshot'}).waitFor();assert.equal(await start.inputValue(),'2026-03-08');assert.equal(await zone.inputValue(),'Asia/Kolkata');
     const viewer='report-viewer-'+randomUUID(),viewerCookie=randomBytes(32).toString('hex');
     await db.query("INSERT INTO memberships(workspace_id,user_id,role)VALUES($1,$2,'Viewer')",[p.workspace,viewer]);await db.query("INSERT INTO auth_sessions(token_hash,user_id,expires_at)VALUES($1,$2,clock_timestamp()+interval '1 hour')",[digest(viewerCookie),viewer]);
     const view=await browser.newContext({viewport:{width:1440,height:1000}});await view.addCookies([{name:'mailcraft_local_session',value:viewerCookie,url:origin,sameSite:'Strict'}]);const viewerPage=await view.newPage();await viewerPage.goto(origin+'/app/reports');await viewerPage.getByRole('heading',{name:'No recorded operations in this window.'}).waitFor();await view.close();
     assert.deepEqual((await db.query('SELECT * FROM operations ORDER BY id')).rows,original);assert.equal(writes,0);assert.equal(external,0);assert.deepEqual(errors,[]);
-    console.log('Actual320/390px, workspace change, ordinary Viewer read and unchanged records PASS; no providers or writes.');
+    console.log('Actual320/390px, workspace change, deep-link/reload/invalid URL, ordinary Viewer read and unchanged records PASS; no providers or writes.');
   }finally{
     if(browser)await browser.close();
     if(app&&app.exitCode===null){const exited=new Promise<void>(resolve=>app!.once('exit',()=>resolve()));app.kill('SIGTERM');await Promise.race([exited,new Promise<void>(resolve=>setTimeout(resolve,5000))]);if(app.exitCode===null){app.kill('SIGKILL');await exited;}}

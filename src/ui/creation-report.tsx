@@ -34,6 +34,24 @@ function windowFor(selection: Selection) {
     time_zone: selection.timeZone.trim(),
   });
 }
+function selectionFromURL(fallback: Selection): Selection {
+  const params = new URLSearchParams(window.location.search);
+  if (!params.size) return fallback;
+  const keys = ['type', 'start', 'end', 'time_zone'] as const;
+  if (keys.some((key) => params.getAll(key).length !== 1)) throw new Error('Incomplete report window');
+  const selection = {
+    type: params.get('type') as Selection['type'],
+    start: params.get('start')!, end: params.get('end')!, timeZone: params.get('time_zone')!,
+  };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(selection.start) || !/^\d{4}-\d{2}-\d{2}$/.test(selection.end))
+    throw new Error('Report dates must use YYYY-MM-DD');
+  windowFor(selection);
+  return { ...selection, timeZone: selection.timeZone.trim() };
+}
+function preserveWindow(selection: Selection) {
+  const params = new URLSearchParams({ type: selection.type, start: selection.start, end: selection.end, time_zone: selection.timeZone.trim() });
+  window.history.replaceState(window.history.state, '', window.location.pathname + '?' + params + window.location.hash);
+}
 function matches(report: Report, selection: Selection) {
   try {
     const window = windowFor(selection);
@@ -57,10 +75,15 @@ export function CreationReport({ workspace, actor }: { workspace: string; actor:
   const initial = useRef(selection);
   const load = useCallback(async (chosen: Selection) => {
     if (admission.current || !workspace || !actor) return;
-    let window: ReturnType<typeof parseCreationReportWindow>;
-    try { window = windowFor(chosen); }
+    let reportWindow: ReturnType<typeof parseCreationReportWindow>;
+    try { reportWindow = windowFor(chosen); }
     catch {
       setError('Choose a valid UTC date range within years 2000–2100, up to 31 days, and a supported IANA time zone. The end date must be after the start date.');
+      return;
+    }
+    try { preserveWindow(chosen); }
+    catch {
+      setError('The report window could not be saved in this page URL. Try again.');
       return;
     }
     admission.current = true;
@@ -69,7 +92,7 @@ export function CreationReport({ workspace, actor }: { workspace: string; actor:
     controller.current = request;
     setBusy(true); setError(''); setReport(null);
     try {
-      const query = new URLSearchParams(window);
+      const query = new URLSearchParams(reportWindow);
       const response = await api<{ report: unknown }>(workspace, 'operations/report?' + query, 'GET', undefined, undefined, undefined, request.signal, actor);
       const parsed = CreationActivityReport.safeParse(response.report);
       if (!parsed.success) throw new Error('The report response could not be read. Refresh to try again.');
@@ -88,7 +111,17 @@ export function CreationReport({ workspace, actor }: { workspace: string; actor:
   useEffect(() => {
     let active = true;
     const fence = epoch;
-    void Promise.resolve().then(() => { if (active) return load(initial.current); });
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      let chosen: Selection;
+      try { chosen = selectionFromURL(initial.current); }
+      catch {
+        setError('The report window in this URL is invalid or incomplete. Choose a valid operation, UTC start and end dates, and time zone, then apply the report window.');
+        return;
+      }
+      setSelection(chosen);
+      return load(chosen);
+    });
     return () => { active = false; fence.current++; controller.current?.abort(); admission.current = false; };
   }, [load]);
   const displayedMatches = Boolean(report && matches(report, selection));
