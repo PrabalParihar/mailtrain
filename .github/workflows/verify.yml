@@ -5,7 +5,8 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # c142 used11m21 before15 further smokes; retain all checks with bounded headroom.
+    timeout-minutes: 30
     services:
       redis:
         image: redis:7.4-alpine
