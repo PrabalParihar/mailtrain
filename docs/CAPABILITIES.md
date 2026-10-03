@@ -24,7 +24,7 @@ No reduced GA baseline is approved. Partial local behavior does not satisfy the 
 | REQ-018 | 5.4 Business realtime collaboration | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-019 | 5.4 Responsive canvas | Partial / development | Desktop/390px simulation shares spec; no client evidence claim |
 | REQ-020 | 5.5 AI images and editing | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
-| REQ-021 | 5.5 GIFs and static fallback | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
+| REQ-021 | 5.5 GIFs and static fallback | Partial / development | Tested private upload, immutable image/GIF variants and static fallback foundation; source lifecycle/current takedown and export admission qualified locally. Public immutable delivery, real-client fidelity and full production acceptance remain required. See MEDIA-ASSETS-CHECKPOINT.md and SOURCE-TRUTH-CHECKPOINT.md. |
 | REQ-022 | 5.6 Real client preflight | Required / pending | Implementation and acceptance evidence remain required; provider/decision gates apply where stated. |
 | REQ-023 | 5.6 Lint links spam and dark mode | Partial / development | Frozen-artifact rule-versioned severity, located voice/footer/alt, static URL syntax, known-token contrast/HTML-byte warnings and spam advisory tested. Live availability/image measurement, opaque contrast/dark mode, client conformance and labeled catch-rate acceptance remain required. |
 | REQ-024 | 5.6 Blocking and report sharing | Partial / development | Missing real-client evidence remains incomplete; sharing/override not implemented |
