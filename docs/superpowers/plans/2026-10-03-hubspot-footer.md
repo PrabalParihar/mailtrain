@@ -36,6 +36,6 @@ Own scripts/smoke-hubspot-export.ts and package.json sole smokealias. Bindingdet
 - [x] Mobile390pixels, empty/error/Viewer/noIO/newoperations-outbox-usage/sourcepreservation; completefailures/logs/type/lint/diff/exactownedcommit and separateTask5review.
 
 ### Task 6: Whole qualification and canonical delivery
-- [ ] Configuredfullsuite/type/lint/API/build/Linux/five actualjourneys.
-- [ ] ONEwholeimmutable review; ONEcompletefix andONEscopedifneeded; allfindingsrulingsretained.
+- [x] Configuredfullsuite/type/lint/API/build/Linux/five actualjourneys.
+- [x] ONEwholeimmutable review; ONEcompletefix andONEscopedifneeded; allfindingsrulingsretained.
 - [ ] CanonicalbytecheckedFF/freshbuildbrowser/preservation/ownedappsrestore, fullverbatimreports/ledger/failures beforeonlyownscratchcleanup. Continue remainingGA.
