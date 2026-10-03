@@ -2,6 +2,7 @@
 
 import type { Block } from '@/domain/email';
 import { BlockFields } from './email-block-fields';
+import type {ColumnEditorActions} from './email-column-controls';
 
 export function EmailLinearOutline({
   sections,
@@ -12,6 +13,7 @@ export function EmailLinearOutline({
   onMove,
   onRemove,
   onSelect,
+  columnActions,
 }: {
   sections: Block[];
   readOnly: boolean;
@@ -21,6 +23,7 @@ export function EmailLinearOutline({
   onMove: (id: string, position: number) => void;
   onRemove: (id: string) => void;
   onSelect: (id: string) => void;
+  columnActions?: ColumnEditorActions;
 }) {
   return (
     <section className="linear-email-outline panel" aria-label="Linear email Outline" lang="en" dir="ltr">
@@ -39,6 +42,7 @@ export function EmailLinearOutline({
                   locale={locale}
                   direction={direction}
                   linear
+                  columnActions={columnActions}
                   onChange={(next) => {
                     if (!readOnly) onChangeBlock(next);
                   }}

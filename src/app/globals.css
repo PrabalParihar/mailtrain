@@ -1777,6 +1777,34 @@ td {
   flex: 1 1 180px;
   margin: 0;
 }
+.column-content-editor {
+  min-width: 0;
+  max-width: 100%;
+}
+.column-child-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  margin: 12px 0;
+}
+.column-child-controls > button,
+.column-child-controls > label {
+  flex: 1 1 130px;
+  min-width: 0;
+  max-width: 100%;
+}
+.column-child-controls button,
+.column-child-controls select {
+  min-height: 44px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.column-child-controls p {
+  flex: 1 1 100%;
+  margin: 0;
+}
 @media (max-width: 767px) {
   .linear-email-outline {
     padding: 12px;

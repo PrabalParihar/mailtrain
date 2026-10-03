@@ -13,6 +13,8 @@ import {LocaleContentReview} from './locale-content-review';
 import {BlockFields} from './email-block-fields';
 import {EmailLinearOutline} from './email-linear-outline';
 import {moveEmailSection,replaceEmailSection,removeEmailSection} from '@/domain/linear-editor';
+import {addColumnChild,moveColumnChild,replaceColumnChild,removeColumnChild,emailNodeCount,MAX_EMAIL_NODES} from '@/domain/column-editor';
+import type {ColumnEditorActions} from './email-column-controls';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
 import {effectiveProjectionStatus} from '@/domain/projection-status';
@@ -129,6 +131,13 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     storage = 'mailcraft.draft.' + workspace + '.' + id;
   const recoveryWrites=useRef<Promise<void>>(Promise.resolve()),pendingUncertain=useRef(false);
   const lifecycle=useRef(crypto.randomUUID()),saveEpoch=useRef(0),pendingSave=useRef<SourceSaveCommand|null>(null),scopeRef=useRef({workspace,actor,email:id});
+  const columnFocus=useRef<{workspace:string;actor:string;email:string;parent:string;child:string}|null>(null);
+  useLayoutEffect(()=>{
+    const pending=columnFocus.current;if(!pending)return;columnFocus.current=null;
+    if(!editorActive.current||pending.workspace!==workspace||pending.actor!==actor||pending.email!==id)return;
+    const control=Array.from(document.querySelectorAll<HTMLSelectElement>('select[data-column-destination]')).find(control=>control.dataset.columnParent===pending.parent&&control.dataset.columnDestination===pending.child);
+    if(control&&!control.disabled)control.focus();
+  },[doc?.spec,workspace,actor,id]);
   useLayoutEffect(()=>{
     if(scopeRef.current.workspace!==workspace||scopeRef.current.actor!==actor||scopeRef.current.email!==id){
       destinationSelectionGeneration.current++;exportController.current?.abort();hubspotSettingsRef.current=emptyHubSpotSettings();
@@ -380,6 +389,17 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     }catch(error){setError(error instanceof Error?error.message:'The block changed. Select its current fields.');}
   }
   const changeBlock = (value:Block) => outlineCommand(spec=>replaceEmailSection(spec,value));
+  const columnActions:ColumnEditorActions={
+    canAdd:!!doc&&emailNodeCount(doc.spec)<MAX_EMAIL_NODES,
+    onAdd:(parent,column,type)=>outlineCommand(spec=>addColumnChild(spec,parent,column,newBlock(type))),
+    onMove:(parent,child,column,position)=>outlineCommand(spec=>{
+      const next=moveColumnChild(spec,parent,child,column,position),block=spec.sections.find(block=>block.id===parent),control=document.activeElement;
+      if(next!==spec&&block?.type==='columns'&&block.columns.findIndex(nodes=>nodes.some(node=>node.id===child))!==column&&control instanceof HTMLSelectElement&&control.dataset.columnParent===parent&&control.dataset.columnDestination===child)columnFocus.current={...scopeRef.current,parent,child};
+      return next;
+    }),
+    onRemove:(parent,child)=>outlineCommand(spec=>removeColumnChild(spec,parent,child)),
+    onChange:(parent,child)=>outlineCommand(spec=>replaceColumnChild(spec,parent,child)),
+  };
   async function applyAsset(ref:AssetVariantRef,a:AssetPickerAnchor){
     const check=()=>{const current=live.current,block=current?.spec.sections.find(b=>b.id===a.nodeId);if(!editorActive.current||!roleRef.current||workspace!==a.workspace||actor!==a.actor||id!==a.email||selectedRef.current!==a.nodeId||!current||current.doc_version!==a.docVersion||block?.type!=='image'||JSON.stringify(block)!==a.sourceRef||conflictRef.current)throw Error('The selected image or account changed. Reopen uploaded media; your current image is preserved.');return{current,block};};
     if(busyRef.current)throw Error('Finish the current editor action first.');check();busyRef.current='asset';setBusy('asset');setError('');
@@ -941,7 +961,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
             doc.spec.editing_mode === 'structured' ? <EmailLinearOutline
               sections={doc.spec.sections} readOnly={!writable} locale={doc.spec.locale} direction={doc.spec.direction}
               onChangeBlock={changeBlock} onMove={(id,position)=>outlineCommand(spec=>moveEmailSection(spec,id,position))}
-              onRemove={id=>outlineCommand(spec=>removeEmailSection(spec,id))} onSelect={setSelected}
+              onRemove={id=>outlineCommand(spec=>removeEmailSection(spec,id))} onSelect={setSelected} columnActions={columnActions}
             /> : <section className="panel linear-email-outline" aria-label="Linear email Outline">
               <h2>Raw source Outline</h2>
               <p>Raw HTML remains the authoritative source. Subject and preheader can be edited above. Use HTML view on a larger screen to edit source; switching views preserves this draft.</p>
@@ -1013,7 +1033,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           <fieldset className="inspector-fields" disabled={!writable}>
             <h2>{block ? block.type.replaceAll('_', ' ') + ' settings' : 'Document settings'}</h2>
             {view !== 'outline' && block && doc.spec.editing_mode === 'structured' && (
-              <BlockFields block={block} onChange={changeBlock}/>
+              <BlockFields block={block} onChange={changeBlock} columnActions={columnActions}/>
             )}
             <div className="divider" />
             <div className="ai-panel">

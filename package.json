@@ -67,7 +67,8 @@
     "smoke:email-templates": "node --import tsx scripts/smoke-email-templates.ts --isolated",
     "smoke:submission-ledgers": "node --import tsx scripts/smoke-submission-ledgers.ts --isolated",
     "worker:submission-ledger:local": "node --import tsx scripts/run-submission-ledger.ts",
-    "smoke:linear-editor": "node --import tsx scripts/smoke-linear-editor.ts"
+    "smoke:linear-editor": "node --import tsx scripts/smoke-linear-editor.ts",
+    "smoke:column-editor": "node --import tsx scripts/smoke-column-editor.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

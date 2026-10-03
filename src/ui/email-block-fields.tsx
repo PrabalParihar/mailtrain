@@ -1,6 +1,7 @@
 'use client';
 
 import type { Block } from '@/domain/email';
+import {AddColumnBlock,ColumnChildControls,type ColumnEditorActions} from './email-column-controls';
 
 export function BlockFields({
   block: b,
@@ -9,6 +10,7 @@ export function BlockFields({
   locale,
   direction,
   linear = false,
+  columnActions,
 }: {
   block: Block;
   onChange: (block: Block) => void;
@@ -16,6 +18,7 @@ export function BlockFields({
   locale?: string;
   direction?: 'ltr' | 'rtl';
   linear?: boolean;
+  columnActions?: ColumnEditorActions;
 }) {
   const field = (key: string, label: string, multiline = false) => {
     const value = (b as unknown as Record<string, string>)[key] ?? '';
@@ -132,8 +135,9 @@ export function BlockFields({
     return (
       <>
         {b.columns.map((col, i) => (
-          <fieldset key={i}>
+          <fieldset key={i} className={columnActions?'column-content-editor':undefined} data-column-index={i}>
             <legend>Column {i + 1}</legend>
+            {columnActions&&col.length===0&&<p className="small">This column has no blocks.</p>}
             {col.map((n, j) => {
               const fields = (
                 <BlockFields
@@ -144,6 +148,7 @@ export function BlockFields({
                   linear={linear}
                   onChange={(next) => {
                     if (readOnly || next.type === 'columns') return;
+                    if(columnActions){columnActions.onChange(b.id,next);return;}
                     const columns = b.columns.map((c, index) =>
                       index === i ? c.map((v, k) => (k === j ? next : v)) : c,
                     );
@@ -155,9 +160,11 @@ export function BlockFields({
                 <fieldset key={n.id} data-linear-child={n.id}>
                   <legend>{n.type} {j + 1}</legend>
                   {fields}
+                  {columnActions&&<ColumnChildControls parent={b} column={i} index={j} child={n} readOnly={readOnly} actions={columnActions}/>}
                 </fieldset>
-              ) : <div key={n.id}>{fields}</div>;
+              ) : <div key={n.id} data-column-child={n.id}>{fields}{columnActions&&<ColumnChildControls parent={b} column={i} index={j} child={n} readOnly={readOnly} actions={columnActions}/>}</div>;
             })}
+            {columnActions&&<AddColumnBlock parent={b.id} column={i} count={col.length} readOnly={readOnly} actions={columnActions}/>}
           </fieldset>
         ))}
       </>

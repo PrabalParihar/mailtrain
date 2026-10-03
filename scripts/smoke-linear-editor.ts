@@ -134,7 +134,9 @@ await sourceDatabase(async({db,p,brand,tx})=>{
     await mkdir('output/linear-editor',{recursive:true});await outline.getByRole('heading',{name:'Edit in Outline',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'output/linear-editor/mobile.png'});
     await page.setViewportSize({width:720,height:1000});await page.evaluate(()=>document.documentElement.style.fontSize='200%');await noOverflow();
     await block('columns').getByRole('textbox',{name:'Body text',exact:true}).focus();await page.keyboard.press('Tab');
-    assert.ok(await page.evaluate(()=>document.activeElement?.tagName==='TEXTAREA'));
+    assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('aria-label')),'Move text 1 in column 1 down');
+    for(let tab=0;tab<4;tab++)await page.keyboard.press('Tab');
+    assert.equal(await block('columns').getByRole('textbox',{name:'Custom HTML source',exact:true}).evaluate(field=>field===document.activeElement),true);
     await page.screenshot({path:'output/linear-editor/text-zoom.png'});await page.evaluate(()=>document.documentElement.style.fontSize='');
     console.log('Actual partial-input error/correction, navigation, 320px reflow and 200% root text zoom PASS.');
 
