@@ -4,7 +4,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { open, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
-import { chromium, type Route, type Request as BrowserRequest } from 'playwright';
+import { chromium, type Page, type Route, type Request as BrowserRequest } from 'playwright';
 import { sourceDatabase } from './smoke-source-truth';
 import { blankSpec, type EmailSpec } from '../src/domain/email';
 import { createEmail, checkpoint } from '../src/server/emails';
@@ -34,6 +34,18 @@ async function bounded<T>(pending: Promise<T>, name: string): Promise<T> { let t
 finally {
     clearTimeout(timer);
 } }
+type DownloadEventEvidence = {filename:string;url:string;phase:string;actor:string;workspace:string};
+function forbidHubSpotDownloads(page:Page, context:()=>Omit<DownloadEventEvidence,'filename'|'url'>) {
+    const events:DownloadEventEvidence[]=[];
+    const forbidden:DownloadEventEvidence[]=[];
+    const listener=(download:import('playwright').Download)=>{
+        const event={filename:download.suggestedFilename(),url:page.url(),...context()};
+        events.push(event);
+        if(event.filename.startsWith('hubspot-prepared-'))forbidden.push(event);
+    };
+    page.on('download',listener);
+    return {events,forbidden,check:()=>assert.equal(forbidden.length,0,'Forbidden delayed HubSpot download: '+JSON.stringify(forbidden)),close:()=>page.off('download',listener)};
+}
 async function vacant() { const s = createServer(); await new Promise<void>((resolve, reject) => { s.once('error', () => reject(Error('Owned app port 3004 is occupied; no existing process touched.'))); s.listen(3004, '127.0.0.1', () => s.close(() => resolve())); }); }
 await mkdir(scratch, { recursive: true });
 console.log('Artifacts ' + scratch);
@@ -67,6 +79,7 @@ try {
         await writeFile(scratch + '/source-manifest.json', JSON.stringify({ revision: frozen.id, html_sha256: sha(original.html), text_sha256: sha(original.plaintext), artifact_hash: original.artifact_hash }));
         const log = await open(scratch + '/app.log', 'w');
         let app: ChildProcess | undefined, browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
+        let finalScopeDownloadCheck:(()=>Promise<void>)|undefined;
         try {
             app = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', '3004'], { env: { PATH: process.env.PATH, NODE_ENV: 'development', LOCAL_DEVELOPMENT: 'true', APP_ORIGIN: origin, DATABASE_URL: runtime.toString(), MIGRATION_DATABASE_URL: fixture.toString(), PREFERENCE_SIGNING_SECRET: randomBytes(32).toString('hex'), NEXT_TELEMETRY_DISABLED: '1' }, stdio: ['ignore', log.fd, log.fd] });
             for (let n = 0; n < 120; n++) {
@@ -518,33 +531,83 @@ try {
             }
             await writeFile(scratch+'/late-download-manifest.json', JSON.stringify(lateEvidence, null, 2));
             pass('Actual later reader chunk and downloaded-byte SHA promise awaits: settings ABA suppresses stale file/error, hooks restored and fresh retries succeed');
+            // Sensitivity: a real browser file event deliberately arrives after the
+            // old producer-side count assertion would have passed. This uses real
+            // owned HTTP artifact bytes, not an editor/generation-state simulation.
+            const sensitivityEmail=new URL(page.url()).pathname.split('/').at(-1)!;
+            const sensitivityRevision=(await db.query('SELECT id FROM revisions WHERE email_id=$1 ORDER BY created_at DESC LIMIT 1',[sensitivityEmail])).rows[0].id;
+            const sensitivityReview=await post({settings},sensitivityRevision);
+            assert.equal(sensitivityReview.status(),200);
+            const sensitivityReceipt=(await sensitivityReview.json()).review;
+            const sensitivityGuard=forbidHubSpotDownloads(page,()=>({phase:'delayed-adoption-sensitivity',actor:p.user,workspace:p.workspace}));
+            let sensitivityEvidence:object;
+            try {
+                const baseline=downloads;
+                const actualSHA=await page.evaluate(`(async()=>{
+                    const response=await fetch(${JSON.stringify(endpoint(sensitivityRevision,'artifact'))},{method:'POST',headers:${JSON.stringify({...headers,'Content-Type':'application/json'})},body:JSON.stringify(${JSON.stringify({settings,format:'html',expected_destination_hash:sensitivityReceipt.destination_hash})})});
+                    if(!response.ok)throw Error('Owned delayed sensitivity artifact unavailable');
+                    const blob=await response.blob();
+                    window.__ownedDelayedHubSpotFile={release:()=>setTimeout(()=>{
+                        const url=URL.createObjectURL(blob),link=document.createElement('a');
+                        link.href=url;link.download='hubspot-prepared-delayed-sensitivity.html';link.click();
+                        delete window.__ownedDelayedHubSpotFile;setTimeout(()=>URL.revokeObjectURL(url),1000);
+                    },50)};
+                    return response.headers.get('x-content-sha256');
+                })()`);
+                assert.equal(actualSHA,sensitivityReceipt.html_sha256);
+                const pending=page.waitForEvent('download');
+                await page.evaluate('window.__ownedDelayedHubSpotFile.release()');
+                // Reproduces the reviewed race: the immediate producer-side test passes.
+                assert.equal(downloads,baseline);
+                const delayed=await pending,path=await delayed.path();assert.ok(path);
+                assert.equal(await delayed.failure(),null);
+                assert.equal(sha(await readFile(path)),actualSHA);
+                assert.throws(()=>sensitivityGuard.check(),/Forbidden delayed HubSpot download/);
+                assert.equal(sensitivityGuard.forbidden.length,1);
+                sensitivityEvidence={baseline,immediate_count:baseline,delayed_count:downloads,guard_rejected:true,actual_bytes_sha256:actualSHA,events:sensitivityGuard.events};
+            } finally {
+                sensitivityGuard.close();
+            }
+            // One immutable baseline spans every transition and fresh recovery.
+            // The guard remains installed through later legitimate other-provider
+            // downloads and browser shutdown; HubSpot downloads stay forbidden.
+            const scopeBaseline=downloads;
+            let scopeContext={phase:'scope-group-start',actor:p.user,workspace:p.workspace};
+            const scopeGuard=forbidHubSpotDownloads(page,()=>scopeContext);
+            const scopeBoundaries:object[]=[];
+            const checkScope=(phase:string)=>{
+                scopeGuard.check();assert.equal(downloads,scopeBaseline,'Scope-group baseline changed at '+phase);
+                scopeBoundaries.push({phase,baseline:scopeBaseline,count:downloads});
+            };
+            finalScopeDownloadCheck=async()=>{
+                await writeFile(scratch+'/scope-download-manifest.json',JSON.stringify({sensitivity:sensitivityEvidence,baseline:scopeBaseline,boundaries:scopeBoundaries,events:scopeGuard.events,forbidden:scopeGuard.forbidden,guard_active_through_browser_close:true},null,2));
+                scopeGuard.check();
+            };
             for (const transition of ['email', 'workspace', 'actor'] as const) {
-                await goto();
-                await fill();
-                await reviewUI();
-                const count = downloads, h = await hold(artifactPattern);
+                scopeContext={phase:transition+'-prepare',actor:p.user,workspace:p.workspace};
+                await goto();await fill();await reviewUI();await ready();checkScope(transition+'-before-hold');
+                const h = await hold(artifactPattern);
                 await panel().getByRole('button', { name: 'Download HubSpot HTML', exact: true }).click();
                 await h.seen();
-                if (transition === 'email')
-                    await goto(other.id);
+                scopeContext={phase:transition+'-transition',actor:transition==='actor'?secondActor:p.user,workspace:transition==='workspace'?foreign:p.workspace};
+                if (transition === 'email')await goto(other.id);
                 else if (transition === 'workspace') {
                     await page.getByLabel('Active brand workspace').selectOption(foreign);
                     await page.waitForURL(origin + '/app');
+                } else {
+                    await cookie(secondActor);await page.reload();await subject().waitFor();
                 }
-                else {
-                    await cookie(secondActor);
-                    await page.reload();
-                    await subject().waitFor();
-                }
-                await h.release();
-                assert.equal(downloads, count);
-                if (transition === 'actor')
-                    await cookie(p.user);
-                await goto();
-                await fill();
-                await reviewUI();
+                await h.release();checkScope(transition+'-producer-released');
+                if (transition === 'actor')await cookie(p.user);
+                scopeContext={phase:transition+'-fresh-recovery',actor:p.user,workspace:p.workspace};
+                await goto();await fill();await reviewUI();await ready();
+                // Fresh editor acknowledgment + explicit review is complete, while
+                // persistent browser-event observation still rejects delayed files.
+                checkScope(transition+'-consumer-recovery-complete');
             }
-            pass('Actual email navigation/workspace selector/session actor reload discard held download, explicit fresh retry');
+            checkScope('scope-group-end-before-legitimate-downloads');
+            scopeContext={phase:'later-other-provider-journeys',actor:p.user,workspace:p.workspace};
+            pass('Actual email/workspace/actor transitions keep constant forbidden-file guard through recovery/group end; delayed real-byte event sensitivity rejects reviewed race');
             const native = { klaviyo: '{% unsubscribe_link %}', mailchimp: '*|UNSUB|*', omnisend: '[[unsubscribe_link]]', brevo: '{{ unsubscribe }}' };
             for (const [destination, expression] of Object.entries(native)) {
                 const name = destination === 'mailchimp' ? 'Mailchimp' : destination === 'klaviyo' ? 'Klaviyo' : destination === 'omnisend' ? 'Omnisend' : 'Brevo';
@@ -595,6 +658,7 @@ try {
             await error(await context.request.post(endpoint(), { headers: { ...headers, 'X-Actor-Id': viewer }, data: { settings } }), 403);
             assert.deepEqual(await baseline(), counts);
             assert.deepEqual((await tx(c => c.query('SELECT spec,html,plaintext,artifact_hash,manifest FROM revisions WHERE id=$1', [frozen.id]))).rows[0], original);
+            scopeGuard.check();
             assert.equal(external, 0);
             assert.deepEqual(pageerrors, []);
             await writeFile(scratch + '/request-manifest.json', JSON.stringify(requests, null, 2));
@@ -607,6 +671,7 @@ try {
                 await new Promise<void>((resolve, reject) => { const timer = setTimeout(() => { app!.kill('SIGKILL'); reject(Error('Owned app required forced termination')); }, 10000); app!.once('exit', () => { clearTimeout(timer); resolve(); }); });
             }
             await log.close();
+            await finalScopeDownloadCheck?.();
         }
     });
     pass('Owned browser/app/fixture cleanup');
