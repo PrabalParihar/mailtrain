@@ -99,7 +99,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     busyRef = useRef(''),
     editorActive = useRef(false),
     exportController = useRef<AbortController | null>(null),
-    destinationRef=useRef<Destination>('klaviyo');
+    destinationRef=useRef<Destination>('klaviyo'),
+    destinationSelectionGeneration=useRef(0);
   const writable = editRole && !['raw', 'restore', 'reload', 'fork','convert','asset'].includes(busy);
   const live = useRef<Doc | null>(null),
     ack = useRef(''),
@@ -382,11 +383,11 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
   }
   function chooseDestination(next:Destination){
     if(destinationRef.current===next)return;
-    destinationRef.current=next;exportController.current?.abort();setDestination(next);setDestinationPreparation(null);setError('');
+    destinationSelectionGeneration.current++;destinationRef.current=next;exportController.current?.abort();setDestination(next);setDestinationPreparation(null);setError('');
   }
   async function reviewDestination(){
-    const scope={...scopeRef.current},life=lifecycle.current,selectedDestination=destinationRef.current;
-    const selected=()=>destinationRef.current===selectedDestination;
+    const scope={...scopeRef.current},life=lifecycle.current,selectedDestination=destinationRef.current,selectionGeneration=destinationSelectionGeneration.current;
+    const selected=()=>destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===selectedDestination;
     try{
       const r=revision&&matches(revision.anchor)?revision:await freeze(scope.actor);
       if(!r||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;

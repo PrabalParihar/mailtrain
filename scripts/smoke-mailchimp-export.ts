@@ -41,6 +41,30 @@ await sourceDatabase(async({db,p,brand,tx})=>{
   let releaseDownload!:()=>void;const heldDownload=new Promise<void>(r=>releaseDownload=r);let arriveDownload!:()=>void;const fetchedDownload=new Promise<void>(r=>arriveDownload=r);let staleDownloads=0;page.on('download',()=>staleDownloads++);
   await page.route('**/destination-artifact?destination=mailchimp&format=html',async route=>{const response=await route.fetch();arriveDownload();await heldDownload;try{await route.fulfill({response});}catch{}});await panel.getByRole('button',{name:'Download Mailchimp HTML',exact:true}).click();await fetchedDownload;await page.goto(origin+'/app/emails/'+other.id);releaseDownload();await page.unroute('**/destination-artifact?destination=mailchimp&format=html');await page.getByRole('textbox',{name:'Subject',exact:true}).waitFor();assert.equal(staleDownloads,0);await page.getByLabel('ESP destination').selectOption('mailchimp');assert.equal(await panel.getByRole('status').count(),0);
   console.log('Actual error/retry/local-edit result fence and held-download navigation prevent stale adoption PASS.');
+  // Cancel the selection interval before a review controller exists, while the
+  // first real checkpoint response is held. Returning to the same destination
+  // must neither dispatch/adopt that review nor revive its checkpoint failure.
+  for(const failCheckpoint of [false,true]){
+   const freshEmail=await tx(c=>createEmail(c,p,'Owned initial-freeze cancellation',spec));
+   await page.goto(origin+'/app/emails/'+freshEmail.id);await page.getByRole('textbox',{name:'Subject',exact:true}).waitFor();await page.getByLabel('ESP destination').selectOption('mailchimp');
+   assert.equal((await db.query('SELECT count(*)::int n FROM revisions WHERE email_id=$1',[freshEmail.id])).rows[0].n,0);assert.equal(await panel.getByRole('status').count(),0);
+   let releaseFreeze!:()=>void,arriveFreeze!:()=>void,staleReviews=0;
+   const heldFreeze=new Promise<void>(r=>releaseFreeze=r),fetchedFreeze=new Promise<void>(r=>arriveFreeze=r),checkpointRoute='**/emails/'+freshEmail.id+'/revisions';
+   const countReview=(request:import('playwright').Request)=>{if(request.url().includes('/destination-review?destination=mailchimp'))staleReviews++;};page.on('request',countReview);
+   await page.route(checkpointRoute,async route=>{const response=await route.fetch();assert.equal(response.status(),200);arriveFreeze();await heldFreeze;await route.fulfill(failCheckpoint?{status:503,contentType:'application/json',body:JSON.stringify({error:{code:'FIXTURE_FREEZE_UNAVAILABLE',message:'Owned stale checkpoint failure'}})}:{response});});
+   try{
+    await panel.getByRole('button',{name:'Review Mailchimp preparation',exact:true}).click();await fetchedFreeze;
+    await page.getByLabel('ESP destination').selectOption('klaviyo');await page.getByLabel('ESP destination').selectOption('mailchimp');releaseFreeze();
+    await page.waitForFunction(()=>{const b=document.querySelector<HTMLButtonElement>('section[aria-label="Mailchimp preparation"] button');return b&&!b.disabled;});
+    assert.equal(staleReviews,0,'Cancelled initial freeze must issue zero stale destination reviews');assert.equal(await panel.getByRole('status').count(),0,'Cancelled initial freeze must adopt zero preparations');assert.equal(await page.getByRole('alert').filter({hasText:'Owned stale checkpoint failure'}).count(),0,'Cancelled initial freeze must adopt zero stale errors');
+    assert.equal((await db.query('SELECT count(*)::int n FROM revisions WHERE email_id=$1',[freshEmail.id])).rows[0].n,1,'Completed immutable checkpoint remains in history');
+   }finally{releaseFreeze();await page.unroute(checkpointRoute);page.off('request',countReview);}
+   let freshCheckpoints=0;const countFreshCheckpoint=(request:import('playwright').Request)=>{if(request.method()==='POST'&&new URL(request.url()).pathname==='/v1/emails/'+freshEmail.id+'/revisions')freshCheckpoints++;};page.on('request',countFreshCheckpoint);
+   try{await panel.getByRole('button',{name:'Review Mailchimp preparation',exact:true}).click();await panel.getByRole('status').waitFor();assert.equal(freshCheckpoints,failCheckpoint?1:0,'Fresh explicit review reuses an acknowledged freeze or replays the unacknowledged checkpoint');}finally{page.off('request',countFreshCheckpoint);}
+   assert.equal((await db.query('SELECT count(*)::int n FROM revisions WHERE email_id=$1',[freshEmail.id])).rows[0].n,1,'Acknowledged reuse and idempotent checkpoint replay preserve the same completed history');
+  }
+  console.log('Actual initial-freeze destination round trips suppress stale review dispatch/adoption/errors, preserve history and allow fresh explicit review PASS.');
+  await page.goto(origin+'/app/emails/'+other.id);await page.getByRole('textbox',{name:'Subject',exact:true}).waitFor();await page.getByLabel('ESP destination').selectOption('mailchimp');
   // A provider selection is a new async-result scope, independent of editor content.
   await panel.getByRole('button',{name:'Review Mailchimp preparation',exact:true}).click();await panel.getByRole('status').waitFor();
   let releaseSelection!:()=>void;const holdSelection=new Promise<void>(r=>releaseSelection=r);let arriveSelection!:()=>void;const fetchedSelection=new Promise<void>(r=>arriveSelection=r);
