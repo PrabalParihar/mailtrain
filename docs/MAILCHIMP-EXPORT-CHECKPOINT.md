@@ -539,3 +539,36 @@ Whole review aa9e9ac:0Critical/0Important/1Minor. M1 destination ABA during init
 Whole correction51fd0f15: M1 generation capture through initial freeze/result/error; actual RED stale request reproduced, complete6-group Mailchimp browser GREEN/scopedtype/lint pass. Sandbox EPERM and incorrect two-checkpoint fixture assumption retained and corrected without production weakening. ONE scoped re-review dispatched.
 
 Whole scoped re-review: M1 ADDRESSED,0 new findings. Corrected51fd0f15 full configured556/556/0skip, lint/type/API122/build, complete Mailchimp6 groups and Klaviyo4 groups+cleanup, Linux UID1001/networknone/API/assets/private exclusions pass; closed production startup exit1. Canonical sync/qualification remains Task4 final step.
+
+## Canonical closeout
+
+Actual Path.home()/Desktop/mail and native mirror synchronized by guarded local fast-forward at518b091368bfc662ec2c2afc3bb4fa2c5d16a4f1; all573tracked SHA256 match, bothclean. Every change from corrected executable51fd0f15 to518b091 is Markdown evidence only. Canonical npm run build/typecheck/api:check/lint and complete Mailchimp6+Klaviyo4 actualHTTP/Chromium groups plus ownedfixture cleanup pass. Fresh canonical390px pixels /tmp/lettercape-mailchimp-canonical-mobile.png inspected, with wrapped receipts/readable warning/fittingbuttons. Original109email and221revision old-column SHA and private metadata unchanged. Only verified owned apps stopped/restored; media/recipientworkers and unrelatedDesktop/proof app preserved. Restored3002/3003 healthdevelopment and dispatch_enabledfalse.
+
+- `/tmp/lettercape-mailchimp-canonical-build.log`: `8b79202718600a2f8a928e05a938c887e6d6851eae1eae3033d3e2741898f26b`
+- `/tmp/lettercape-mailchimp-canonical-type.log`: `e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6`
+- `/tmp/lettercape-mailchimp-canonical-api.log`: `ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f`
+- `/tmp/lettercape-mailchimp-canonical-lint.log`: `177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746`
+- `/tmp/lettercape-mailchimp-canonical-browser.log`: `b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9`
+- `/tmp/lettercape-mailchimp-canonical-klaviyo.log`: `84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e`
+
+## Completed ledger (verbatim; all rulings retained before scratch cleanup)
+
+# SDD ledger — plan: docs/superpowers/plans/2026-10-02-mailchimp-export.md
+Preflight: compiler/adapter share only MailchimpArtifact from compiler; root routes/UI consume strict contracts. Worker file scopes disjoint. Existing Klaviyo paths unchanged until extraction/integration qualifying checks. Server node APIs stay separate from browser contracts. No provider acceptance invented.
+Ruling: user explicitly requests parallel focused workers, so disjoint compiler and transport tasks run concurrently despite default SDD sequential-implementer guidance — no shared owned files, exact interface brief and final integration review — costs integration rework if contract assumptions drift.
+Ruling: metadata-only Mailchimp API cannot prove HTML fidelity; known-ID metadata match remains needs_attention — official full schema exposes no HTML or artifact management link — costs blocked native handoff until account-tested content/deep-link evidence exists.
+Ruling: standing continuous independent-development authorization replaces routine planning/finishing approval menus — reversible local work within existing scope — costs preference rework; no procurement/provider/publication decision inferred.
+
+Task 1: complete (commits 4764f2f..a17d89b4, task spec and quality PASS, no findings).
+Task 2: complete (commits 4764f2f..1bf5dac0, task spec and quality PASS, no findings).
+Task 3: complete (root route/UI/API/dual-browser integration; task1/2 combined review clean, root integration included in final whole review).
+Task 4: in progress (556/556 configured tests; lint/type/API122/build; actual Mailchimp5 and Klaviyo4 HTTP/browser groups plus cleanup PASS; immutable whole review and canonical qualification next).
+Evidence note: old Klaviyo browser assertion treated newly-supported Mailchimp as unsupported422; actual200 was correct. Fixture now uses unsupported Brevo; original failure log retained, fresh complete Klaviyo browser pass. No production assertion was weakened.
+
+Whole review aa9e9ac:0Critical/0Important/1Minor. M1 destination ABA during initial freeze revives cancelled review. ONE complete fix dispatched for sole finding, covering held initial-checkpoint browser regression; one scoped re-review follows.
+
+Whole correction51fd0f15: M1 generation capture through initial freeze/result/error; actual RED stale request reproduced, complete6-group Mailchimp browser GREEN/scopedtype/lint pass. Sandbox EPERM and incorrect two-checkpoint fixture assumption retained and corrected without production weakening. ONE scoped re-review dispatched.
+
+Whole scoped re-review: M1 ADDRESSED,0 new findings. Corrected51fd0f15 full configured556/556/0skip, lint/type/API122/build, complete Mailchimp6 groups and Klaviyo4 groups+cleanup, Linux UID1001/networknone/API/assets/private exclusions pass; closed production startup exit1. Canonical sync/qualification remains Task4 final step.
+
+Task 4: complete (one immutable whole review/one complete M1 correction/one scoped re-review allclosed; corrected556tests/0skip/API122/lint/type/build, Mailchimp6+Klaviyo4 real browser groups, Linux networknone UID1001/private exclusion/closed startup; canonical518b091 passesfullchecks and both browsers,573trackedSHA matches, original109/221 hashes/private metadata preserved, only owned app groups stopped/restored). All65/all13/zero whole accepted; no provider/push/deployment.
