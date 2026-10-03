@@ -787,3 +787,131 @@ ONE immutable whole Brevo review baseline7ae416aa41aec7221b7eda40a95a929245f28eb
   "oci_config_digest": "sha256:3de5dd262a349d92ff5a5cea84a76a44b00b43b30189faa7795fa107c6a6681d"
 }
 ```
+
+## Canonical closure evidence
+
+Fresh canonicalqualification and private/originaldata preservation are established; full GA and remote activation remain unaccepted. The final documentation successor changes no executable bytes.
+
+```json
+{
+  "canonical_head": "7552fdd578f1e05bbda04e11c764c6877f159f78",
+  "qualified_code_head": "b7f70f950c95a4972c74f4def33a9fcc70da6e7a",
+  "tracked_files_identical": 591,
+  "non_markdown_files_match_qualified_code": 497,
+  "logs": [
+    {
+      "path": "/tmp/lettercape-brevo-canonical-type.log",
+      "bytes": 45,
+      "sha256": "e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-lint.log",
+      "bytes": 36,
+      "sha256": "177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-api.log",
+      "bytes": 157,
+      "sha256": "ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-build.log",
+      "bytes": 1369,
+      "sha256": "431620e60a3308f7502f5ccb5b9d1c2a4484d63b30a9b16ce3e1b6cc267b02f3",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-browser.log",
+      "bytes": 982,
+      "sha256": "1c49cdd524cb33e0e52f02a98dbe83b1b0f98ff3f331c548d00672ff4fbb12f7",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-omnisend-browser.log",
+      "bytes": 850,
+      "sha256": "64d1118a8766c8483fc334fc52ca133df49273d96b3226e29167be8bf55b4e54",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-mailchimp-browser.log",
+      "bytes": 831,
+      "sha256": "b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9",
+      "exit_code": 0
+    },
+    {
+      "path": "/tmp/lettercape-brevo-canonical-klaviyo-browser.log",
+      "bytes": 584,
+      "sha256": "84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e",
+      "exit_code": 0
+    }
+  ],
+  "mobile_pixel_inspected": true,
+  "original109emails221revisions_and_private_metadata_unchanged": true,
+  "private_contents_copied_printed_or_hashed": false,
+  "owned_apps_restored_after_all_fixtures": true,
+  "owned_pids": {
+    "main": 96553,
+    "canonical": 96556,
+    "recipient_worker": 74504,
+    "media_worker": 74559
+  },
+  "unrelated_proof_pid_preserved": 91500,
+  "health": [
+    {
+      "port": 3002,
+      "health": {
+        "request_id": "88a3f106-011a-469a-9c03-90be6389d689",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    },
+    {
+      "port": 3003,
+      "health": {
+        "request_id": "376204e4-04ca-4d71-a3bf-db95355c54e2",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    }
+  ],
+  "all65_all13_zero_whole_accepted": true,
+  "deployment": false
+}
+```
+
+## Complete final current planledger
+
+# SDD ledger — docs/superpowers/plans/2026-10-03-brevo-export.md
+
+| Pair/task | Interface/consistency | Outcome |
+|1/2|BrevoArtifact subject+6tuplehash, constants, exact4keyPOST|Aligned explicit; transport fixture can scaffold until compiler arrives.|
+|1/3|Strict browser review strips subject/html/text,7blockers|Root unions/API, no node browserimports.|
+|2/3|Unmounted primitive only|No connection/admission inferred.|
+|1|Source hash/subject/privacy and HTMLfieldbudget|Sharedvalidator unchanged, exactsubject bound; all old mapping tests unchanged.|
+|2|201numericID, safeGET(emptyaudience/draft) vs400duplicate|No retry/false management URL, nativefidelity alwaysfalse.|
+|3|Predecessor correction/canonical/private boundaries|Separateworktree includes frozenO candidate; root must integrate closed corrected successor before qualifying.|
+
+Ruling: standing continuous independent implementation/parallel focused workers replaces routine approval menus and default sequential SDD for disjoint files; costs integration/preference rework, no provider/spend/publication authority inferred.
+Ruling: new Brevo worktree starts from frozen Omnisend candidate during its ONE correction; integrate closed corrected successor before root qualification/canonical; costs a local ancestry merge and possible docs conflicts, earlier finding never waived.
+Ruling: strict HTML UTF8bytes<1000000 interprets provider less-than1MB conservatively; name255/subject200 local bounded values, not invented provider length claims; costs possible boundary/long-name rejection until account qualification.
+Ruling: frozen exact subject joins destination hash but is omitted from browser metadata; empty/unsafe subject blocks localBrevo preparation; costs additional hash protocol/mapping and correcting incomplete email subjects.
+Ruling: API-key transport is an unmounted documented contract only; current private-only OAuth does not approve SaaS connectionmode. ExactsafeHTMLGET may contentverifybytes but never nativefidelity or management handoff; costs blockedactivation/nativehandoff until compatible approvedauth/sender/account/client/link proof.
+
+Ruling: sharedvalidator already rejects empty subject via static lint. Translate only exact subject-only EXPORT_STATIC_BLOCKED after unchanged validation and nonempty all-SUBJECT_REQUIRED lint evidence; structural/integrity and mixed blockers retain original precedence. Costs bounded repeat static lint on subject-only failures; avoids a misleading promised unreachable Brevo error without shared-validator changes. Compilerworker asked; root inspected actual src/domain/preflight.ts:152 and authorized narrow mapping.
+
+RootTask3 actualRED captured422unsupportedBrevo vs200expected at firstownedHTTPrequest; generated fixture cleanup completes on error. Currentrootfixture clone retains three-destination scaffolding, must expand fourth Omnisend assertion and subject refusal beforeGREEN. Compiler has exact3filecommit90c5dc8/60ownedGREEN+90priorcompilerregression; transport41ownedGREEN/scopedtype/lint, final reports/commits pending.
+
+Both workers complete:compiler90c5dc8247416de7d07aab16ea2b11161216448f60owned+90priorcompilerGREEN; transportb7d3447d679653b0560b383480899820348c3aea42GREEN with contextual400duplicate regression, scopedtype/lint/diff pass. Root brief shorthand scratch path was ambiguous and workers wrote only own reports to root scratch/. Root copied byteidentical completed reports to thisplan scratch, verified hashes then removed only those2owned files/emptydirectory before imagecontext; no productcode/unrelatedfiles changed. Joint taskreview pending.
+
+SeparateTask1 andTask2spec/qualityreview PASS/no findings; fullreport/tmp/lettercape-brevo-tasks-review.md SHA256b4950ce3b48855854c4fa077dd299c88b33136068b0152218785ad38472a107f. Integrated finalOmnisend canonical7ae evidence ancestor at3494dd7 beforequalification. Root fourthroute/UI/strictAPI union/CI and subjectmessages integrated; earlier3 fixtures unsupported literal changed Brevo→HubSpot because Brevo is now locally implemented. InitialactualBrevo422RED retained; generatedcontract RED/GREEN and expanded4mapping/subjectbrowserfixture next.
+
+RootTask3candidate qualification complete:727/727configuredtests/0fail/cancel/skip/fulltype/lint/build/API122 pass. ActualBrevo7+Omnisend6+Mailchimp6+Klaviyo4HTTP-Chromiumgroups/ownedcleanup/zeroinstrumentedexternal/pageerrors PASS, sourceprivacy/exactsubjectsixhash/missing+unsafe subject/correction+review/repeatedclick/initialfreezeABA/heldreview+download fourmapping rounds/navigation/Viewer/390 tested. PixelBrevo390 inspected/readable wrapped notices/digests/controls/nohorizontaloverflow. Root actual422unsupportedRED and generatedAPI3vs4enumRED retained;15APItestGREEN afterregen. No prod/account/remotedraft success. Whole/Linux/canonical pending.
+
+ONE immutable whole Brevo review baseline7ae416aa41aec7221b7eda40a95a929245f28eb1->candidateb7f70f950c95a4972c74f4def33a9fcc70da6e7a, patchSHA092076f1ec69302bf8132bb78cdce00a606f35658e9c09a6510f11eae0111b7b PASS/0Critical/0Important/0Minor. No correction/scopedre-review requested or needed; no additionalwhole review. CandidateLinux imagec8a5fdd/config3de5dd26 sourceb7f UID1001/networknone/fourmappingcontracts/twoendpoints/assets/privateexclusion/startuprefused1PASS. Executablecode unchanged after727fullsuite/type/lint/build/API122/actualall4browser qualification. Canonicalguarded sync/qualification next, keepownedapps paused through fixtures toavoid established samecwdNextlock.
+
+Guarded source→localmirror→actual Path.home()/Desktop/mail fastforward7552fdd complete; all591trackedSHA match and private metadata/readability unchanged. Fresh canonicaltype/lint/API122/build and all4completeHTTPChromiumfixtures PASS, mobile390pixel inspected. Ownedmain96553/canonical96556 restored ONLY after allfixtures; recipient74504/media74559 and unrelatedproof91500 preserved. Original109emails/221revisions oldcolumnSHA and private metadata exactlymatch before. All497nonMarkdownfiles byteidentical qualifiedb7f code; zero executablechanges. Complete reports/briefs/currentledger/6rulings retained verbatim beforeonlyownplanscratch cleanup. No newfailure; all65/all13/zeroaccepted and launch/remote gates remain.
