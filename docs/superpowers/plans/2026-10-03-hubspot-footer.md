@@ -12,20 +12,30 @@ Exactfootercomparison doesnot certifyaccount. HTMLsourceUTF16spans andplaintexts
 
 ### Task 1: Strict comparison and browser contracts
 Own src/domain/hubspot-footer-contracts.ts/tests/hubspot-footer-contracts.test.ts. Exactexports/schemas/helpers/messages in spec. Report .superpowers/sdd/2026-10-03-hubspot-footer/task-1-report.md.
-- [ ] Meaningful executableRED then strictschemas/address/comparison; actualsourcefixture/no source mutation.
-- [ ] Focused unit/browserbundle outside source/scopedlint/fulltype/diff; no DB/fullsuite, exact2filecommit/fullreport/failures/hashes. No subagents.
+- [x] Meaningful executableRED then strictschemas/address/comparison; actualsourcefixture/no source mutation; reviewed sparsearray fix.
+- [x] Focused10/10/browserbundle outside source/scopedlint/fulltype/diff, exact2filecommits/reviews. Historical forbidden broadattempt/lostcompleteoutput permanentlyqualified in ledger, notpassing evidence. No subagents.
 
 ### Task 2: Frozen visible-footer compiler
 Own src/domain/hubspot-export.ts/tests/hubspot-export.test.ts, afterTask1review. Exactspecsourcevalidation/spanmapping/digest/readiness/privacy. Report same scratch/task-2-report.md.
-- [ ] Meaningful executableRED and implement strictmatch/visible nativeHTML/anchoredplaintext without sharedformatterduplication/globalrewrite.
-- [ ] Nested/Unicode/entities/repeatedtext/optional/sourceintegrity/strictreview/hash/limits/noIO/immutability tests, scopedunit+fourcompilerregression/type/lint/diff exact2filecommit/fullreport. No DB/fullsuite/subagents.
+- [x] Meaningful executableRED and strictmatch/visible nativeHTML/anchoredplaintext without sharedformatterduplication/globalrewrite; reviewedfa99bd3.
+- [x] Nested/Unicode/entities/repeatedtext/optional/sourceintegrity/strictreview/hash/limits/noIO/immutability57tests+207regressions/type/lint/diff exact2filecommit/fullreport; separate review0C0I0M. No DB/fullsuite/subagents.
 
-### Task 3: Mounted fifth preparation
-Root assigns exact API/UI/contract/browser file ownership afterTask2review. Two typed POSTs, allfivefencedbrowserjourneys, no remote call. Complete source/docscontracts/recoverableflow, not future-only proposal.
-- [ ] Implement and individuallyreview current-authority/bodyprivacy/fifthUI/fences and exactpubliccontract.
-- [ ] ActualownedHTTP/Chromium tests interrupt/retry/repeatedclick/settingsABA/navigation/emptyerror/role/mobile/noIO; API/type/lint.
+### Task 3: Mounted POST boundary and typed API/SDK
+Own src/server/hubspot-export-review.ts, src/server/http.ts, src/server/esp-export-review.ts (fixed-message export only), src/app/v1/[...path]/route.ts, focusedHTTP/method/contract/SDK tests, scripts/generate-api.ts and exactgenerated3outputs+SDKtypefixture. Binding detailed Task3brief/rootserverdraft.
+- [ ] Strict16KiB timed/cancellable opt-inJSONreader preservingdefaults; currentauthority/tenant/abort/hash/audit-safe two POSTs.
+- [ ] API124/examples/strictbody+falseflags/media/headers/typedSDKPOST privacy/retry/scopedtests/type/lint/diff; exactownedcommit/report; separateTask3spec+qualityreview.
 
-### Task 4: Whole qualification and canonical delivery
+### Task 4: Fifth editor comparison/preparation
+Own src/ui/editor.tsx/src/ui/klaviyo-export.tsx/newHubSpotform+smallbrowserhelper+meaningfultests as Task4brief. No server/source mutation.
+- [ ] Explicit7fieldlocallydeclaredsettings, mismatchrecovery and fifthselect, immutable source, strictdigest/receipt/downloadbytes.
+- [ ] Existinggenerationinitialfreeze/settings/destinationABA/scope/navigation/abort/singleadmission fences; scopedtest/bundle/type/lint/diff and separateTask4review. ActualbrowserproofTask5.
+
+### Task 5: Actual owned HTTP and Chromium qualification
+Own scripts/smoke-hubspot-export.ts and package.json sole smokealias. BindingdetailedTask5brief. No productcodechanges to satisfyfixture; reportconcretefailures.
+- [ ] RealisolatedPGfixture/app HTTP/currentrole/tenant/bodyprivacy/hash/audit/SDK tests and actualallfiveeditorreview/download/retry/interrupt/ABAfences.
+- [ ] Mobile390pixels, empty/error/Viewer/noIO/newoperations-outbox-usage/sourcepreservation; completefailures/logs/type/lint/diff/exactownedcommit and separateTask5review.
+
+### Task 6: Whole qualification and canonical delivery
 - [ ] Configuredfullsuite/type/lint/API/build/Linux/five actualjourneys.
 - [ ] ONEwholeimmutable review; ONEcompletefix andONEscopedifneeded; allfindingsrulingsretained.
 - [ ] CanonicalbytecheckedFF/freshbuildbrowser/preservation/ownedappsrestore, fullverbatimreports/ledger/failures beforeonlyownscratchcleanup. Continue remainingGA.
