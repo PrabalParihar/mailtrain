@@ -27,3 +27,7 @@ Full GA baseline, all 65 requirements and all 13 release gates remain in force. 
 - Undo from invalid fields back to the acknowledged spec can leave a stale validation alert until manual Save clears it. The draft is correctly marked saved and remains usable; retire only the resolved validation alert in a later polish change.
 
 Neither finding blocks this bounded workflow qualification. They do not establish complete accessibility acceptance.
+
+## CI compatibility closure
+
+The first publication (`65d5bc8`, run 37136176560) passed unit/lint/typecheck/build, media, renderer and every new Outline browser group. Its inherited template mobile fixture then timed out waiting for Preview to be the default. That fixture now explicitly selects Preview before checking the iframe and restricts browser initialization to the top frame. The existing isolated native template journey passes after this correction; lint/typecheck also pass. Production code is unchanged from the independently reviewed code commit. Final exact-head CI is reported in delivery.
