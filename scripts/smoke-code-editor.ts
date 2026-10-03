@@ -85,7 +85,32 @@ try{
  for(let index=0;index<3;index++){await enhance();await raw.focus();await page.keyboard.press('Escape');assert.equal(await page.getByRole('button',{name:'Use basic editor',exact:true}).evaluate(node=>node===document.activeElement),true);assert.equal(await basic(),'<p>Newer basic while loading Ω</p>');}
  await enhance();await page.getByRole('button',{name:'Preview',exact:true}).first().click();assert.equal(await page.locator('.monaco-editor').count(),0);assert.equal(await modelCount(),0,'HTML tab navigation disposes the model');await page.getByRole('button',{name:'HTML',exact:true}).first().click();await enhanced();
  // Generated source and a current Viewer cannot edit through real Monaco.
- await open(generated);await page.locator('.html-code-editor .monaco-editor').waitFor({state:'visible'});const compiled=page.getByRole('textbox',{name:'Compiled HTML source',exact:true});assert.equal(await compiled.getAttribute('aria-readonly'),'true');await page.getByRole('button',{name:'Use basic editor',exact:true}).click();const compiledBefore=await compiled.inputValue();assert.equal(await compiled.evaluate(node=>(node as HTMLTextAreaElement).readOnly),true);await page.getByRole('button',{name:'Use enhanced editor',exact:true}).click();await page.locator('.html-code-editor .monaco-editor').waitFor({state:'visible'});await compiled.focus();await page.keyboard.press('ControlOrMeta+A');await page.keyboard.insertText('Generated source must remain read-only');await page.getByRole('button',{name:'Use basic editor',exact:true}).click();assert.equal(await compiled.inputValue(),compiledBefore);assert.equal(await page.getByRole('button',{name:'Edit raw HTML',exact:true}).isEnabled(),true);
+ const probeCompiledPreviewRace=process.argv.includes('--probe-compiled-preview-race');
+ const generatedPreviewUrl=origin+'/v1/emails/'+generated+'/preview';
+ let releaseGeneratedPreview!:()=>void,generatedPreviewHeld!:()=>void;
+ const generatedPreviewGate=new Promise<void>(resolve=>{releaseGeneratedPreview=resolve;});
+ const generatedPreviewArrival=new Promise<void>(resolve=>{generatedPreviewHeld=resolve;});
+ if(probeCompiledPreviewRace)await page.route(generatedPreviewUrl,async route=>{
+  const response=await route.fetch();generatedPreviewHeld();await generatedPreviewGate;await route.fulfill({response});
+ });
+ const generatedPreviewResponse=page.waitForResponse(response=>response.url()===generatedPreviewUrl&&response.request().method()==='POST');
+ await open(generated);await page.locator('.html-code-editor .monaco-editor').waitFor({state:'visible'});
+ const compiled=page.getByRole('textbox',{name:'Compiled HTML source',exact:true});
+ assert.equal(await compiled.getAttribute('aria-readonly'),'true');
+ await page.getByRole('button',{name:'Use basic editor',exact:true}).click();
+ if(probeCompiledPreviewRace){await generatedPreviewArrival;assert.equal(await compiled.inputValue(),'','Held preview must expose the initial empty field');releaseGeneratedPreview();}
+ const generatedResponse=await generatedPreviewResponse;assert.equal(generatedResponse.status(),200);
+ const generatedHtml=(await generatedResponse.json()).artifact.html;assert.equal(typeof generatedHtml,'string');assert.ok(generatedHtml.includes('Owned code editor'));
+ await page.waitForFunction(expected=>{const field=document.querySelector('textarea[aria-label="Compiled HTML source"]');return field instanceof HTMLTextAreaElement&&field.value===expected;},generatedHtml);
+ if(probeCompiledPreviewRace){console.log('Compiled preview race probe adopted exact generated artifact before read-only baseline.');await page.unroute(generatedPreviewUrl);}
+ const compiledBefore=await compiled.inputValue();assert.equal(compiledBefore,generatedHtml);
+ const generatedBefore=(await db.query('SELECT spec,doc_version FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,generated])).rows[0];
+ assert.equal(await compiled.evaluate(node=>(node as HTMLTextAreaElement).readOnly),true);
+ await page.getByRole('button',{name:'Use enhanced editor',exact:true}).click();await page.locator('.html-code-editor .monaco-editor').waitFor({state:'visible'});
+ await compiled.focus();await page.keyboard.press('ControlOrMeta+A');await page.keyboard.insertText('Generated source must remain read-only');
+ await page.getByRole('button',{name:'Use basic editor',exact:true}).click();assert.equal(await compiled.inputValue(),compiledBefore);
+ assert.deepEqual((await db.query('SELECT spec,doc_version FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,generated])).rows[0],generatedBefore,'Read-only keyboard attempt must not mutate the generated document');
+ assert.equal(await page.getByRole('button',{name:'Edit raw HTML',exact:true}).isEnabled(),true);
  const importPattern='**/v1/emails/'+generated+'/source-fork';await page.route(importPattern,async route=>{await new Promise(resolve=>setTimeout(resolve,400));await route.continue();});await page.getByRole('button',{name:'Edit raw HTML',exact:true}).click();await raw.waitFor();await page.unroute(importPattern);assert.equal((await db.query('SELECT spec FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,generated])).rows[0].spec.editing_mode,'raw_html');await enhanced();
  await context.addCookies([{name:'mailcraft_local_session',value:viewerCookie,url:origin,sameSite:'Strict'}]);await open();await enhanced();assert.equal(await raw.getAttribute('aria-readonly'),'true');const beforeViewer=(await db.query('SELECT spec FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,email])).rows[0].spec.raw_html;await raw.focus();await page.keyboard.press('ControlOrMeta+A');await page.keyboard.insertText('Viewer must not mutate');assert.equal(await basic(),beforeViewer);assert.equal((await db.query('SELECT spec FROM emails WHERE workspace_id=$1 AND id=$2',[workspace,email])).rows[0].spec.raw_html,beforeViewer);
  console.log('Readonly compiled/checkpoint and Viewer attempted keyboard mutation PASS.');await context.addCookies([{name:'mailcraft_local_session',value:cookie,url:origin,sameSite:'Strict'}]);await open();await enhanced();await page.locator('#workspace').selectOption(other);await page.waitForURL(origin+'/app');assert.equal(await modelCount(),0,'Workspace navigation disposes the old actor model');await open(otherEmail);await enhanced();assert.equal(await basic(),'<p>Other workspace source</p>');await page.locator('#workspace').selectOption(workspace);await page.waitForURL(origin+'/app');await open();await enhanced();assert.equal(await basic(),beforeViewer);console.log('Actor/workspace navigation source isolation PASS.');
