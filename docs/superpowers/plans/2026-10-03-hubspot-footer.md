@@ -22,8 +22,8 @@ Own src/domain/hubspot-export.ts/tests/hubspot-export.test.ts, afterTask1review.
 
 ### Task 3: Mounted POST boundary and typed API/SDK
 Own src/server/hubspot-export-review.ts, src/server/http.ts, src/server/esp-export-review.ts (fixed-message export only), src/app/v1/[...path]/route.ts, focusedHTTP/method/contract/SDK tests, scripts/generate-api.ts and exactgenerated3outputs+SDKtypefixture. Binding detailed Task3brief/rootserverdraft.
-- [ ] Strict16KiB timed/cancellable opt-inJSONreader preservingdefaults; currentauthority/tenant/abort/hash/audit-safe two POSTs.
-- [ ] API124/examples/strictbody+falseflags/media/headers/typedSDKPOST privacy/retry/scopedtests/type/lint/diff; exactownedcommit/report; separateTask3spec+qualityreview.
+- [x] Strict16KiB timed/cancellable opt-inJSONreader preservingdefaults; currentauthority/tenant/abort/hash/audit-safe two POSTs.
+- [x] API124/examples/strictbody+falseflags/media/headers/typedSDKPOST privacy/retry/scopedtests/type/lint/diff; exactownedcommit/report; separateTask3spec+qualityreview.
 
 ### Task 4: Fifth editor comparison/preparation
 Own src/ui/editor.tsx/src/ui/klaviyo-export.tsx/newHubSpotform+smallbrowserhelper+meaningfultests as Task4brief. No server/source mutation.
