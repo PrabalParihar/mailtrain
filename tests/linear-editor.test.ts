@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {blankSpec} from '../src/domain/email';
+const feature=await import('../src/domain/linear-editor').catch(()=>null);
+test('linear reordering preserves every block, source bytes and document metadata without mutating the input',()=>{
+  assert.ok(feature,'linear editor section commands are missing');
+  const spec=blankSpec('brand','Fixture');
+  spec.sections.push({id:'columns',type:'columns',columns:[[{id:'nested',type:'custom_html',html:'<!--exact-->\r\n<p>é 😀</p>'}],[{id:'nested-text',type:'text',text:'Other column'}]]});
+  const before=structuredClone(spec),moved=feature.moveEmailSection(spec,'columns',0);
+  assert.deepEqual(spec,before);assert.equal(moved.sections[0].id,'columns');
+  assert.deepEqual(moved.sections.slice(1),before.sections.slice(0,-1));
+  assert.deepEqual({...moved,sections:[]},{...before,sections:[]});
+  assert.equal(feature.moveEmailSection(moved,'columns',0),moved);
+  for(const position of [-1,100,0.5])assert.throws(()=>feature.moveEmailSection(spec,'columns',position));
+});
+test('linear edits and repeated deletion preserve sibling identities, exact source and other fields',()=>{
+  assert.ok(feature);
+  const spec=blankSpec('brand','Fixture'),hero=spec.sections[0];assert.equal(hero.type,'hero');
+  const next=feature.replaceEmailSection(spec,{...hero,heading:'A changed heading'});
+  assert.equal((next.sections[0] as {heading:string}).heading,'A changed heading');
+  assert.deepEqual(next.sections.slice(1),spec.sections.slice(1));assert.notEqual(next,spec);
+  assert.equal(feature.replaceEmailSection(next,next.sections[0]),next);
+  const deleted=feature.removeEmailSection(next,hero.id);assert.equal(feature.removeEmailSection(deleted,hero.id),deleted);
+  assert.deepEqual(deleted.sections,next.sections.slice(1));assert.equal(next.sections.length,spec.sections.length);
+  assert.throws(()=>feature.replaceEmailSection(spec,{id:hero.id,type:'text',text:'No silent type replacement'}));
+});
+test('partial URL input is retained locally and stale or raw commands cannot silently alter a draft',()=>{
+  assert.ok(feature);
+  const spec=blankSpec('brand','Fixture'),button=spec.sections.find(block=>block.type==='button')!;
+  assert.equal(button.type,'button');
+  const partial=feature.replaceEmailSection(spec,{...button,href:'https://'});
+  assert.equal((partial.sections.find(block=>block.id===button.id) as {href:string}).href,'https://');
+  assert.deepEqual(spec,blankSpec('brand','Fixture'));
+  assert.throws(()=>feature.moveEmailSection(spec,'removed',0));
+  assert.throws(()=>feature.replaceEmailSection(spec,{id:'removed',type:'text',text:'Stale'}));
+  const raw={...spec,editing_mode:'raw_html' as const,raw_html:'Exact raw source'};
+  assert.throws(()=>feature.moveEmailSection(raw,button.id,0));
+  assert.throws(()=>feature.removeEmailSection(raw,button.id));
+  assert.throws(()=>feature.replaceEmailSection(raw,button));
+  assert.equal(raw.raw_html,'Exact raw source');
+});

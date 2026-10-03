@@ -1702,3 +1702,83 @@ td {
   .creation-report-fields { grid-template-columns: minmax(0, 1fr); }
   .creation-report-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
+
+/* Linear editing reflows independently of the email document's canvas width. */
+.editor-grid.linear-mode {
+  grid-template-columns: minmax(0, 1fr);
+}
+.editor-grid.linear-mode > .canvas-area {
+  grid-row: auto;
+}
+.editor-grid.linear-mode > .inspector {
+  display: block;
+}
+.linear-email-outline {
+  min-width: 0;
+  max-width: 100%;
+  padding: 20px;
+  overflow-wrap: anywhere;
+}
+.linear-email-outline h2 {
+  font-size: 1.125rem;
+}
+.linear-email-outline .linear-block-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.linear-email-outline .linear-block-list > li {
+  min-width: 0;
+  margin: 0 0 20px;
+}
+.linear-email-outline fieldset {
+  min-width: 0;
+  max-width: 100%;
+  margin: 16px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.linear-email-outline legend {
+  max-width: 100%;
+  padding: 0 4px;
+  font-weight: 600;
+  white-space: normal;
+}
+.linear-email-outline label,
+.linear-email-outline input,
+.linear-email-outline textarea,
+.linear-email-outline select {
+  min-width: 0;
+  max-width: 100%;
+}
+.linear-email-outline textarea {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.linear-email-outline button {
+  max-width: 100%;
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.linear-email-outline .linear-block-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.linear-email-outline .linear-block-controls > button {
+  flex: 1 1 120px;
+}
+.linear-email-outline .linear-block-controls > label {
+  flex: 1 1 180px;
+  margin: 0;
+}
+@media (max-width: 767px) {
+  .linear-email-outline {
+    padding: 12px;
+  }
+}

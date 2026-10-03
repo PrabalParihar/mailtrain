@@ -10,6 +10,9 @@ type Destination='klaviyo'|'mailchimp'|'omnisend'|'brevo'|'hubspot';type Destina
 function emptyHubSpotSettings():HubSpotFooterSettingsData{return {company_name:'',company_street_address_1:'',company_street_address_2:'',company_city:'',company_state:'',company_zip:'',company_country:''};}
 import {LocaleSourceComparison} from './locale-source-comparison';
 import {LocaleContentReview} from './locale-content-review';
+import {BlockFields} from './email-block-fields';
+import {EmailLinearOutline} from './email-linear-outline';
+import {moveEmailSection,replaceEmailSection,removeEmailSection} from '@/domain/linear-editor';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
 import {effectiveProjectionStatus} from '@/domain/projection-status';
@@ -80,7 +83,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [rawDelivery,setRawDelivery]=useState(''),
     [showAssets,setShowAssets]=useState(false),
     [text, setText] = useState(''),
-    [view, setView] = useState<'canvas' | 'code' | 'text'>('canvas'),
+    [view, setView] = useState<'canvas' | 'code' | 'text' | 'outline'>('canvas'),
     [mobile, setMobile] = useState(false),
     [showHistory, setShowHistory] = useState(false),
     [revision, setRevision] = useState<Frozen | null>(null),
@@ -100,6 +103,11 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     [addType, setAddType] = useState<Block['type']>('text'),
     [undoCount, setUndoCount] = useState(0),
     [renderEpoch, setRenderEpoch] = useState(0);
+  useEffect(()=>{
+    let active=true;
+    if(window.matchMedia('(max-width: 767px)').matches)void Promise.resolve().then(()=>{if(active)setView('outline');});
+    return ()=>{active=false;};
+  },[]);
   const selectedRef=useRef(selected),roleRef=useRef(editRole);useLayoutEffect(()=>{selectedRef.current=selected;roleRef.current=editRole;});
   const historyPage = useResourcePage<Revision>(workspace, 'email-revisions?email_id=' + id);
   const history = historyPage.data;
@@ -207,10 +215,24 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
   async function flush(): Promise<boolean> {
     if (!editRole) return !dirtyAt.current;
     if (saving.current) return saving.current;
-    if (!live.current || (!pendingSave.current&&canonicalSpecString(live.current.spec)===ack.current)) return true;
+    if (!live.current) return true;
+    if (!pendingSave.current&&canonicalSpecString(live.current.spec)===ack.current) {
+      // Undo/reorder can return to the already acknowledged spec without a write.
+      if(!conflictRef.current&&!pendingUncertain.current){dirtyAt.current=0;setStatus('Saved · v'+live.current.doc_version);}
+      return true;
+    }
     if (conflictRef.current||pendingUncertain.current) return false;
     if (!navigator.onLine) {setStatus('Offline · local only');return false;}
     const scope={...scopeRef.current},life=lifecycle.current,context=saveContext();
+    if(!pendingSave.current){
+      const validation=EmailSourceSpecSchema.safeParse(context.spec);
+      if(!validation.success){
+        const issue=validation.error.issues[0],position=issue.path[0]==='sections'&&typeof issue.path[1]==='number'?`block ${issue.path[1]+1}`:'the draft fields';
+        setError(`Complete ${position} before saving: ${issue.message}. Your edits remain in this tab.`);
+        setStatus('Incomplete fields · local work retained');
+        return false;
+      }
+    }
     setStatus('Saving…');
     const task=(async()=>{
       try{
@@ -247,7 +269,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         if(pendingSave.current)pendingUncertain.current=true;
         setError((e as Error).message);
         if(e instanceof ApiError&&e.status===412){conflictRef.current=true;setStatus('Conflict · local work preserved');const server=await api<{email:Doc}>(scope.workspace,'emails/'+scope.email,'GET',undefined,undefined,undefined,undefined,scope.actor);if(sameContext(scope,life))setConflict(checkedDoc(server.email));}
-        else if(!conflictRef.current)setStatus(navigator.onLine?'Save failed · original command retained':'Offline · local only');
+        else if(!conflictRef.current)setStatus(navigator.onLine?(pendingSave.current?'Save failed · original command retained':'Save failed · local work retained'):'Offline · local only');
         return false;
       }finally{if(sameContext(scope,life))saving.current=null;}
     })();saving.current=task;return task;
@@ -350,13 +372,14 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
     if(trackingFingerprint(policy)!==trackingFingerprint(live.current.spec.tracking))update(spec);
     return null;
   }
-  const changeBlock = (value: Block) => {
-    if (doc)
-      update({
-        ...doc.spec,
-        sections: doc.spec.sections.map((b) => (b.id === value.id ? value : b)),
-      });
-  };
+  function outlineCommand(command:(spec:EmailSpec)=>EmailSpec){
+    if(!writable||!live.current)return;
+    try{
+      const current=live.current.spec,next=command(current);
+      if(next!==current)update(next);
+    }catch(error){setError(error instanceof Error?error.message:'The block changed. Select its current fields.');}
+  }
+  const changeBlock = (value:Block) => outlineCommand(spec=>replaceEmailSection(spec,value));
   async function applyAsset(ref:AssetVariantRef,a:AssetPickerAnchor){
     const check=()=>{const current=live.current,block=current?.spec.sections.find(b=>b.id===a.nodeId);if(!editorActive.current||!roleRef.current||workspace!==a.workspace||actor!==a.actor||id!==a.email||selectedRef.current!==a.nodeId||!current||current.doc_version!==a.docVersion||block?.type!=='image'||JSON.stringify(block)!==a.sourceRef||conflictRef.current)throw Error('The selected image or account changed. Reopen uploaded media; your current image is preserved.');return{current,block};};
     if(busyRef.current)throw Error('Finish the current editor action first.');check();busyRef.current='asset';setBusy('asset');setError('');
@@ -757,7 +780,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           if (matches(r.anchor)) router.push('/app/emails/' + result.email.id);
           else if (editorActive.current) setError('The source changed while the new draft was created. Your separate draft is in Emails; current edits are preserved.');
         })} />
-      <div className="editor-grid">
+      <div className={`editor-grid${view === 'outline' ? ' linear-mode' : ''}`}>
         <aside className="outline panel">
           <div className="section-heading">
             <h2>Outline</h2>
@@ -767,7 +790,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           </div>
           {doc.spec.editing_mode === 'structured' ? (
             <>
-              <ol>
+              {view !== 'outline' && <ol>
                 {doc.spec.sections.map((b, i) => (
                   <li key={b.id} className={selected === b.id ? 'selected' : ''}>
                     <button
@@ -819,10 +842,11 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                     </div>
                   </li>
                 ))}
-              </ol>
+              </ol>}
               <label>
                 Block type
                 <select
+                  aria-label="Block type"
                   value={addType}
                   onChange={(e) => setAddType(e.target.value as Block['type'])}
                 >
@@ -848,7 +872,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                 disabled={!writable}
                 onClick={() => {
                   const b = newBlock(addType);
-                  update({ ...doc.spec, sections: [...doc.spec.sections, b] });
+                  outlineCommand(spec=>({ ...spec, sections: [...spec.sections, b] }));
                   setSelected(b.id);
                 }}
               >
@@ -884,6 +908,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
               >
                 Preview
               </button>
+              <button aria-pressed={view === 'outline'} className={view === 'outline' ? 'selected' : ''} onClick={() => setView('outline')}>Outline</button>
               <button className={view === 'code' ? 'selected' : ''} onClick={() => setView('code')}>
                 <Code2 size={16} /> HTML
               </button>
@@ -912,7 +937,18 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
             <span className="badge warning">Simulation</span> {mobile ? '390px mobile' : 'Desktop'}{' '}
             · Same draft revision · No real-client verification
           </p>
-          {view === 'canvas' ? (
+          {view === 'outline' ? (
+            doc.spec.editing_mode === 'structured' ? <EmailLinearOutline
+              sections={doc.spec.sections} readOnly={!writable} locale={doc.spec.locale} direction={doc.spec.direction}
+              onChangeBlock={changeBlock} onMove={(id,position)=>outlineCommand(spec=>moveEmailSection(spec,id,position))}
+              onRemove={id=>outlineCommand(spec=>removeEmailSection(spec,id))} onSelect={setSelected}
+            /> : <section className="panel linear-email-outline" aria-label="Linear email Outline">
+              <h2>Raw source Outline</h2>
+              <p>Raw HTML remains the authoritative source. Subject and preheader can be edited above. Use HTML view on a larger screen to edit source; switching views preserves this draft.</p>
+              <label>Raw HTML source in Outline<textarea readOnly dir="ltr" rows={12} value={doc.spec.raw_html??''}/></label>
+              <h3>Plaintext projection</h3><pre className="code-view" lang={doc.spec.locale} dir={doc.spec.direction}>{text}</pre>
+            </section>
+          ) : view === 'canvas' ? (
             <iframe
               title="Email browser simulation"
               sandbox=""
@@ -976,7 +1012,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
         <aside className="inspector panel">
           <fieldset className="inspector-fields" disabled={!writable}>
             <h2>{block ? block.type.replaceAll('_', ' ') + ' settings' : 'Document settings'}</h2>
-            {block && doc.spec.editing_mode === 'structured' && (
+            {view !== 'outline' && block && doc.spec.editing_mode === 'structured' && (
               <BlockFields block={block} onChange={changeBlock}/>
             )}
             <div className="divider" />
@@ -1190,142 +1226,4 @@ function newBlock(type: Block['type']): Block {
     case 'custom_html':
       return { id, type, html: '<p>Custom content</p>' };
   }
-}
-function BlockFields({ block: b, onChange }: { block: Block; onChange: (b: Block) => void }) {
-  const field = (key: string, label: string, multiline = false) => {
-    const value = (b as unknown as Record<string, string>)[key] ?? '';
-    return (
-      <label key={key}>
-        {label}
-        {multiline ? (
-          <textarea
-            rows={key === 'html' ? 8 : 4}
-            value={value}
-            onChange={(e) => onChange({ ...b, [key]: e.target.value } as Block)}
-          />
-        ) : (
-          <input
-            value={value}
-            onChange={(e) => onChange({ ...b, [key]: e.target.value } as Block)}
-          />
-        )}
-      </label>
-    );
-  };
-  if (b.type === 'hero')
-    return (
-      <>
-        {field('heading', 'Heading')}
-        {field('text', 'Supporting text', true)}
-      </>
-    );
-  if (b.type === 'text') return field('text', 'Body text', true);
-  if (b.type === 'button')
-    return (
-      <>
-        {field('label', 'Button label')}
-        {field('href', 'Destination URL')}
-      </>
-    );
-  if (b.type === 'image')
-    return (
-      <>
-        {b.asset_ref?<><p className="small">Private immutable variant selected. Public delivery is unavailable; use an image ZIP bundle.</p><button type="button" onClick={()=>{const image={...b,src:'https://example.com/image.png'};delete image.asset_ref;delete image.fallback_ref;onChange(image);}}>Use a public image URL</button></>:field('src','Public image URL')}
-        {field('alt', 'Alternative text')}
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={b.decorative ?? false}
-            onChange={(e) => onChange({ ...b, decorative: e.target.checked })}
-          />{' '}
-          Decorative image
-        </label>
-        <p className="small muted">
-          Remote images are blocked in local simulations. Verified private derivatives are available after real processing; public hosting remains a production gate.
-        </p>
-      </>
-    );
-  if (b.type === 'legal_footer')
-    return (
-      <>
-        {field('identity', 'Sender identity')}
-        {field('address', 'Postal address', true)}
-        <p className="small muted">Unsubscribe slot is required and retained.</p>
-      </>
-    );
-  if (b.type === 'product_card')
-    return (
-      <>
-        {field('title', 'Product title')}
-        {field('description', 'Description', true)}
-        {field('price', 'Approved price and currency')}
-        {field('href', 'Product URL')}
-      </>
-    );
-  if (b.type === 'custom_html')
-    return (
-      <>
-        {field('html', 'Sanitized custom HTML', true)}
-        <p className="small muted">Only supported safe constructs are retained.</p>
-      </>
-    );
-  if (b.type === 'columns')
-    return (
-      <>
-        {b.columns.map((col, i) => (
-          <fieldset key={i}>
-            <legend>Column {i + 1}</legend>
-            {col.map((n, j) => (
-              <div key={n.id}>
-                <BlockFields
-                  block={n}
-                  onChange={(next) => {
-                    if (next.type === 'columns') return;
-                    const columns = b.columns.map((c, index) =>
-                      index === i ? c.map((v, k) => (k === j ? next : v)) : c,
-                    );
-                    onChange({ ...b, columns });
-                  }}
-                />
-              </div>
-            ))}
-          </fieldset>
-        ))}
-      </>
-    );
-  if (b.type === 'social')
-    return (
-      <>
-        {b.links.map((l, i) => (
-          <fieldset key={i}>
-            <legend>Link {i + 1}</legend>
-            <label>
-              Label
-              <input
-                value={l.label}
-                onChange={(e) =>
-                  onChange({
-                    ...b,
-                    links: b.links.map((v, j) => (j === i ? { ...v, label: e.target.value } : v)),
-                  })
-                }
-              />
-            </label>
-            <label>
-              URL
-              <input
-                value={l.href}
-                onChange={(e) =>
-                  onChange({
-                    ...b,
-                    links: b.links.map((v, j) => (j === i ? { ...v, href: e.target.value } : v)),
-                  })
-                }
-              />
-            </label>
-          </fieldset>
-        ))}
-      </>
-    );
-  return <p className="muted">A divider separates content sections.</p>;
 }
