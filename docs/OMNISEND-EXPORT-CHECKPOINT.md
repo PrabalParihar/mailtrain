@@ -845,3 +845,135 @@ Native /tmp/lettercape-mailchimp-export-native branchcodex/omnisend-export froze
   "oci_config_digest": "sha256:bcf2afcbe4b8422f7a04a4542efef0f88c89f6f2a17bda24b9494ba29dd711ef"
 }
 ```
+
+## Canonical development closure
+
+Qualified actual Desktop/mail and mirror atc99851614494f4d43596a772e6eff42ebefe1b9d with582trackedSHA matches, fullcanonicaltype/lint/API122/build, freshactualOmnisend6+Mailchimp6+Klaviyo4HTTP/Chromium groups and cleanup pass. Mobile390pixels inspected and readable. The first canonicalfixture failed atstartup because root restored its same-directorydevserver tooearly; diagnosed Nextlock and fixed only execution ordering, then unchanged assertions passed. Both ownedapps restored/main91988/canonical92419 healthy dispatchdisabled. Original109email/221revision old-column digests/private metadata remain identical. Final evidence-only local commit does not change executable bytes; no remoteCI/push/deployment/nativeprovider/fullGA acceptance is inferred. All65/all13/zero whole accepted,43Partial/17undelivered/5roadmap retained.
+
+```json
+{
+  "qualified_head": "c99851614494f4d43596a772e6eff42ebefe1b9d",
+  "tracked_sha256_matches": 582,
+  "source_main_canonical_equal": true,
+  "main_canonical_clean": true,
+  "original_counts_and_old_column_digests_preserved": true,
+  "private_metadata_unchanged_readable": true,
+  "private_contents_copied_printed_or_hashed": false,
+  "canonical_type_lint_api122_build": true,
+  "fresh_canonical_browser": {
+    "omnisend": 6,
+    "mailchimp": 6,
+    "klaviyo": 4,
+    "cleanup": true,
+    "external_calls": 0
+  },
+  "canonical_mobile_pixel_inspected": true,
+  "failure_retained": "Restoring canonical dev app before owned fixture caused diagnosed same-directory Next dev lock; only canonicalgroup91991 stopped, same unchanged fixtures passed; main91988 preserved. Helper historical banner said two groups although filtered execution stopped one; banner corrected, guards unchanged.",
+  "owned_app_pids": {
+    "main": 91988,
+    "canonical": 92419
+  },
+  "workers_and_unrelated_app_preserved": true,
+  "health": [
+    {
+      "port": 3002,
+      "health": {
+        "request_id": "81b579a3-2551-4932-885d-1440ba5501d3",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    },
+    {
+      "port": 3003,
+      "health": {
+        "request_id": "06125538-f398-471b-919a-8c95e3836dd8",
+        "status": "ok",
+        "release": "development",
+        "dispatch_enabled": false
+      }
+    }
+  ],
+  "deployment": false,
+  "logs": [
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-type.log",
+      "bytes": 45,
+      "sha256": "e11c3d59ab9d9aabaa73e552f5ae5dca4fb95a39e0ae3d568aa0d9e41b5bcaa6"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-lint.log",
+      "bytes": 36,
+      "sha256": "177e308fb34c67e35b7e5d386753d3db49bdb519b9ccb1b1f223066b4372f746"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-api.log",
+      "bytes": 157,
+      "sha256": "ab290f6bee02e1fcfa50627a9b4ecd92b7ab23d8bdeacf6560075c6f1d46140f"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-build.log",
+      "bytes": 1368,
+      "sha256": "1755cac1f57086dd39de970ba3927979f13b05628b9714ef2c6c89da09c99327"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-browser.log",
+      "bytes": 850,
+      "sha256": "64d1118a8766c8483fc334fc52ca133df49273d96b3226e29167be8bf55b4e54"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-mailchimp-browser.log",
+      "bytes": 831,
+      "sha256": "b716c4145f29c2249467696270c49d512469f953a75ec03d8c8ff6d2af9c97c9"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-klaviyo-browser.log",
+      "bytes": 584,
+      "sha256": "84bf5fee002fbc42d5b96a4fd25909f0e1d4e0c89fbcf19dc9758f44fa2acc2e"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-browser-lock-failure.log",
+      "bytes": 914,
+      "sha256": "7bc1e280386a3c224c152100abde4d97e381be4d3527c4eaed4475f8637ca903"
+    },
+    {
+      "path": "/tmp/lettercape-omnisend-canonical-app-lock-failure.log",
+      "bytes": 526,
+      "sha256": "1ac1268c162549a53cc4e7fc6e3cbc73708485da29881327c854687dab7b8792"
+    }
+  ]
+}
+```
+
+## Final complete plan ledger and exhaustive rulings
+
+# SDD ledger — plan: docs/superpowers/plans/2026-10-03-omnisend-export.md
+## Preflight interface/self-consistency table
+| Pair/task | Produces/consumes or internal consistency | Outcome |
+|1/2|OmnisendArtifact/constants, exact options/results|Disjoint owned files; transport may scaffold interface until compiler arrives.|
+|1/3|OmnisendReview strict browser schema/artifact mapping|Root owns UI/routes/API; no node imports in browser contracts.|
+|2/3|Unmounted primitive, no route activation|Root product still refuses actualremote export; no inferred connection.|
+|1|Validator unchanged/token/hash/JSONreserve vs tests|Aligned; prior two compilers preserved.|
+|2|20124hexID + metadataonlyGET vs tests|Aligned; arbitrary renderJSON key not invented.|
+|3|122existingoperations + thirdliteral, selectiongeneration, localonly qualification|Aligned; fullGA does not close.|
+Ruling: standing user instruction to continue independent development and focused parallel workers replaces routine spec/plan permission menus and SDD sequential workers for disjoint tasks — exact interface/file ownership and joint/whole review retained — costs integration or preference rework if assumptions drift, no provider/spend/publication permission inferred.
+Ruling: use1000000 totalJSON bytes and compiler reserve for worst allowed255-unit well-formed UTF8 name — docs specify1MB without binary boundary, requestescaping affectssize — costs avoidable rejection up to48,576bytes until native boundary qualification.
+Ruling: Omnisend imported template metadata/readback is never content/handoff verified in this slice; renderJSON lacks a named HTML property and import transforms bytes — no invented key/normalization/management URL — costs blocked nativehandoff until account-tested fidelity/link evidence.
+
+Preflight artifact writer reached a final status-print NameError (json import omitted) after successfully writing spec/plan/ledger; git whitespace check and exact2-file plan commit04fe4b82 verified. No product code affected. Corrected handoff writer imports json; all files read/verified before task dispatch.
+
+Root integration RED actualHTTP Omnisend422vs200 retained; API mapping enum assertion RED failed against old2-destination generated schema, regenerated API122/15testsGREEN. Initial root edit writer matched wrong CI indentation and failed after route/UI/API/package edits; multiline CI command block corrected explicitly. No compiler/transport changes by root. Third mapping/generation-bound downloads and actual3-destination round-trip fixture now integrated.
+
+Root candidate qualification: full configured622/622tests/0fail/0cancel/0skip; full type/lint/API122/build pass. Actual owned Omnisend6+Mailchimp6+Klaviyo4HTTP/Chromium groups and fixture cleanup pass; native390pixel inspection shows readable wrapped receipts/buttons/no horizontal overflow. Original109emails/221revisions old-column hashes/private metadata unchanged in fresh pre-sync proof; main/Desktop remain clean fda23c6 until reviewed closure. Joint reviewer provisionally reported Minor UUID-validator drift; final task report and whole-slice triage pending.
+
+Task1 complete after separate spec/quality PASS. Task2 complete with one Minor UUID-validation mismatch, no Critical/Important; full joint report /tmp/lettercape-omnisend-tasks-review.md retained and deferred to final whole-slice triage (not silently accepted). RootTask3 implementation/browser/fullcandidate qualification complete, immutablewhole/Linux/canonical gates pending.
+
+ONE immutable whole review candidate debeee8410c17167e4a969d04f2b5c47f9c4a046 (baselinefda23c6, patchSHA37d5b926fdab9f1cacb1593df513054591d4ed06a192907b16758b06bd923c9d) found0Critical/0Important/1Minor M1, confirms task UUID-validator drift. ONE complete native correction worker will align strict sourceidentity and zero-IO regression; no root production edit. CandidateLinux UID1001/networknone/three exactmapping contracts/assets/privateexclusion/startupclosedPASS; metadata at/tmp/lettercape-omnisend-linux-proof-candidate.json. Canonical remains clean fda.
+
+ONE complete correction7aa9eedace18f20affed399b17a4de16b09ed4f0 changes exactly transport+tests47+/3-, patchSHA517df19fc4a03dd689087b07c5c0f4aa794409e038a7e0758845dc0334acfa4e. Strictz.uuid beforemarker; invalidversion/variant meaningfulRED27tests/25pass2fail each marker1/request2/persist1, GREEN27/27 including acceptednil/max/modernvalidsemantics. Freshroot625/625configuredtests/0fail/cancel/skip and fulltype/lint/build/API122 pass. Onlyunmountedadapter+its tests changed; reviewed UI/routes/compilers and existing successful actual3browser byteidentical; freshcanonicalactual3fixtures planned. ONE scopedre-review and correctedLinux pending.
+
+ONE scoped re-review M1ADDRESSED/no correction-introduced findings; exactlive/patch/loghashesverified and13independent in-memory cases preserve versions1–8/uppercase/nil/max while malformedvariant/version zeroeffects. CorrectedLinux source7aa9eed image7059c779/configbcf2afcb UID1001/networknone/three mappings/two endpoints/assets/privateexclusion/startuprefused1PASS. Root625tests/fulltype/lint/API122/build PASS. Whole/fix/scoped cycle closed; no residual finding/adjudication waiver. Canonical qualification follows.
+
+Canonicalbuild/type/lint/API122 PASS and source/main/Desktop582trackedSHA matches/private/original109/221 unchanged atc998516. Root restored both ownedapps before canonicalfixture, causing unchangedfixture app3004 to fail beforetests: Nextdiagnostic says another same-directorydevserver3002 (child91994) already running. Systematicdebugging read/applied: compare successful isolatedfixture(nonconflictingcwd) vs restoredcanonicalserver same.next lock; hypothesis samecwdprocesslock prevents fixture startup. Correct onlyexecutionordering: pause identitychecked ownedcanonicalgroup91991; keepmain91988/workers/proofapp alive; rerun unchanged all3fixtures then restorecanonical. Retain initialfailed canonical browser and appdiagnostic logs; no product/check weakening.
+
+Canonicalexecution ordering hypothesis confirmed: unchanged Omnisend6/Mailchimp6/Klaviyo4HTTP-Chromium groups+cleanup PASS afteronlycanonicalpause; restoredcanonicalPID92419/main91988 both healthdevelopment/dispatchfalse. Original109/221/private proofs identical across before/after/final;582trackedSHA source/main/Desktop match atc998516, allclean. Canonicaltype/lint/API122/build/mobilepixelPASS. FinalMarkdown-onlyevidencecommit/guardedFF retains completeallreports/ledger/rulings and code491-file equivalence beforedeletingonlythisplanscratch. No currenttaskrediscussion/remote action. Historical filtered helper banner saidtwo although execution stoppedone group; correctedbanner, actualPID/cwd/PGID guards unchanged.
