@@ -31,3 +31,5 @@ Neither finding blocks this bounded workflow qualification. They do not establis
 ## CI compatibility closure
 
 The first publication (`65d5bc8`, run 37136176560) passed unit/lint/typecheck/build, media, renderer and every new Outline browser group. Its inherited template mobile fixture then timed out waiting for Preview to be the default. That fixture now explicitly selects Preview before checking the iframe and restricts browser initialization to the top frame. The existing isolated native template journey passes after this correction; lint/typecheck also pass. Production code is unchanged from the independently reviewed code commit. Final exact-head CI is reported in delivery.
+
+Two further inherited phone consumers were reproduced locally: derivation waited for the default iframe, and UTM link editing selected the hidden legacy inspector. Both now explicitly choose Preview for their existing simulation/inspector journeys, including after reload. Their complete native disposable-database scripts pass after the change; original assertions remain in place. No production code or paused collaboration/security work changed.

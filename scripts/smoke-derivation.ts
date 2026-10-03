@@ -54,7 +54,7 @@ try {
   await db.query("UPDATE memberships SET role='Owner' WHERE workspace_id=$1 AND user_id=$2", [w, user]);
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  await context.addInitScript((workspace) => localStorage.setItem('mailcraft.workspace', workspace), w);
+  await context.addInitScript((workspace) => { if (window.top === window) localStorage.setItem('mailcraft.workspace', workspace); }, w);
   await context.addCookies([{ name: 'mailcraft_local_session', value: cookie, url: origin, sameSite: 'Strict' }]);
   const page = await context.newPage();
   await page.goto(origin + '/app/emails/' + parent.id);
@@ -118,6 +118,7 @@ try {
   if (process.argv.includes('--review-reload')) assert.equal((await call('emails/' + frenchId)).j.email.spec.subject, 'Changed source');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await page.getByRole('status').filter({ hasText: 'Saved' }).waitFor();
+  await page.getByRole('button', { name: 'Preview', exact: true }).click();
   await page.locator('iframe[title="Email browser simulation"]').scrollIntoViewIfNeeded();
   await page.frameLocator('iframe[title="Email browser simulation"]').getByText('Your next story starts here', { exact: true }).waitFor();
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true)))));
