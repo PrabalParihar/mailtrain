@@ -11,6 +11,11 @@ import { createEmail, checkpoint } from '../src/server/emails';
 import { digest } from '../src/server/audit';
 import { LettercapeClient } from '../sdk/client';
 import type { HubSpotFooterSettingsData, HubSpotReview } from '../src/domain/hubspot-footer-contracts';
+type LateDownloadGate = {
+    phase: 'armed' | 'chunk' | 'digest' | 'released';
+    bytes: Uint8Array; pulls: number; digestCalls: number;
+    release: () => void; restore: () => void;
+};
 const origin = 'http://127.0.0.1:3004';
 const scratch = '/tmp/lettercape-hubspot-footer-task5-' + Date.now();
 const settings: HubSpotFooterSettingsData = { company_name: 'Owned Fixture Company', company_street_address_1: '123 Fixture Road', company_street_address_2: 'Suite 7', company_city: 'Fixture City', company_state: 'CA', company_zip: '90210', company_country: 'US' };
@@ -423,6 +428,96 @@ try {
                 await downloadUI('HTML');
             }
             pass('Held download settings/destination ABA, missing/forged metadata and corrupt actual bytes prevent file adoption, retry works');
+            // Schedule only actual owned server bytes. These hooks preserve the real
+            // editor, real receipts and cryptographic result while holding two late awaits.
+            const lateEvidence: object[] = [];
+            for (const mode of ['chunk', 'digest'] as const) {
+                // Static JS avoids tsx/esbuild's Node-only __name helper in a
+                // serialized browser function with nested scheduling callbacks.
+                await page.evaluate(`(() => {
+                    const mode = ${JSON.stringify(mode)}, origin = ${JSON.stringify(origin)};
+                    const scope = window;
+                    if (scope.__ownedHubSpotLateDownload) throw Error('Owned late-download hook already active');
+                    const originalFetch = window.fetch, originalDigest = crypto.subtle.digest;
+                    let release;
+                    const held = new Promise(resolve => {release = resolve;});
+                    const gate = {
+                        phase: 'armed', bytes: new Uint8Array(), pulls: 0, digestCalls: 0,
+                        release: () => {gate.phase = 'released'; release();},
+                        restore: () => {
+                            gate.release(); window.fetch = originalFetch;
+                            crypto.subtle.digest = originalDigest;
+                            delete scope.__ownedHubSpotLateDownload;
+                        },
+                    };
+                    scope.__ownedHubSpotLateDownload = gate;
+                    window.fetch = async (input, init) => {
+                        const response = await originalFetch.call(window, input, init);
+                        const url = new URL(input instanceof Request ? input.url : String(input), location.href);
+                        if (url.origin !== origin || !url.pathname.endsWith('/hubspot-artifact') || !response.ok) return response;
+                        gate.bytes = new Uint8Array(await response.clone().arrayBuffer());
+                        if (gate.bytes.length < 2) throw Error('Actual owned artifact is too short for late-body qualification');
+                        if (mode === 'digest') return response;
+                        const split = Math.floor(gate.bytes.length / 2);
+                        const body = new ReadableStream({
+                            async pull(controller) {
+                                gate.pulls++;
+                                if (gate.pulls === 1) {controller.enqueue(gate.bytes.slice(0, split)); return;}
+                                if (gate.pulls !== 2) throw Error('Unexpected owned artifact pull');
+                                gate.phase = 'chunk';
+                                await held;
+                                controller.enqueue(gate.bytes.slice(split)); controller.close();
+                            },
+                        }, {highWaterMark: 0});
+                        return new Response(body, {status: response.status, statusText: response.statusText, headers: response.headers});
+                    };
+                    if (mode === 'digest') crypto.subtle.digest = async (algorithm, data) => {
+                        const bytes = ArrayBuffer.isView(data)
+                            ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+                            : new Uint8Array(data);
+                        const actualDownload = gate.bytes.length > 0 && bytes.length === gate.bytes.length
+                            && bytes.every((value, index) => value === gate.bytes[index]);
+                        const actualDigest = originalDigest.call(crypto.subtle, algorithm, data);
+                        if (actualDownload) {
+                            gate.digestCalls++; gate.phase = 'digest';
+                            await held;
+                        }
+                        return actualDigest;
+                    };
+                })()`);
+                const count = downloads;
+                try {
+                    await panel().getByRole('button', {name: 'Download HubSpot HTML', exact: true}).click();
+                    await page.waitForFunction(expected => {
+                        const gate = (window as unknown as {__ownedHubSpotLateDownload?: LateDownloadGate}).__ownedHubSpotLateDownload;
+                        return gate?.phase === expected;
+                    }, mode);
+                    const observed = await page.evaluate(() => {
+                        const gate = (window as unknown as {__ownedHubSpotLateDownload: LateDownloadGate}).__ownedHubSpotLateDownload;
+                        return {phase: gate.phase, pulls: gate.pulls, digestCalls: gate.digestCalls, bytes: Array.from(gate.bytes)};
+                    });
+                    assert.equal(observed.phase, mode);
+                    assert.equal(observed.pulls, mode === 'chunk' ? 2 : 0);
+                    assert.equal(observed.digestCalls, mode === 'digest' ? 1 : 0);
+                    const actualBytes = new Uint8Array(observed.bytes);
+                    assert.ok(Buffer.from(actualBytes).toString().includes('{{ unsubscribe_link|escape_url }}'));
+                    await settingsABA(); await noReceipt();
+                    await page.evaluate(() => (window as unknown as {__ownedHubSpotLateDownload: LateDownloadGate}).__ownedHubSpotLateDownload.release());
+                    await ready(); await noReceipt();
+                    assert.equal(downloads, count, 'Late '+mode+' result must create no file');
+                    assert.equal(await page.locator('.alert[role="alert"]').count(), 0, 'Late '+mode+' result must adopt no stale error');
+                    lateEvidence.push({mode, phase: observed.phase, pulls: observed.pulls, digestCalls: observed.digestCalls, actual_bytes_sha256: sha(actualBytes), downloads_before: count, downloads_after: downloads});
+                } finally {
+                    await page.evaluate(() => (window as unknown as {__ownedHubSpotLateDownload?: LateDownloadGate}).__ownedHubSpotLateDownload?.restore());
+                }
+                assert.equal(await page.evaluate(() => '__ownedHubSpotLateDownload' in window), false);
+                await reviewUI();
+                const retry = await downloadUI('HTML');
+                const evidence = lateEvidence.at(-1) as {actual_bytes_sha256: string};
+                assert.equal(sha(retry), evidence.actual_bytes_sha256, 'Fresh retry must download the same real server artifact');
+            }
+            await writeFile(scratch+'/late-download-manifest.json', JSON.stringify(lateEvidence, null, 2));
+            pass('Actual later reader chunk and downloaded-byte SHA promise awaits: settings ABA suppresses stale file/error, hooks restored and fresh retries succeed');
             for (const transition of ['email', 'workspace', 'actor'] as const) {
                 await goto();
                 await fill();
@@ -486,6 +581,8 @@ try {
             assert.ok(await panel().getByRole('button', { name: 'Refresh HubSpot preparation', exact: true }).isVisible());
             assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
             await page.screenshot({ path: '/tmp/lettercape-hubspot-footer-mobile.png', fullPage: true });
+            await panel().screenshot({path: '/tmp/lettercape-hubspot-footer-mobile-panel.png'});
+            await writeFile(scratch+'/mobile-panel-sha256.txt', sha(await readFile('/tmp/lettercape-hubspot-footer-mobile-panel.png'))+'\n');
             await writeFile(scratch + '/mobile-sha256.txt', sha(await readFile('/tmp/lettercape-hubspot-footer-mobile.png')) + '\n');
             await cookie(viewer);
             await page.reload();
