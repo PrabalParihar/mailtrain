@@ -1352,7 +1352,7 @@ export interface paths {
         };
         /**
          * review destination revision
-         * @description Current edit/export authority required. Locally compiled immutable Klaviyo or Mailchimp Classic preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
+         * @description Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic or Omnisend HTML-import preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.
          */
         get: operations["reviewDestinationRevision"];
         put?: never;
@@ -2301,6 +2301,32 @@ export interface components {
                 "MANAGEMENT_LINK_UNVERIFIED"
             ];
         };
+        OmnisendReview: {
+            /** @constant */
+            destination: "omnisend";
+            /** @constant */
+            mapping_version: "omnisend-html-import-1";
+            /** @constant */
+            api_revision: "2026-03-15";
+            /** Format: uuid */
+            revision_id: string;
+            source_artifact_hash: string;
+            destination_hash: string;
+            html_sha256: string;
+            text_sha256: string;
+            /** @constant */
+            remote_export_enabled: false;
+            transformations: string[];
+            blockers: [
+                "OAUTH_CONNECTION_UNAVAILABLE",
+                "ACCOUNT_ENTITLEMENT_UNVERIFIED",
+                "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                "DESTINATION_CONFORMANCE_UNVERIFIED",
+                "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
+                "IMPORT_FIDELITY_UNVERIFIED",
+                "MANAGEMENT_LINK_UNVERIFIED"
+            ];
+        };
         DestinationReviewResponse: {
             /** Format: uuid */
             request_id: string;
@@ -2350,6 +2376,31 @@ export interface components {
                     "DESTINATION_CONFORMANCE_UNVERIFIED",
                     "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
                     "TEMPLATE_HTML_READBACK_UNAVAILABLE",
+                    "MANAGEMENT_LINK_UNVERIFIED"
+                ];
+            } | {
+                /** @constant */
+                destination: "omnisend";
+                /** @constant */
+                mapping_version: "omnisend-html-import-1";
+                /** @constant */
+                api_revision: "2026-03-15";
+                /** Format: uuid */
+                revision_id: string;
+                source_artifact_hash: string;
+                destination_hash: string;
+                html_sha256: string;
+                text_sha256: string;
+                /** @constant */
+                remote_export_enabled: false;
+                transformations: string[];
+                blockers: [
+                    "OAUTH_CONNECTION_UNAVAILABLE",
+                    "ACCOUNT_ENTITLEMENT_UNVERIFIED",
+                    "REAL_CLIENT_PREFLIGHT_UNAVAILABLE",
+                    "DESTINATION_CONFORMANCE_UNVERIFIED",
+                    "DURABLE_REMOTE_EXPORT_UNAVAILABLE",
+                    "IMPORT_FIDELITY_UNVERIFIED",
                     "MANAGEMENT_LINK_UNVERIFIED"
                 ];
             };
@@ -26680,7 +26731,7 @@ export interface operations {
     reviewDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo" | "mailchimp";
+                destination: "klaviyo" | "mailchimp" | "omnisend";
             };
             header?: {
                 /** @description Required for tenant session requests; bearer keys cannot override their workspace. */
@@ -26957,7 +27008,7 @@ export interface operations {
     downloadDestinationRevision: {
         parameters: {
             query: {
-                destination: "klaviyo" | "mailchimp";
+                destination: "klaviyo" | "mailchimp" | "omnisend";
                 format?: "html" | "txt";
             };
             header?: {
@@ -26971,7 +27022,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Locally prepared frozen Klaviyo or Mailchimp Classic HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled. */
+            /** @description Locally prepared frozen Klaviyo, Mailchimp Classic or Omnisend HTML-import HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled. */
             200: {
                 headers: {
                     "X-Request-Id"?: string;
@@ -26981,7 +27032,7 @@ export interface operations {
                     "X-Source-Artifact-Hash"?: string;
                     /** @description SHA256 of the exact UTF-8 bytes for the selected format. */
                     "X-Content-SHA256"?: string;
-                    "X-Destination-Mapping"?: "klaviyo-html-1" | "mailchimp-classic-html-1";
+                    "X-Destination-Mapping"?: "klaviyo-html-1" | "mailchimp-classic-html-1" | "omnisend-html-import-1";
                     /** @description Local preparation only; no provider export is enabled. */
                     "X-Remote-Export-Enabled"?: "false";
                     "Content-Type"?: "text/html; charset=utf-8" | "text/plain; charset=utf-8";

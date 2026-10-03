@@ -2,7 +2,8 @@
 import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
 import{MailchimpReview as MailchimpReviewSchema,type MailchimpReview}from'../domain/mailchimp-export-contracts';
-type Destination='klaviyo'|'mailchimp';type DestinationReview=KlaviyoReview|MailchimpReview;
+import{OmnisendReview as OmnisendReviewSchema,type OmnisendReview}from'../domain/omnisend-export-contracts';
+type Destination='klaviyo'|'mailchimp'|'omnisend';type DestinationReview=KlaviyoReview|MailchimpReview|OmnisendReview;
 import {LocaleSourceComparison} from './locale-source-comparison';
 import { useEffect, useLayoutEffect,useRef, useState,useCallback } from 'react';
 import {EmailConversion}from'./email-conversion';
@@ -394,17 +395,17 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       const controller=new AbortController();exportController.current=controller;
       try{const result=await api<{review:unknown}>(scope.workspace,'email-revisions/'+r.id+'/destination-review?destination='+selectedDestination,'GET',undefined,undefined,undefined,controller.signal,scope.actor);
         if(controller.signal.aborted||!selected()||!sameContext(scope,life)||!matches(r.anchor))return;
-        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):MailchimpReviewSchema.parse(result.review);
+        const review=selectedDestination==='klaviyo'?KlaviyoReviewSchema.parse(result.review):selectedDestination==='mailchimp'?MailchimpReviewSchema.parse(result.review):OmnisendReviewSchema.parse(result.review);
         if(review.revision_id!==r.id||review.source_artifact_hash!==r.artifact_hash)throw Error('The destination receipt belongs to a different frozen version. Review again.');
         setDestinationPreparation({review,anchor:r.anchor,...scope});
       }finally{if(exportController.current===controller)exportController.current=null;}
     }catch(error){if(selected()&&sameContext(scope,life)&&!(error instanceof DOMException&&error.name==='AbortError')){setDestinationPreparation(null);setError(error instanceof Error?error.message:'Destination preparation unavailable.');}}
   }
   async function downloadDestination(format:'html'|'txt'){
-    const scope={...scopeRef.current},life=lifecycle.current,current=destinationPreparation;
+    const scope={...scopeRef.current},life=lifecycle.current,current=destinationPreparation,selectionGeneration=destinationSelectionGeneration.current;
     if(!current||current.review.destination!==destinationRef.current||current.workspace!==scope.workspace||current.actor!==scope.actor||current.email!==scope.email||!matches(current.anchor))return;
     const controller=new AbortController();exportController.current=controller;
-    const fresh=()=>!controller.signal.aborted&&destinationRef.current===current.review.destination&&sameContext(scope,life)&&matches(current.anchor);
+    const fresh=()=>!controller.signal.aborted&&destinationSelectionGeneration.current===selectionGeneration&&destinationRef.current===current.review.destination&&sameContext(scope,life)&&matches(current.anchor);
     try{
       const response=await fetch('/v1/email-revisions/'+current.review.revision_id+'/destination-artifact?destination='+current.review.destination+'&format='+format,{signal:controller.signal,headers:{'X-Workspace-Id':scope.workspace,'X-Actor-Id':scope.actor}});
       if(!fresh())return;

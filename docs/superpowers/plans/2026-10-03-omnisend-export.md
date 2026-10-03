@@ -22,22 +22,22 @@
 
 ### Task1: Omnisend compiler and client-safe review
 Files create src/domain/omnisend-export-contracts.ts, src/domain/omnisend-export.ts, tests/omnisend-export.test.ts. Consumes validateFrozenExportSource(r):Promise<{footerCount:number}>, FrozenExportRevision from existing domain module. Produces OmnisendArtifact with same common fields as MailchimpArtifact and destination:'omnisend'; async compileOmnisendArtifact(r):Promise<OmnisendArtifact>; omnisendReview(a):OmnisendReview. Browser-safe constants/schema exact values/7blockers in spec.
-- [ ] Write real compiler tests: exactslot mapping/UTF8/destination hashes/sourceimmutability/reorderedJSONB/allmanifest corruption/refusedraw/private/footer/unknownnativeconditionaltokens/bodyescaping-reserve and strict contentfree review. Existing Klaviyo/Mailchimp tests unchanged.
-- [ ] Run owned tests against unimplemented behavior and retain meaningful RED.
-- [ ] Implement only owned files against spec; no shared validator refactor.
-- [ ] Run owned + existing compiler/Klaviyo/Mailchimp regression; scoped lint/type when interface is available.
-- [ ] Commit only owned files; full handoff report in plan scratch, no reviewer/subagents.
+- [x] Write real compiler tests: exactslot mapping/UTF8/destination hashes/sourceimmutability/reorderedJSONB/allmanifest corruption/refusedraw/private/footer/unknownnativeconditionaltokens/bodyescaping-reserve and strict contentfree review. Existing Klaviyo/Mailchimp tests unchanged.
+- [x] Run owned tests against unimplemented behavior and retain meaningful RED.
+- [x] Implement only owned files against spec; no shared validator refactor.
+- [x] Run owned + existing compiler/Klaviyo/Mailchimp regression; scoped lint/type when interface is available.
+- [x] Commit only owned files; full handoff report in plan scratch, no reviewer/subagents.
 
 ### Task2: Unmounted Omnisend import transport
 Files create src/server/omnisend-template-adapter.ts, tests/omnisend-template-adapter.test.ts. Consumes Task1 OmnisendArtifact/interface/constants. Produces createAndInspectOmnisendTemplate(o):Promise<OmnisendTemplateResult>, options artifact/name/accessToken/signal?/required markSubmission:()=>Promise<void>/required persistRemoteId:(id:string)=>Promise<void>/fetcher?:typeof fetch. Result state needs_attention|outcome_unknown, code,remote_id:string|null,resource_url:string|null,destination_url:null,content_verified:false,retry_after?:number. Never mounts.
-- [ ] Write injected-fetcher tests: exactPOST/namehtml/versionBearer/noextraIO; beforeIO completevalidation/exactbodylimit/JSONescaping/nameUnicode; captured callbackmutation; partial24hexID beforeGET; knownID allfailures; metadataonly/unsolicitedhtml/links; HTTPuncertainty/rate/auth/version/size; foreignorigin/path/redirect/userinfo; 5MiB response streaming/abort/signalignoring/late-response/30sec combined budget. Real compiled artifact fixtures for normalpaths.
-- [ ] Run scaffold behavioral RED; retain failures.
-- [ ] Implement exact spec independently within owned files; no generic shared-helper change.
-- [ ] Run owned tests/scoped lint/type; full no secrets/DB/provider report, then scoped commit.
+- [x] Write injected-fetcher tests: exactPOST/namehtml/versionBearer/noextraIO; beforeIO completevalidation/exactbodylimit/JSONescaping/nameUnicode; captured callbackmutation; partial24hexID beforeGET; knownID allfailures; metadataonly/unsolicitedhtml/links; HTTPuncertainty/rate/auth/version/size; foreignorigin/path/redirect/userinfo; 5MiB response streaming/abort/signalignoring/late-response/30sec combined budget. Real compiled artifact fixtures for normalpaths.
+- [x] Run scaffold behavioral RED; retain failures.
+- [x] Implement exact spec independently within owned files; no generic shared-helper change.
+- [x] Run owned tests/scoped lint/type; full no secrets/DB/provider report, then scoped commit.
 
 ### Task3: Root integration and qualification
 Modify src/server/esp-export-review.ts, src/ui/editor.tsx, src/ui/klaviyo-export.tsx, scripts/generate-api.ts,public/openapi.json,sdk/schema.d.ts,tests/esp-export.test.ts,package.json,.github/workflows/verify.yml; create scripts/smoke-omnisend-export.ts. Existing122operations and earlier mapping behavior preserved; strictdest/media/mapping unions expand. Show exact honest Omnisend import notice and selector; generation fences allselected intervals. Saved worker joint spec+quality review precedes wholeintegrationgate.
-- [ ] Run actualrootHTTP/ChromiumRED then all third-destination and both earlier fixtures incl initialfreeze away/back/error/download/navigation/mobileness.
+- [x] Run actualrootHTTP/ChromiumRED then all third-destination and both earlier fixtures incl initialfreeze away/back/error/download/navigation/mobileness.
 - [ ] Implement integration/contracts/CI/docs, then fullconfiguredsuite/lint/type/API/build/Linuxchecks.
 - [ ] Freeze immutablewholebaseline-to-candidate patch; one mostcapable whole reviewer; iffindings onecompleteworker +onescopedrereview.
 - [ ] Guarded canonical sync/buildchecks/both prior+thirdbrowser/original109/221/private/hash preservation; restoreowned apps/keepunrelated.
