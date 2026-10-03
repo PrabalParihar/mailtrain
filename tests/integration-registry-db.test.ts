@@ -6,7 +6,7 @@ import {sourceDatabase} from '../scripts/smoke-source-truth';
 
 const blockers=['CONNECTION_AUTH_MODE_UNAPPROVED','ACCOUNT_ENTITLEMENT_UNVERIFIED','REAL_CLIENT_PREFLIGHT_UNAVAILABLE','DESTINATION_CONFORMANCE_UNVERIFIED','DURABLE_REMOTE_EXPORT_UNAVAILABLE','MANAGEMENT_LINK_UNVERIFIED'];
 const keys=['id','provider','auth_mode','region','state','record_version','credential_version','created_at','updated_at','revoked_at','can_export','blockers'];
-const binding=()=>({id:randomUUID(),provider:'klaviyo',account:'Owned private account '+randomUUID(),mode:'oauth',region:'eu-west-1',credential:randomUUID()});
+const binding=()=>({id:randomUUID() as string,provider:'klaviyo',account:'Owned private account '+randomUUID(),mode:'oauth',region:'eu-west-1',credential:randomUUID() as string});
 type Binding=ReturnType<typeof binding>;
 type Fixture=Parameters<Parameters<typeof sourceDatabase>[0]>[0];
 async function register(f:Fixture,b:Binding,actor?:string){return f.tx(async c=>(await c.query('SELECT public.mailcraft_register_integration($1,$2,$3,$4,$5,$6,$7) AS value',[f.p.workspace,b.id,b.provider,b.account,b.mode,b.region,b.credential])).rows[0].value,actor);}
