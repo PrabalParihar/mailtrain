@@ -13,7 +13,7 @@ test('planning persistence replays exact commands and stores immutable lifecycle
  current=await tx(c=>feature.changeInvitationRequest(c,p,input.request_id,'reopen',{expected_version:3},randomUUID()));assert.equal(current.request.version,4);assert.equal(current.request.state,'draft');
  assert.deepEqual(await tx(c=>feature.createInvitationRequest(c,p,input,key)),created);
  const history=await tx(c=>feature.invitationRequestPage(new Request('http://127.0.0.1/v1/invitation-requests/'+input.request_id+'/history'),c,p,input.request_id));
- assert.deepEqual(history.data.map(r=>r.command),['reopened','withdrawn','updated','created']);assert.equal(history.data.at(-1).snapshot.notes,fields.notes);
+ assert.deepEqual(history.data.map(r=>r.command),['reopened','withdrawn','updated','created']);const original=history.data.at(-1);assert.ok(original);assert.equal(original.snapshot.notes,fields.notes);
  assert.deepEqual((await db.query('SELECT * FROM memberships ORDER BY id')).rows,members);assert.deepEqual((await db.query('SELECT * FROM auth_sessions')).rows,sessions);
  });
 });

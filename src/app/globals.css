@@ -1810,3 +1810,6 @@ td {
     padding: 12px;
   }
 }
+
+.invitation-planning, .invitation-request-card { min-width: 0; overflow-wrap: anywhere; }
+.invitation-planning input, .invitation-planning select, .invitation-planning textarea { min-width: 0; max-width: 100%; }

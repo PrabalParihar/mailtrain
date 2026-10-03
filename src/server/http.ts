@@ -51,6 +51,7 @@ export function assertRouteMethod(path: string[], method: string) {
   }
   if(root==='workspace-preferences'){if(!id)methods=['GET'];else if(id==='timezone'&&!command)methods=['POST'];}
   if (root === 'workspaces' && path.length === 1) methods = ['GET', 'POST'];
+  if(root==='invitation-requests'){if(!id)methods=['GET','POST'];else if(id==='readiness'&&!command)methods=['GET'];else if(uuid.test(id)&&(!command||command==='history'))methods=['GET'];else if(uuid.test(id)&&['update','withdraw','reopen','send','accept'].includes(command))methods=['POST'];}
   if(root==='membership-changes'&&!id)methods=['GET'];
   if(root==='memberships'){if(!id||id==='summary'&&!command)methods=['GET'];else if(uuid.test(id)&&['role','remove','transfer-owner'].includes(command))methods=['POST'];}
   if (root === 'brands') {

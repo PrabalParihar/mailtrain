@@ -1,3 +1,4 @@
+import {InvitationCreateInput,InvitationUpdateInput,InvitationStateInput,InvitationRequestView,InvitationRequestHistory,InvitationPlanningContext}from'../src/domain/invitation-requests';
 import {CreationActivityReport,CreationReportWindow} from '../src/domain/creation-report';
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
 import {SubmissionLedgerInput,SubmissionLedgerView,StagedRecipientView,DeliveryHistoryView,DeliveryAttemptView} from '../src/domain/submission-ledgers';
@@ -50,6 +51,7 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  InvitationCreateInput:fromZod(InvitationCreateInput),InvitationUpdateInput:fromZod(InvitationUpdateInput),InvitationStateInput:fromZod(InvitationStateInput),InvitationRequestView:fromZod(InvitationRequestView),InvitationRequestHistory:fromZod(InvitationRequestHistory),InvitationPlanningContext:fromZod(InvitationPlanningContext),
   LocaleReviewInput:fromZod(LocaleReviewInput),
   LocaleReviewRecord:fromZod(LocaleReviewRecord),
   LocaleReviewContext:fromZod(LocaleReviewContext),
@@ -279,6 +281,7 @@ schemas.SenderVersionResponse=senderEnvelope({sender:ref('SenderView'),changed:{
 schemas.DNSCheckResponse=senderEnvelope({check:ref('DNSCheckView')});
 for(const [name,item] of Object.entries({SenderIdentities:'SenderView',SenderVersions:'SenderVersionView',SenderDNSChecks:'DNSCheckView'}))schemas[name+'Page']=senderEnvelope({data:array(ref(item)),has_more:{type:'boolean'},next_cursor:nullable(string),total_count:{type:'integer',minimum:0}});
 for (const [name, item] of Object.entries({
+  InvitationRequests:'InvitationRequestView',InvitationRequestHistory:'InvitationRequestHistory',
   Members:'Membership',MemberChanges:'MembershipChange',
   Emails: 'Email',
   EmailTemplates: 'EmailTemplateView',
@@ -320,6 +323,9 @@ schemas.LocaleSourceComparisonResponse=envelope({comparison:ref('LocaleSourceCom
 schemas.LocaleReviewResponse=envelope({review:ref('LocaleReviewRecord')});
 schemas.LocaleReviewHistoryResponse=envelope({context:ref('LocaleReviewContext'),data:array(ref('LocaleReviewHistoryItem')),total_count:{type:'integer',minimum:0},has_more:{type:'boolean'},next_cursor:nullable(string)});
 schemas.DerivationResponse = envelope({ email: ref('Email'), revision: json, lineage: json });
+schemas.InvitationCommandResponse=envelope({request:ref('InvitationRequestView'),changed:{type:'boolean'}});
+schemas.InvitationRequestResponse=envelope({request:ref('InvitationRequestView')});
+schemas.InvitationPlanningResponse=envelope({context:ref('InvitationPlanningContext')});
 schemas.MembershipCommandResponse=envelope({member:ref('Membership'),changes:array(ref('MembershipChange'))});
 schemas.MembershipSummaryResponse=envelope({summary:ref('MembershipSummary')});
 schemas.BrandSourceResponse=envelope({source:ref('BrandSource')});
@@ -441,6 +447,9 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const hubspotSettingsExample={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
 const examples: Record<string, unknown> = {
+  InvitationCreateInput:{request_id:exampleId,email:'proposed@example.test',role:'Editor',notes:'Planning only; not sent.',review_due_at:null},
+  InvitationUpdateInput:{email:'proposed@example.test',role:'Viewer',notes:'Updated proposal; no access grant.',review_due_at:'2026-11-01T12:00:00Z',expected_version:1},
+  InvitationStateInput:{expected_version:1},
   LocaleReviewInput:{revision_id:exampleId,source_revision_id:exampleId,expected_source_doc_version:1,outcome:'content_reviewed',note:'Manually checked the local wording; sending is not approved.'},
   SubmissionLedgerInput:{expected_version:1,expected_digest:'a'.repeat(64)},
   SaveEmailTemplateInput: {name:'Example template',source_revision_id:exampleId,expected_artifact_hash:'a'.repeat(64)},
@@ -537,7 +546,7 @@ function add(d: Definition) {
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
-  if(d.hubspotBody||d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||d.path.startsWith('/v1/templates')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
+  if(d.hubspotBody||d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||d.path.startsWith('/v1/templates')||d.path.startsWith('/v1/invitation-requests')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',
@@ -652,6 +661,13 @@ add({id:'listSenderVersions',path:'/v1/sender-identities/{id}/versions',method:'
 add({id:'saveSenderVersion',path:'/v1/sender-identities/{id}/versions',method:'POST',body:'SenderVersionInput',response:'SenderVersionResponse',keyed:true,scope:'sender:write',description:'Exact acknowledged sender version. Provider/account/region/address changes never inherit old DNS evidence or activate sending.'});
 add({id:'listSenderDNSChecks',path:'/v1/sender-identities/{id}/dns-checks',method:'GET',response:'SenderDNSChecksPage',paged:true,scope:'sender:read'});
 add({id:'checkSenderDNS',path:'/v1/sender-identities/{id}/dns-checks',method:'POST',body:'SenderCheckInput',response:'DNSCheckResponse',keyed:true,scope:'sender:write',description:'Bounded read-only exact-domain SPF/DMARC TXT discovery;5second owned resolver deadline,10checks/minute/workspace excluding replay. No DKIM, full protocol evaluation, ownership, provider acceptance or aligned received-message authentication claim. Sending stays disabled.'});
+add({id:'listInvitationRequests',path:'/v1/invitation-requests',method:'GET',response:'InvitationRequestsPage',paged:true,session:true,description:'Owner/Admin session planning records only; no invitation is sent, accepted, credentialed or seat-reserved.'});
+add({id:'getInvitationPlanningContext',path:'/v1/invitation-requests/readiness',method:'GET',response:'InvitationPlanningResponse',session:true});
+add({id:'getInvitationRequest',path:'/v1/invitation-requests/{id}',method:'GET',response:'InvitationRequestResponse',session:true});
+add({id:'listInvitationRequestHistory',path:'/v1/invitation-requests/{id}/history',method:'GET',response:'InvitationRequestHistoryPage',paged:true,session:true});
+add({id:'createInvitationRequest',path:'/v1/invitation-requests',method:'POST',body:'InvitationCreateInput',response:'InvitationCommandResponse',status:201,keyed:true,session:true});
+for(const [command,input]of [['update','InvitationUpdateInput'],['withdraw','InvitationStateInput'],['reopen','InvitationStateInput']])add({id:command+'InvitationRequest',path:'/v1/invitation-requests/{id}/'+command,method:'POST',body:input,response:'InvitationCommandResponse',keyed:true,session:true,description:'CAS/keyed noncredential planning transition. No membership or editing-seat count changes. Admin cannot manage Billing requests.'});
+for(const command of ['send','accept'])add({id:command+'InvitationRequest',path:'/v1/invitation-requests/{id}/'+command,method:'POST',body:'Empty',response:'ErrorResponse',status:409,blocked:true,session:true,description:'Always refuses409 '+(command==='send'?'INVITATION_DELIVERY_DISABLED':'INVITATION_ACCEPTANCE_DISABLED')+'. No delivery, credential, membership, seat reservation or commercial policy is enabled.'});
 add({id:'listMemberships',path:'/v1/memberships',method:'GET',response:'MembersPage',paged:true,session:true,description:'Current Owner/Admin session; tenant-bound membership metadata only, no provider identity lookup.'});
 add({id:'listMembershipChanges',path:'/v1/membership-changes',method:'GET',response:'MemberChangesPage',paged:true,session:true,description:'Immutable local membership and editing-seat impact; no Stripe reconciliation claim.'});
 add({id:'getMembershipSummary',path:'/v1/memberships/summary',method:'GET',response:'MembershipSummaryResponse',session:true});

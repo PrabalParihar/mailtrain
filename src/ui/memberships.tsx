@@ -1,4 +1,5 @@
 'use client';
+import {InvitationRequests}from'./invitation-requests';
 import { useEffect, useRef, useState } from 'react';
 import { MembershipCommandResult, type Member, type MemberChange, type MemberSummary, editingSeat } from '../domain/memberships';
 import { api } from './api';
@@ -50,6 +51,7 @@ function MembersPanel({workspace}:{workspace:string}){
   <h2>Team members</h2>
   <p className="muted">Manage existing members. Invitations and approved seat capacity require account setup.</p>
   {summary&&<><p>Editing seats: <strong>{summary.editing_seats}</strong>. Owner, Admin and Editor each use one seat.</p><p className="small muted">Seat increases are blocked until capacity is approved. These counts are local evidence; billing is not reconciled.</p><p className="small muted">{summary.mfa_mode==='local-development'?'Local development session. Production MFA has not been verified.':'Changes require both authentication factors verified less than ten minutes ago.'}</p></>}
+  {summary&&<InvitationRequests key={workspace+':'+summary.actor.user_id} workspace={workspace} actor={summary.actor.user_id} role={summary.actor.role as 'Owner'|'Admin'}/>}
   {(error||members.error||history.error)&&<p className="alert danger" role="alert">{error||members.error||history.error}</p>}
   {notice&&<p role="status">{notice}</p>}
   <button disabled={busy||members.busy} onClick={()=>{setError('');void Promise.all([members.reload(),history.reload(),loadSummary()]);}}>Refresh team</button>

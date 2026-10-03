@@ -1,3 +1,4 @@
+import {invitationRequestRoute}from'@/server/invitation-request-route';
 import {creationActivityReport} from '@/server/creation-report';
 import {submissionLedgerRoute} from '@/server/submission-ledger-route';
 import {hubspotExportResponse} from '@/server/hubspot-export-review';
@@ -80,7 +81,7 @@ async function handle(req: Request, ctx: Context) {
     if(sourceBody)await withPrincipal(req,command==='preview'?'read':'edit',async tx=>{if(id)await getEmail(tx,id);});
     const ledgerBody=['submission-ledgers','deliveries'].includes(root)||(root==='campaigns'&&command==='submission-ledgers');
     const recipientBody=ledgerBody||root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
-    const body=recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
+    const body=root==='invitation-requests'?await readJson(req,16*1024,{strict:method!=='GET'}):recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
     if(root==='emails'&&id&&command==='locale-reviews')return json(await localeContentReviewRoute(req,id,body,key),method==='POST'?201:200);
     if (ledgerBody) {
@@ -111,6 +112,7 @@ async function handle(req: Request, ctx: Context) {
     if(root==='emails'&&command==='preview'){const prepared=await withPrincipal(req,'read',async(tx,p)=>{const spec=EmailSourceSpecSchema.parse(body.spec),assets=assetReferences(spec).length?await resolveAssetManifest(tx,p,spec,'preview'):undefined;return{p,artifact:await compileEmail(spec,{assets}),assets};});if(prepared.assets?.entries.length){const values=await readAssetVariantsVerified(prepared.p,prepared.assets,undefined,4*1024*1024);return json({artifact:{...prepared.artifact,preview_html:privatePreviewHtml(prepared.artifact.preview_html??prepared.artifact.html,prepared.assets,values)}});}return json({artifact:prepared.artifact});}
     if(root==='sender-identities')return json(await senderDomainRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if(root==='workspace-preferences')return json(await workspacePreferenceRoute(req,body,key));
+    if(root==='invitation-requests')return json(await invitationRequestRoute(req,path,body,key),method==='POST'&&!id?201:200);
     if(root==='memberships'||root==='membership-changes')return json(await membershipRoute(req,path,body,key));
     if(root==='brand-sources'||(root==='brands'&&command==='memory-preview'))return json(await brandMemoryRoute(req,path,body,key),root==='brand-sources'&&method==='POST'&&!id?201:200);
     if(root==='webhook-deliveries')return json(await webhookHistoryRoute(req,path,body,key));

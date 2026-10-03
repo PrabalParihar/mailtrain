@@ -45,7 +45,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   const roots = [
     'assets',
     'sender-identities',
-    'workspace-preferences','memberships','membership-changes',
+    'workspace-preferences','memberships','membership-changes','invitation-requests',
     'brand-sources',
     'webhook-deliveries',
     'webhook-endpoints',
@@ -76,7 +76,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'usage',
     'audit',
   ];
-  const ids = ['', '{id}', 'uploads', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone', 'report'];
+  const ids = ['', '{id}', 'uploads', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'readiness', 'calendar', 'timezone', 'report'];
   const commands = [
     'source-import','source-fork',
     'archive',
@@ -85,7 +85,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'history',
     'fallback', 'publish',
     'dns-checks','conversion-proposal','convert-to-blocks',
-    'role','transfer-owner',
+    'role','transfer-owner','update','withdraw','reopen','accept',
     '',
     'memory-preview',
     'remove',
@@ -241,6 +241,31 @@ test('HubSpot POST contracts are private strict bounded bodies with honest recei
  for(const name of ['X-Artifact-Hash','X-Source-Artifact-Hash','X-Content-SHA256','X-Request-Id','Content-Disposition','Content-Type','Cache-Control','X-Content-Type-Options','Content-Security-Policy','X-Mailcraft-Notice'])assert.ok(headers[name]);
  assert.deepEqual(headers['X-Destination-Mapping'].schema.enum,['hubspot-coded-footer-1']);assert.equal(headers['X-Remote-Export-Enabled'].schema.const,'false');assert.equal(headers['X-Artifact-Hash'].description.includes('API revision'),false);
  assert.equal(spec.components.schemas.DestinationReviewResponse.properties.review.oneOf.length,4);
- assert.equal(Object.keys(operationRegistry).length,140);
+ assert.equal(Object.keys(operationRegistry).length,150);
  assert.match(spec['x-lettercape-json-semantics'],/HubSpot.*composed address.*Unicode.*delimiter.*authoritative/);
+});
+
+test('invitation contracts expose session-only planning and unconditional disabled send/accept',()=>{
+ const prefix='/v1/invitation-requests';
+ for(const [path,methods]of Object.entries(spec.paths).filter(([path])=>path.startsWith(prefix)))for(const [method,operation]of Object.entries(methods as Record<string,{security:unknown;parameters:Array<{name:string;required:boolean}>;'x-lettercape-availability':string}>)){
+  assert.deepEqual(operation.security,[{session:[]}]);
+  const actor=operation.parameters.find(p=>p.name==='X-Actor-Id');assert.ok(actor);assert.equal(actor.required,false);
+  assert.equal(operation['x-lettercape-availability'],path.endsWith('/send')||path.endsWith('/accept')?'blocked':'development');
+  if(method==='post'&&!path.endsWith('/send')&&!path.endsWith('/accept')){const key=operation.parameters.find(p=>p.name==='Idempotency-Key');assert.ok(key);assert.equal(key.required,true);}
+ }
+ for(const command of ['send','accept']){
+  const operation=spec.paths[prefix+'/{id}/'+command].post;
+  assert.equal(Object.keys(operation.responses).some(status=>/^2/.test(status)),false);
+  assert.equal(operation.responses[409].content['application/json'].schema.$ref,'#/components/schemas/ErrorResponse');
+ }
+ for(const name of ['InvitationRequestView','InvitationPlanningContext']){
+  const schema=spec.components.schemas[name];
+  for(const flag of ['delivery_enabled','acceptance_enabled','credentials_created'])assert.equal(schema.properties[flag].const,false);
+  assert.equal(schema.properties.seats_reserved.const,0);
+ }
+ const create=ajv.compile(absolute(spec.components.schemas.InvitationCreateInput) as object);
+ const example=spec.paths[prefix].post.requestBody.content['application/json'].example;
+ assert.equal(create(example),true);
+ for(const extra of ['token','redeem_url','acceptance_enabled','seats_reserved'])assert.equal(create({...example,[extra]:true}),false);
+ assert.equal(create({...example,role:'Owner'}),false);
 });

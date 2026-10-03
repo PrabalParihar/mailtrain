@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import type {Tx} from './db';import type {Principal} from './auth';
 import {assertCurrentAuthority} from './current-authority';import {keyed} from './commands';import {audit}from'./audit';import {fail}from'./errors';import {resourcePage}from'./pagination';
-import {InvitationCreateInput,InvitationUpdateInput,InvitationStateInput,InvitationRequestRecord,InvitationRequestView,InvitationRequestHistory,InvitationPlanningContext,INVITATION_PREREQUISITES,invitationPlanningStatus,type InvitationFields}from'../domain/invitation-requests';
+import {InvitationCreateInput,InvitationUpdateInput,InvitationStateInput,InvitationRequestRecord,InvitationRequestView,InvitationRequestHistory,InvitationPlanningContext,INVITATION_PREREQUISITES,invitationPlanningStatus,type InvitationFields,type InvitationRequest,type InvitationHistory}from'../domain/invitation-requests';
 const instant=(value:unknown)=>value instanceof Date?value.toISOString():value;
 function record(row:Record<string,unknown>){return InvitationRequestRecord.parse({...row,review_due_at:instant(row.review_due_at),created_at:instant(row.created_at),updated_at:instant(row.updated_at)});}
 function view(row:Record<string,unknown>){const request=record(row),now=new Date();return InvitationRequestView.parse({...request,planning_status:invitationPlanningStatus(request,now),observed_at:now.toISOString(),delivery_enabled:false,acceptance_enabled:false,credentials_created:false,seats_reserved:0});}
@@ -40,6 +40,9 @@ export async function changeInvitationRequest(tx:Tx,p:Principal,id:string,comman
   await history(tx,p,updated,command==='update'?'updated':command==='withdraw'?'withdrawn':'reopened');return{request:view(updated),changed:true};
  });
 }
+type PlanningPage<T>={data:T[];total_count:number;has_more:boolean;next_cursor:string|null};
+export function invitationRequestPage(req:Request,tx:Tx,p:Principal,id:string):Promise<PlanningPage<InvitationHistory>>;
+export function invitationRequestPage(req:Request,tx:Tx,p:Principal,id?:undefined):Promise<PlanningPage<InvitationRequest>>;
 export async function invitationRequestPage(req:Request,tx:Tx,p:Principal,id?:string){
  await assertCurrentAuthority(tx,p,'manage');
  if(id){const current=await row(tx,p,id);const page=await resourcePage(req,tx,p,{resource:'invitation-request-history',from:'invitation_request_history',fields:'*',where:'workspace_id=$1 AND request_id=$2',values:[p.workspace,current.id],filters:{request:current.id}});return{...page,data:page.data.map(r=>InvitationRequestHistory.parse({...r,created_at:instant(r.created_at)}))};}
