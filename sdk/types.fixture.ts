@@ -1,6 +1,22 @@
 import type { LettercapeClient } from './client';
 // Compiled only: catches regressions in generated operation/body/path/query types.
 export function typeExamples(client: LettercapeClient) {
+  const settings={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
+  void client.call('reviewHubSpotRevision',{path:{id:'example'},body:{settings},actorId:'example-actor'});
+  void client.call('downloadHubSpotRevision',{path:{id:'example'},body:{settings,format:'html',expected_destination_hash:'a'.repeat(64)}});
+  // @ts-expect-error HubSpot input rejects unknown readiness claims
+  void client.call('reviewHubSpotRevision',{path:{id:'example'},body:{settings,ready:true}});
+  // @ts-expect-error HubSpot artifact requires explicit supported format
+  void client.call('downloadHubSpotRevision',{path:{id:'example'},body:{settings,format:'pdf',expected_destination_hash:'a'.repeat(64)}});
+  // @ts-expect-error HubSpot artifact must bind the reviewed destination hash
+  void client.call('downloadHubSpotRevision',{path:{id:'example'},body:{settings,format:'txt'}});
+  // @ts-expect-error HubSpot operation requires a frozen revision path
+  void client.call('reviewHubSpotRevision',{body:{settings}});
+  // @ts-expect-error HubSpot settings are body-only, without query parameters
+  void client.call('reviewHubSpotRevision',{path:{id:'example'},body:{settings},query:{settings:'private'}});
+  // @ts-expect-error all seven explicit settings fields are required
+  void client.call('reviewHubSpotRevision',{path:{id:'example'},body:{settings:{company_name:'Example'}}});
+
   void client.call('importEmailSource',{path:{id:'example'},body:'\uFEFF<p>Exact</p>\r\n',idempotencyKey:'source-command',ifMatch:'"draft-1"'});
   void client.call('forkEmailSource',{path:{id:'example'},body:{expected_artifact_hash:'a'.repeat(64)},idempotencyKey:'fork-command',ifMatch:'"draft-1"',actorId:'actor'});
   void client.call('downloadRevision',{path:{id:'example'},query:{format:'source'}});

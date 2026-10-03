@@ -201,3 +201,27 @@ test('SDK exposes uncertain generated command keys and aborts a stalled response
   );
   assert.equal(cancelled, true);
 });
+const hubspotSettings={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
+test('HubSpot SDK constructs private unkeyed POST JSON and returns review identity and binary receipt bytes',async()=>{
+ const bytes=new TextEncoder().encode('<p>{{ site_settings.company_name|escape_html }}</p>'),hash='a'.repeat(64),seen:string[]=[];
+ const client=new LettercapeClient({baseUrl:'https://example.test',workspace,apiKey:'synthetic-key',fetch:async request=>{
+  seen.push(request.url);assert.equal(request.method,'POST');assert.equal(new URL(request.url).search,'');assert.equal(request.headers.get('Content-Type'),'application/json');assert.equal(request.headers.get('Idempotency-Key'),null);assert.equal(request.headers.get('X-Workspace-Id'),workspace);assert.equal(request.headers.get('Authorization'),'Bearer synthetic-key');assert.equal(request.headers.get('X-Actor-Id'),'example-actor');
+  for(const value of request.headers.values())assert.equal(value.includes('Example Company'),false);
+  const input=await request.json();assert.deepEqual(input.settings,hubspotSettings);
+  if(request.url.endsWith('/hubspot-review')){assert.deepEqual(input,{settings:hubspotSettings});return reply(200,{request_id:'review-request',review:{destination:'hubspot',destination_hash:hash}});}
+  assert.deepEqual(input,{settings:hubspotSettings,format:'html',expected_destination_hash:hash});
+  return new Response(bytes,{headers:{'Content-Type':'text/html; charset=utf-8','X-Request-Id':'download-request','X-Artifact-Hash':hash,'X-Source-Artifact-Hash':'b'.repeat(64),'X-Content-SHA256':'c'.repeat(64),'X-Destination-Mapping':'hubspot-coded-footer-1','X-Remote-Export-Enabled':'false'}});
+ }});
+ const reviewed=await client.call('reviewHubSpotRevision',{path:{id:workspace},actorId:'example-actor',body:{settings:hubspotSettings}});assert.equal(reviewed.requestId,'review-request');assert.equal(reviewed.data.review.destination_hash,hash);
+ const downloaded=await client.call('downloadHubSpotRevision',{path:{id:workspace},actorId:'example-actor',body:{settings:hubspotSettings,format:'html',expected_destination_hash:hash}});
+ assert.deepEqual(downloaded.data,bytes);assert.equal(downloaded.requestId,'download-request');assert.equal(downloaded.headers.get('X-Artifact-Hash'),hash);assert.equal(downloaded.headers.get('X-Remote-Export-Enabled'),'false');assert.equal(seen.length,2);
+});
+test('HubSpot SDK does not retry unkeyed POST network loss and respects abort before and during transport',async()=>{
+ let calls=0;
+ const client=new LettercapeClient({baseUrl:'https://example.test',wait:async()=>assert.fail('must not retry'),fetch:async()=>{calls++;throw new TypeError('synthetic network loss');}}),input={path:{id:workspace},body:{settings:hubspotSettings}};
+ await assert.rejects(client.call('reviewHubSpotRevision',input),/synthetic network loss/);assert.equal(calls,1);
+ const abort=new AbortController();abort.abort();await assert.rejects(client.call('reviewHubSpotRevision',{...input,signal:abort.signal}),{name:'AbortError'});assert.equal(calls,1);
+ const inflight=new AbortController();let aborted=false;
+ const waiting=new LettercapeClient({baseUrl:'https://example.test',fetch:async request=>new Promise<Response>((_,reject)=>{request.signal.addEventListener('abort',()=>{aborted=true;reject(request.signal.reason);},{once:true});inflight.abort();})});
+ await assert.rejects(waiting.call('reviewHubSpotRevision',{...input,signal:inflight.signal}),{name:'AbortError'});assert.equal(aborted,true);
+});

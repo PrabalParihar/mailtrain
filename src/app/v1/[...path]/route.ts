@@ -1,3 +1,4 @@
+import {hubspotExportResponse} from '@/server/hubspot-export-review';
 import{destinationReviewResponse}from'@/server/esp-export-review';
 import {prepareRecipientAssessment,assessmentDetail,assessmentHistory,assessmentObservations,cancelRecipientAssessment} from '@/server/recipient-assessments';
 import {RecipientAssessmentInput} from '@/domain/recipient-assessments';
@@ -70,6 +71,7 @@ async function handle(req: Request, ctx: Context) {
       const response=await revisionSourceResponse(req,id);response.headers.set('X-Request-Id',request_id);return response;
     }
     if(root==='email-revisions'&&['destination-review','destination-artifact'].includes(command))return await destinationReviewResponse(req,id,command as 'destination-review'|'destination-artifact',request_id);
+    if(root==='email-revisions'&&['hubspot-review','hubspot-artifact'].includes(command))return await hubspotExportResponse(req,id,command as 'hubspot-review'|'hubspot-artifact',request_id);
     const sourceBody=root==='emails'&&method==='POST'&&(!id||command==='preview');
     if(sourceBody)await withPrincipal(req,command==='preview'?'read':'edit',async tx=>{if(id)await getEmail(tx,id);});
     const recipientBody=root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');

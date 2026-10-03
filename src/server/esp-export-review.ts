@@ -14,6 +14,7 @@ const messages:Record<string,string>={
  EXPORT_FOOTER_REQUIRED:'Add the sender identity and postal address in a legal footer before preparing this destination.',
  EXPORT_TOKEN_UNSUPPORTED:'Unresolved or unsupported template syntax requires an explicit destination mapping. The original content is preserved.',
 };
+export const DESTINATION_EXPORT_MESSAGES = messages;
 export async function destinationReviewResponse(req:Request,id:string,command:'destination-review'|'destination-artifact',request_id:string):Promise<Response>{
  const artifact=await withPrincipal(req,'edit',async(tx,p)=>{
   await assertCurrentAuthority(tx,p,'edit','emails:export');

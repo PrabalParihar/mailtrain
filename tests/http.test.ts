@@ -49,3 +49,9 @@ test('JSON is limited while streaming, without relying on Content-Length', async
     { x: 1 },
   );
 });
+test('default JSON reader retains empty/legacy media, nonfatal UTF8 and read-method behavior',async()=>{
+ for(const method of ['GET','HEAD','DELETE'])assert.deepEqual(await readJson(new Request('https://example.test',{method})),{});
+ for(const body of [undefined,''])assert.deepEqual(await readJson(new Request('https://example.test',{method:'POST',body})),{});
+ assert.deepEqual(await readJson(new Request('https://example.test',{method:'POST',headers:{'Content-Type':'text/plain','Content-Encoding':'identity','Content-Length':'not-numeric'},body:'{"x":1}'})),{x:1});
+ assert.deepEqual(await readJson(new Request('https://example.test',{method:'POST',body:new Uint8Array([123,34,120,34,58,34,0xff,34,125])})),{x:'�'});
+});

@@ -1,3 +1,4 @@
+import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
 import{OmnisendReview,OMNISEND_MAPPING_VERSION}from'../src/domain/omnisend-export-contracts';
@@ -45,6 +46,13 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  HubSpotFooterSettings:{...fromZod(HubSpotFooterSettings),description:'Seven explicit locally declared footer values. Server validation additionally enforces composed address length, well-formed Unicode, controls, nonblank required values and authored delimiters; JSON Schema omits these refinements.'},
+  HubSpotReview:fromZod(HubSpotReview),
+  HubSpotReviewInput:fromZod(HubSpotReviewInput),
+  HubSpotArtifactInput:fromZod(HubSpotArtifactInput),
+  HubSpotMappingVersion:fromZod(z.literal(HUBSPOT_MAPPING_VERSION)),
+  HubSpotComparisonVersion:fromZod(z.literal(HUBSPOT_COMPARISON_VERSION)),
+  HubSpotReviewResponse:fromZod(z.strictObject({request_id:z.uuid(),review:HubSpotReview})),
   KlaviyoReview:fromZod(KlaviyoReview),
   MailchimpReview:fromZod(MailchimpReview),
   OmnisendReview:fromZod(OmnisendReview),
@@ -400,11 +408,16 @@ type Definition = {
   sourceJson?: boolean;
   sourceDownload?: boolean;
   destinationDownload?: boolean;
+  hubspotDownload?: boolean;
+  hubspotBody?: boolean;
   binaryMediaTypes?: string[];
   description?: string;
 };
 const exampleId = '11111111-1111-4111-8111-111111111111';
+const hubspotSettingsExample={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
 const examples: Record<string, unknown> = {
+  HubSpotReviewInput:{settings:hubspotSettingsExample},
+  HubSpotArtifactInput:{settings:hubspotSettingsExample,format:'html',expected_destination_hash:'a'.repeat(64)},
   SourceForkInput:{expected_artifact_hash:'a'.repeat(64)},
   AssetUploadInput: {filename:'example.png',declared_mime:'image/png',byte_size:1024,sha256:'a'.repeat(64),rights:{attested:true,terms_version:MEDIA_LIMITS.rights},alt:'Example product',decorative:false},
   AssetFallbackInput: {selected_frame:0},
@@ -494,7 +507,7 @@ function add(d: Definition) {
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
-  if(d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
+  if(d.hubspotBody||d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',
@@ -506,18 +519,18 @@ function add(d: Definition) {
   if (d.binaryBody) parameters.push({name:'X-Upload-Token',in:'header',required:true,schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Actor/workspace-bound upload token from the acknowledged intent. Preserve this token, upload ID and exact bytes for explicit transfer recovery.'});
   if (d.paged) parameters.push(...(d.pageParameters ?? pageParameters));
   if (d.query) parameters.push(...d.query);
-  const success = d.destinationDownload
+  const success = d.destinationDownload || d.hubspotDownload
     ? {
-        description:'Locally prepared frozen Klaviyo, Mailchimp Classic or Omnisend HTML-import HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.',
+        description:d.hubspotDownload?'Locally prepared HubSpot coded-footer HTML or plaintext UTF-8 attachment. Declared settings are compared locally; account settings, native conformance and client fidelity remain unverified. No remote export.':'Locally prepared frozen Klaviyo, Mailchimp Classic, Omnisend HTML-import or Brevo marketing-draft HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.',
         headers:{
           'X-Request-Id':{schema:string},
-          'X-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Destination artifact hash bound to source, mapping, API revision and both prepared formats.'},
+          'X-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:d.hubspotDownload?'Destination artifact hash bound to source, mapping/comparison versions, declared settings digest and both prepared formats.':'Destination artifact hash bound to source, mapping, API revision and both prepared formats.'},
           'X-Source-Artifact-Hash':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'Exact frozen source artifact hash reviewed before download.'},
           'X-Content-SHA256':{schema:{type:'string',pattern:'^[a-f0-9]{64}$'},description:'SHA256 of the exact UTF-8 bytes for the selected format.'},
-          'X-Destination-Mapping':{schema:{type:'string',enum:[KLAVIYO_MAPPING_VERSION,MAILCHIMP_MAPPING_VERSION,OMNISEND_MAPPING_VERSION,BREVO_MAPPING_VERSION]}},
+          'X-Destination-Mapping':{schema:{type:'string',enum:d.hubspotDownload?[HUBSPOT_MAPPING_VERSION]:[KLAVIYO_MAPPING_VERSION,MAILCHIMP_MAPPING_VERSION,OMNISEND_MAPPING_VERSION,BREVO_MAPPING_VERSION]}},
           'X-Remote-Export-Enabled':{schema:{type:'string',const:'false'},description:'Local preparation only; no provider export is enabled.'},
           'Content-Type':{schema:{type:'string',enum:['text/html; charset=utf-8','text/plain; charset=utf-8']}},
-          'Content-Disposition':{schema:string,description:'attachment; filename="{destination}-prepared-{revision_id}.{format}"'},
+          'Content-Disposition':{schema:string,description:d.hubspotDownload?'attachment; filename="hubspot-prepared-{revision_id}.{format}"':'attachment; filename="{destination}-prepared-{revision_id}.{format}"'},
           'Cache-Control':{schema:{type:'string',const:'no-store'}},
           'X-Content-Type-Options':{schema:{type:'string',const:'nosniff'}},
           'Content-Security-Policy':{schema:{type:'string',const:"sandbox; default-src 'none'"}},
@@ -537,6 +550,7 @@ function add(d: Definition) {
           : 'Acknowledged result',
         headers: {
           'X-Request-Id': { schema: string },
+          ...(d.hubspotBody?{'Cache-Control':{schema:{type:'string',const:'no-store'}},'X-Content-Type-Options':{schema:{type:'string',const:'nosniff'}}}:{}),
           ...(d.status === 202
             ? { Location: { schema: string }, 'Retry-After': { schema: string } }
             : {}),
@@ -562,6 +576,7 @@ function add(d: Definition) {
       ? {
           requestBody: {
             required: true,
+            ...(d.hubspotBody?{description:'Required strict JSON object with application/json and optional UTF-8 charset only, no Content-Encoding. At most16384 actual bytes; declared byte length must be safe/nonnegative and exact. Fatal UTF-8 validation,30-second deadline and cancellation. Settings stay in the body. Server footer Unicode/delimiter/composed-address refinements remain authoritative.'}:{}),
             content: {
               'application/json': {
                 schema: ref(d.body),
@@ -571,8 +586,9 @@ function add(d: Definition) {
           },
         }
       : {}),
-    responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}),...(d.sourceCommand||d.sourceJson?{408:errors[400],415:errors[400]}:{}) },
+    responses: { [d.status ?? 200]: success, ...errors, ...(d.binaryBody ? {415:errors[400],499:errors[400]} : {}),...(d.sourceCommand||d.sourceJson?{408:errors[400],415:errors[400]}:{}),...(d.hubspotBody?{408:errors[400],415:errors[400],499:errors[400]}:{}) },
     ...(d.textBody||d.sourceJson?{'x-lettercape-body-max-bytes':d.textBody?MAX_RAW_SOURCE_BYTES:MAX_SOURCE_COMMAND_JSON_BYTES}:{}),
+    ...(d.hubspotBody?{'x-lettercape-body-max-bytes':16384}:{}),
     'x-lettercape-scopes': [...(d.scope?[d.scope]:[]),...(d.additionalScopes??[])],
     'x-lettercape-availability': d.blocked ? 'blocked' : 'development',
     'x-lettercape-idempotent-command': !!d.keyed,
@@ -811,6 +827,9 @@ add({
 });
 add({id:'reviewDestinationRevision',path:'/v1/email-revisions/{id}/destination-review',method:'GET',response:'DestinationReviewResponse',scope:'emails:export',description:'Current edit/export authority required. Locally compiled immutable Klaviyo, Mailchimp Classic, Omnisend HTML-import or Brevo marketing-draft preparation, explicit false remote availability and unchanged original source; not real-client or native destination evidence. Raw/custom/personalization/private assets refuse unsupported mapping.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend','brevo']}}]});
 add({id:'downloadDestinationRevision',path:'/v1/email-revisions/{id}/destination-artifact',method:'GET',response:'GenericResponse',binary:true,destinationDownload:true,scope:'emails:export',description:'Locally prepared frozen selected-destination attachment; no remote effect. Source/destination/content SHA256 headers bind the reviewed version. HTML or plaintext only; unsupported destination mapping fails closed.',query:[{name:'destination',in:'query',required:true,schema:{type:'string',enum:['klaviyo','mailchimp','omnisend','brevo']}},{name:'format',in:'query',schema:{type:'string',enum:['html','txt'],default:'html'}}]});
+const hubspotDescription='Current edit/export authority and actor fence required. Locally declared seven-field settings compared with the exact frozen footer; settings stay in the required strict JSON body, never query parameters. Review contains hashes and fixed false readiness flags only. Account settings, entitlement, native/client conformance and remote export remain unverified. No provider call, durable export or idempotent receipt.';
+add({id:'reviewHubSpotRevision',path:'/v1/email-revisions/{id}/hubspot-review',method:'POST',body:'HubSpotReviewInput',response:'HubSpotReviewResponse',hubspotBody:true,scope:'emails:export',description:hubspotDescription});
+add({id:'downloadHubSpotRevision',path:'/v1/email-revisions/{id}/hubspot-artifact',method:'POST',body:'HubSpotArtifactInput',response:'GenericResponse',hubspotBody:true,hubspotDownload:true,binary:true,scope:'emails:export',description:hubspotDescription+' Recompile with the same declared settings and require expected_destination_hash; changed review409 HUBSPOT_REVIEW_CHANGED before any download audit. Explicit HTML or plaintext format only.'});
 for (const [id, command, blocked] of [
   ['preflightRevision', 'preflight', false],
   ['exportRevision', 'export', true],
@@ -1061,7 +1080,7 @@ const spec = {
     'rights/deletion/retention and operations',
   ],
   'x-lettercape-json-semantics':
-    'EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative.',
+    'EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative. HubSpot footer settings additionally require composed address bounds, well-formed Unicode, controls/nonblank and authored delimiter checks; these server refinements are omitted from JSON Schema and remain authoritative.',
 };
 await mkdir('public', { recursive: true });
 await mkdir('sdk', { recursive: true });

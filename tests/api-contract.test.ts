@@ -13,6 +13,7 @@ import { BrandSchema } from '../src/domain/brand';
 import { EmailSpecSchema } from '../src/domain/email';
 import { validateRule } from '../src/domain/segments';
 import { operationRegistry } from '../sdk/operations';
+import {HubSpotReviewInput,HubSpotArtifactInput} from '../src/domain/hubspot-footer-contracts';
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 addFormats(ajv);
 ajv.addSchema(spec, 'https://lettercape.test/contract');
@@ -201,4 +202,38 @@ test('Contract examples reject executable/unknown email shapes and required erro
   assert.equal(page({ request_id: 'r', data: [] }), false);
   const error = ajv.compile(absolute({ $ref: '#/components/schemas/ErrorResponse' }) as object);
   assert.equal(error({ error: { message: 'failure' } }), false);
+});
+test('HubSpot POST contracts are private strict bounded bodies with honest receipts and attachment headers',()=>{
+ const review=spec.paths['/v1/email-revisions/{id}/hubspot-review']?.post,download=spec.paths['/v1/email-revisions/{id}/hubspot-artifact']?.post;
+ assert.ok(review);assert.ok(download);
+ for(const [operation,id,input] of [[review,'reviewHubSpotRevision','HubSpotReviewInput'],[download,'downloadHubSpotRevision','HubSpotArtifactInput']] as const){
+  assert.equal(operation.operationId,id);assert.equal(operation['x-lettercape-idempotent-command'],false);assert.equal(operation['x-lettercape-availability'],'development');assert.deepEqual(operation['x-lettercape-scopes'],['emails:export']);
+  assert.equal(operation['x-lettercape-body-max-bytes'],16384);assert.equal(operation.requestBody.required,true);assert.deepEqual(Object.keys(operation.requestBody.content),['application/json']);
+  assert.equal(operation.parameters.some((p:{in:string})=>p.in==='query'),false);assert.equal(operation.parameters.find((p:{name:string})=>p.name==='X-Actor-Id').required,false);
+  for(const status of [408,415,499])assert.ok(operation.responses[status]);
+  const example=operation.requestBody.content['application/json'].example,check=ajv.compile(absolute(spec.components.schemas[input]) as object);assert.equal(check(example),true);
+  for(const extra of ['revision_id','readiness','remote_export_enabled'])assert.equal(check({...example,[extra]:true}),false);
+  assert.equal(check({...example,settings:{...example.settings,unknown:'marker'}}),false);
+  assert.equal(Object.keys(example.settings).length,7);
+  (input==='HubSpotReviewInput'?HubSpotReviewInput:HubSpotArtifactInput).parse(example);
+ }
+ const example=download.requestBody.content['application/json'].example,check=ajv.compile(absolute(spec.components.schemas.HubSpotArtifactInput) as object);
+ assert.equal(check({...example,format:'pdf'}),false);assert.equal(check({...example,expected_destination_hash:'bad'}),false);
+ const missing={...example};delete missing.expected_destination_hash;assert.equal(check(missing),false);
+ assert.equal(review.responses[200].content['application/json'].schema.$ref,'#/components/schemas/HubSpotReviewResponse');
+ const receipt=spec.components.schemas.HubSpotReviewResponse;assert.equal(receipt.additionalProperties,false);assert.equal(receipt.properties.review.additionalProperties,false);
+ for(const flag of ['remote_export_enabled','account_settings_verified','native_conformance_verified','management_link_verified'])assert.equal(receipt.properties.review.properties[flag].const,false);
+ const value={request_id:'11111111-1111-4111-8111-111111111111',review:{destination:'hubspot',mapping_version:'hubspot-coded-footer-1',comparison_version:'hubspot-footer-comparison-1',revision_id:'11111111-1111-4111-8111-111111111111',source_artifact_hash:'a'.repeat(64),destination_hash:'b'.repeat(64),html_sha256:'c'.repeat(64),text_sha256:'d'.repeat(64),settings_digest:'e'.repeat(64),settings_origin:'locally_declared',remote_export_enabled:false,account_settings_verified:false,native_conformance_verified:false,management_link_verified:false,transformations:['Local comparison'],blockers:['CONNECTION_AUTH_MODE_UNAPPROVED','HUBSPOT_ACCOUNT_SETTINGS_UNVERIFIED','ACCOUNT_ENTITLEMENT_UNVERIFIED','REAL_CLIENT_PREFLIGHT_UNAVAILABLE','DESTINATION_CONFORMANCE_UNVERIFIED','DURABLE_REMOTE_EXPORT_UNAVAILABLE','MANAGEMENT_LINK_UNVERIFIED']}};
+ const validateReceipt=ajv.compile(absolute(receipt) as object);assert.equal(validateReceipt(value),true);
+ for(const flag of ['remote_export_enabled','account_settings_verified','native_conformance_verified','management_link_verified'])assert.equal(validateReceipt({...value,review:{...value.review,[flag]:true}}),false);
+ for(const extra of ['settings','html','text','api_revision','url'])assert.equal(validateReceipt({...value,review:{...value.review,[extra]:'marker'}}),false);
+ assert.equal(validateReceipt({...value,review:{...value.review,settings_digest:'bad'}}),false);
+ for(const absent of ['settings','html','text','api_revision','url'])assert.equal(Object.hasOwn(receipt.properties.review.properties,absent),false);
+ assert.deepEqual(Object.keys(download.responses[200].content),['text/html','text/plain']);
+ const headers=download.responses[200].headers;
+ for(const name of ['X-Artifact-Hash','X-Source-Artifact-Hash','X-Content-SHA256','X-Request-Id','Content-Disposition','Content-Type','Cache-Control','X-Content-Type-Options','Content-Security-Policy','X-Mailcraft-Notice'])assert.ok(headers[name]);
+ assert.deepEqual(headers['X-Destination-Mapping'].schema.enum,['hubspot-coded-footer-1']);assert.equal(headers['X-Remote-Export-Enabled'].schema.const,'false');assert.equal(headers['X-Artifact-Hash'].description.includes('API revision'),false);
+ assert.equal(spec.components.schemas.DestinationReviewResponse.properties.review.oneOf.length,4);
+ assert.equal(Object.keys(operationRegistry).length,124);
+ assert.match(spec['x-lettercape-json-semantics'],/HubSpot.*composed address.*Unicode.*delimiter.*authoritative/);
 });

@@ -75,7 +75,7 @@ export function assertRouteMethod(path: string[], method: string) {
     if (!id) methods = ['GET'];
     else if (uuid.test(id)) {
       if (['download','destination-review','destination-artifact'].includes(command)) methods = ['GET'];
-      else if (['preflight', 'export', 'remix', 'localize'].includes(command)) methods = ['POST'];
+      else if (['preflight', 'export', 'remix', 'localize', 'hubspot-review', 'hubspot-artifact'].includes(command)) methods = ['POST'];
     }
   }
   if(root==='operations'&&!id)methods=['GET'];
@@ -121,35 +121,85 @@ export function assertRouteMethod(path: string[], method: string) {
   if (!methods.includes(method))
     fail(405, 'METHOD_NOT_ALLOWED', 'This method is not allowed for this route.');
 }
+export const STRICT_JSON_TIMEOUT_MS = 30000;
+export type JsonReadOptions = { strict?: boolean; timeoutMs?: number };
 export async function readJson(
   request: Request,
   maxBytes = 2 * 1024 * 1024,
+  options: JsonReadOptions = {},
 ): Promise<Record<string, unknown>> {
-  if (['GET', 'HEAD', 'DELETE'].includes(request.method)) return {};
-  const length = Number(request.headers.get('content-length') ?? 0);
-  const limitMessage=maxBytes===2*1024*1024?'Request exceeds 2 MiB.':'Request exceeds '+maxBytes+' bytes.';
+  const strict = options.strict === true;
+  if (!strict && ['GET', 'HEAD', 'DELETE'].includes(request.method)) return {};
+  const timeoutMs = options.timeoutMs ?? STRICT_JSON_TIMEOUT_MS;
+  if (strict && (!Number.isFinite(timeoutMs) || timeoutMs <= 0))
+    throw new Error('Use a positive finite JSON timeout.');
+  const declared = request.headers.get('content-length');
+  if (strict) {
+    if (request.headers.has('content-encoding'))
+      fail(415, 'JSON_ENCODING_UNSUPPORTED', 'Compressed JSON requests are not supported.');
+    if (!/^application\/json(?:\s*;\s*charset\s*=\s*(?:utf-8|"utf-8"))?\s*$/i.test(request.headers.get('content-type') ?? ''))
+      fail(415, 'JSON_CONTENT_TYPE_UNSUPPORTED', 'Use application/json with UTF-8.');
+    if (declared !== null && (!/^\d+$/.test(declared) || !Number.isSafeInteger(Number(declared))))
+      fail(400, 'JSON_LENGTH_INVALID', 'Use a valid JSON byte length.');
+  }
+  const length = Number(declared ?? 0);
+  const limitMessage = maxBytes === 2 * 1024 * 1024 ? 'Request exceeds 2 MiB.' : 'Request exceeds ' + maxBytes + ' bytes.';
   if (length > maxBytes) fail(413, 'PAYLOAD_TOO_LARGE', limitMessage);
   const reader = request.body?.getReader();
-  if (!reader) return {};
+  if (!reader) {
+    if (strict) fail(400, 'JSON_BODY_REQUIRED', 'Provide a JSON object body.');
+    return {};
+  }
   let bytes = 0;
   const chunks: Uint8Array[] = [];
+  let interrupted: 'abort' | 'timeout' | undefined;
+  let wake: (() => void) | undefined;
+  const interruption = new Promise<void>((resolve) => { wake = resolve; });
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  const abort = () => { interrupted = 'abort'; cancel(); wake?.(); };
+  const checkInterrupted = () => {
+    if (request.signal.aborted || interrupted === 'abort')
+      fail(499, 'EXPORT_CANCELLED', 'Destination preparation interrupted.');
+    if (interrupted === 'timeout')
+      fail(408, 'JSON_TRANSFER_TIMEOUT', 'JSON transfer exceeded its time limit.');
+  };
+  const timer = strict ? setTimeout(() => { interrupted = 'timeout'; cancel(); wake?.(); }, timeoutMs) : undefined;
+  if (strict) request.signal.addEventListener('abort', abort, { once: true });
   try {
+    if (strict && request.signal.aborted) abort();
     for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      bytes += value.byteLength;
+      if (strict) checkInterrupted();
+      let part: ReadableStreamReadResult<Uint8Array> | void;
+      try {
+        part = strict ? await Promise.race([reader.read(), interruption]) : await reader.read();
+      } catch (error) {
+        if (!strict) throw error;
+        checkInterrupted();
+        fail(400, 'MALFORMED_JSON', 'Use valid JSON.');
+      }
+      if (strict) checkInterrupted();
+      if (!part || part.done) break;
+      bytes += part.value.byteLength;
       if (bytes > maxBytes) {
-        await reader.cancel();
+        if (strict) cancel(); else await reader.cancel();
         fail(413, 'PAYLOAD_TOO_LARGE', limitMessage);
       }
-      chunks.push(value);
+      chunks.push(part.value);
     }
+    if (strict && declared !== null && length !== bytes)
+      fail(400, 'JSON_LENGTH_MISMATCH', 'Declared and actual JSON body sizes differ.');
+    if (strict && bytes === 0) fail(400, 'JSON_BODY_REQUIRED', 'Provide a JSON object body.');
+  } catch (error) {
+    if (strict) cancel();
+    throw error;
   } finally {
+    if (timer !== undefined) clearTimeout(timer);
+    if (strict) request.signal.removeEventListener('abort', abort);
     reader.releaseLock();
   }
   let result: unknown;
   try {
-    const raw = Buffer.concat(chunks).toString('utf8');
+    const raw = strict ? new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes)) : Buffer.concat(chunks).toString('utf8');
     result = raw ? JSON.parse(raw) : {};
   } catch {
     fail(400, 'MALFORMED_JSON', 'Use valid JSON.');

@@ -900,6 +900,30 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "reviewHubSpotRevision": {
+    "method": "POST",
+    "path": "/v1/email-revisions/{id}/hubspot-review",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "downloadHubSpotRevision": {
+    "method": "POST",
+    "path": "/v1/email-revisions/{id}/hubspot-artifact",
+    "keyed": false,
+    "paged": false,
+    "binary": true,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
   "preflightRevision": {
     "method": "POST",
     "path": "/v1/email-revisions/{id}/preflight",

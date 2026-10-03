@@ -25317,7 +25317,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Locally prepared frozen Klaviyo, Mailchimp Classic or Omnisend HTML-import HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.",
+            "description": "Locally prepared frozen Klaviyo, Mailchimp Classic, Omnisend HTML-import or Brevo marketing-draft HTML (format=html) or plaintext (format=txt), encoded as UTF-8 attachment bytes. Integrity receipts bind the source, destination mapping and exact downloaded content. Remote export remains disabled.",
             "headers": {
               "X-Request-Id": {
                 "schema": {
@@ -25661,6 +25661,880 @@
             }
           }
         },
+        "x-lettercape-scopes": [
+          "emails:export"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/email-revisions/{id}/hubspot-review": {
+      "post": {
+        "operationId": "reviewHubSpotRevision",
+        "summary": "review hub spot revision",
+        "description": "Current edit/export authority and actor fence required. Locally declared seven-field settings compared with the exact frozen footer; settings stay in the required strict JSON body, never query parameters. Review contains hashes and fixed false readiness flags only. Account settings, entitlement, native/client conformance and remote export remain unverified. No provider call, durable export or idempotent receipt.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Required strict JSON object with application/json and optional UTF-8 charset only, no Content-Encoding. At most16384 actual bytes; declared byte length must be safe/nonnegative and exact. Fatal UTF-8 validation,30-second deadline and cancellation. Settings stay in the body. Server footer Unicode/delimiter/composed-address refinements remain authoritative.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HubSpotReviewInput"
+              },
+              "example": {
+                "settings": {
+                  "company_name": "Example Company",
+                  "company_street_address_1": "10 Example Road",
+                  "company_street_address_2": "",
+                  "company_city": "Example City",
+                  "company_state": "Example State",
+                  "company_zip": "12345",
+                  "company_country": "Example Country"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "const": "nosniff"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HubSpotReviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "499": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-body-max-bytes": 16384,
+        "x-lettercape-scopes": [
+          "emails:export"
+        ],
+        "x-lettercape-availability": "development",
+        "x-lettercape-idempotent-command": false
+      }
+    },
+    "/v1/email-revisions/{id}/hubspot-artifact": {
+      "post": {
+        "operationId": "downloadHubSpotRevision",
+        "summary": "download hub spot revision",
+        "description": "Current edit/export authority and actor fence required. Locally declared seven-field settings compared with the exact frozen footer; settings stay in the required strict JSON body, never query parameters. Review contains hashes and fixed false readiness flags only. Account settings, entitlement, native/client conformance and remote export remain unverified. No provider call, durable export or idempotent receipt. Recompile with the same declared settings and require expected_destination_hash; changed review409 HUBSPOT_REVIEW_CHANGED before any download audit. Explicit HTML or plaintext format only.",
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-Workspace-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Required for tenant session requests; bearer keys cannot override their workspace."
+          },
+          {
+            "name": "X-Actor-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Required strict JSON object with application/json and optional UTF-8 charset only, no Content-Encoding. At most16384 actual bytes; declared byte length must be safe/nonnegative and exact. Fatal UTF-8 validation,30-second deadline and cancellation. Settings stay in the body. Server footer Unicode/delimiter/composed-address refinements remain authoritative.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HubSpotArtifactInput"
+              },
+              "example": {
+                "settings": {
+                  "company_name": "Example Company",
+                  "company_street_address_1": "10 Example Road",
+                  "company_street_address_2": "",
+                  "company_city": "Example City",
+                  "company_state": "Example State",
+                  "company_zip": "12345",
+                  "company_country": "Example Country"
+                },
+                "format": "html",
+                "expected_destination_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Locally prepared HubSpot coded-footer HTML or plaintext UTF-8 attachment. Declared settings are compared locally; account settings, native conformance and client fidelity remain unverified. No remote export.",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Artifact-Hash": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "Destination artifact hash bound to source, mapping/comparison versions, declared settings digest and both prepared formats."
+              },
+              "X-Source-Artifact-Hash": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "Exact frozen source artifact hash reviewed before download."
+              },
+              "X-Content-SHA256": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "description": "SHA256 of the exact UTF-8 bytes for the selected format."
+              },
+              "X-Destination-Mapping": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "hubspot-coded-footer-1"
+                  ]
+                }
+              },
+              "X-Remote-Export-Enabled": {
+                "schema": {
+                  "type": "string",
+                  "const": "false"
+                },
+                "description": "Local preparation only; no provider export is enabled."
+              },
+              "Content-Type": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "text/html; charset=utf-8",
+                    "text/plain; charset=utf-8"
+                  ]
+                }
+              },
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "attachment; filename=\"hubspot-prepared-{revision_id}.{format}\""
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "const": "nosniff"
+                }
+              },
+              "Content-Security-Policy": {
+                "schema": {
+                  "type": "string",
+                  "const": "sandbox; default-src 'none'"
+                }
+              },
+              "X-Mailcraft-Notice": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Local preparation notice; remote export, live destination and real-client conformance remain unverified."
+              }
+            },
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Minimum seconds before retry"
+              }
+            }
+          },
+          "499": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": false
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Safe error; preserve request ID. Business errors do not automatically retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "request_id": "req-example",
+                  "error": {
+                    "code": "STATE_CONFLICT",
+                    "message": "Resolve the documented request or setup requirement.",
+                    "retryable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-lettercape-body-max-bytes": 16384,
         "x-lettercape-scopes": [
           "emails:export"
         ],
@@ -39738,6 +40612,451 @@
   },
   "components": {
     "schemas": {
+      "HubSpotFooterSettings": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "company_street_address_1": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "company_street_address_2": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "company_city": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "company_state": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "company_zip": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "company_country": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "company_name",
+          "company_street_address_1",
+          "company_street_address_2",
+          "company_city",
+          "company_state",
+          "company_zip",
+          "company_country"
+        ],
+        "additionalProperties": false,
+        "description": "Seven explicit locally declared footer values. Server validation additionally enforces composed address length, well-formed Unicode, controls, nonblank required values and authored delimiters; JSON Schema omits these refinements."
+      },
+      "HubSpotReview": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "const": "hubspot"
+          },
+          "mapping_version": {
+            "type": "string",
+            "const": "hubspot-coded-footer-1"
+          },
+          "comparison_version": {
+            "type": "string",
+            "const": "hubspot-footer-comparison-1"
+          },
+          "revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "source_artifact_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "destination_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "html_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "text_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "settings_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "settings_origin": {
+            "type": "string",
+            "const": "locally_declared"
+          },
+          "remote_export_enabled": {
+            "type": "boolean",
+            "const": false
+          },
+          "account_settings_verified": {
+            "type": "boolean",
+            "const": false
+          },
+          "native_conformance_verified": {
+            "type": "boolean",
+            "const": false
+          },
+          "management_link_verified": {
+            "type": "boolean",
+            "const": false
+          },
+          "transformations": {
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "const": "CONNECTION_AUTH_MODE_UNAPPROVED"
+              },
+              {
+                "type": "string",
+                "const": "HUBSPOT_ACCOUNT_SETTINGS_UNVERIFIED"
+              },
+              {
+                "type": "string",
+                "const": "ACCOUNT_ENTITLEMENT_UNVERIFIED"
+              },
+              {
+                "type": "string",
+                "const": "REAL_CLIENT_PREFLIGHT_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "DESTINATION_CONFORMANCE_UNVERIFIED"
+              },
+              {
+                "type": "string",
+                "const": "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+              },
+              {
+                "type": "string",
+                "const": "MANAGEMENT_LINK_UNVERIFIED"
+              }
+            ],
+            "items": false,
+            "minItems": 7,
+            "maxItems": 7
+          }
+        },
+        "required": [
+          "destination",
+          "mapping_version",
+          "comparison_version",
+          "revision_id",
+          "source_artifact_hash",
+          "destination_hash",
+          "html_sha256",
+          "text_sha256",
+          "settings_digest",
+          "settings_origin",
+          "remote_export_enabled",
+          "account_settings_verified",
+          "native_conformance_verified",
+          "management_link_verified",
+          "transformations",
+          "blockers"
+        ],
+        "additionalProperties": false
+      },
+      "HubSpotReviewInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "properties": {
+              "company_name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "company_street_address_1": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_street_address_2": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_city": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_state": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_zip": {
+                "type": "string",
+                "maxLength": 50
+              },
+              "company_country": {
+                "type": "string",
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "company_name",
+              "company_street_address_1",
+              "company_street_address_2",
+              "company_city",
+              "company_state",
+              "company_zip",
+              "company_country"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "additionalProperties": false
+      },
+      "HubSpotArtifactInput": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "settings": {
+            "type": "object",
+            "properties": {
+              "company_name": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "company_street_address_1": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_street_address_2": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_city": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_state": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "company_zip": {
+                "type": "string",
+                "maxLength": 50
+              },
+              "company_country": {
+                "type": "string",
+                "maxLength": 200
+              }
+            },
+            "required": [
+              "company_name",
+              "company_street_address_1",
+              "company_street_address_2",
+              "company_city",
+              "company_state",
+              "company_zip",
+              "company_country"
+            ],
+            "additionalProperties": false
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "html",
+              "txt"
+            ]
+          },
+          "expected_destination_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "settings",
+          "format",
+          "expected_destination_hash"
+        ],
+        "additionalProperties": false
+      },
+      "HubSpotMappingVersion": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "const": "hubspot-coded-footer-1"
+      },
+      "HubSpotComparisonVersion": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string",
+        "const": "hubspot-footer-comparison-1"
+      },
+      "HubSpotReviewResponse": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "review": {
+            "type": "object",
+            "properties": {
+              "destination": {
+                "type": "string",
+                "const": "hubspot"
+              },
+              "mapping_version": {
+                "type": "string",
+                "const": "hubspot-coded-footer-1"
+              },
+              "comparison_version": {
+                "type": "string",
+                "const": "hubspot-footer-comparison-1"
+              },
+              "revision_id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "source_artifact_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "destination_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "html_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "text_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "settings_digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "settings_origin": {
+                "type": "string",
+                "const": "locally_declared"
+              },
+              "remote_export_enabled": {
+                "type": "boolean",
+                "const": false
+              },
+              "account_settings_verified": {
+                "type": "boolean",
+                "const": false
+              },
+              "native_conformance_verified": {
+                "type": "boolean",
+                "const": false
+              },
+              "management_link_verified": {
+                "type": "boolean",
+                "const": false
+              },
+              "transformations": {
+                "minItems": 1,
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "blockers": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "const": "CONNECTION_AUTH_MODE_UNAPPROVED"
+                  },
+                  {
+                    "type": "string",
+                    "const": "HUBSPOT_ACCOUNT_SETTINGS_UNVERIFIED"
+                  },
+                  {
+                    "type": "string",
+                    "const": "ACCOUNT_ENTITLEMENT_UNVERIFIED"
+                  },
+                  {
+                    "type": "string",
+                    "const": "REAL_CLIENT_PREFLIGHT_UNAVAILABLE"
+                  },
+                  {
+                    "type": "string",
+                    "const": "DESTINATION_CONFORMANCE_UNVERIFIED"
+                  },
+                  {
+                    "type": "string",
+                    "const": "DURABLE_REMOTE_EXPORT_UNAVAILABLE"
+                  },
+                  {
+                    "type": "string",
+                    "const": "MANAGEMENT_LINK_UNVERIFIED"
+                  }
+                ],
+                "items": false,
+                "minItems": 7,
+                "maxItems": 7
+              }
+            },
+            "required": [
+              "destination",
+              "mapping_version",
+              "comparison_version",
+              "revision_id",
+              "source_artifact_hash",
+              "destination_hash",
+              "html_sha256",
+              "text_sha256",
+              "settings_digest",
+              "settings_origin",
+              "remote_export_enabled",
+              "account_settings_verified",
+              "native_conformance_verified",
+              "management_link_verified",
+              "transformations",
+              "blockers"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "request_id",
+          "review"
+        ],
+        "additionalProperties": false
+      },
       "KlaviyoReview": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -51314,5 +52633,5 @@
     "billing/customer/entitlements/signed webhooks",
     "rights/deletion/retention and operations"
   ],
-  "x-lettercape-json-semantics": "EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative."
+  "x-lettercape-json-semantics": "EmailSpec shape does not encode all server semantic refinements (unique node IDs,200 total nodes, safe URLs/raw sanitizer, tenant references, explicit UTM well-formed Unicode/no controls/nonblank/256UTF8bytes and final2048UTF8bytes, conflicting/duplicate/case-ambiguous managed keys, signed/merge/conditional targets). Optional tracking defaults absent and changes new artifacts only; no collectors or consent/send success is implied. Server validation remains authoritative. HubSpot footer settings additionally require composed address bounds, well-formed Unicode, controls/nonblank and authored delimiter checks; these server refinements are omitted from JSON Schema and remain authoritative."
 }
