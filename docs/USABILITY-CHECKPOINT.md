@@ -6,7 +6,7 @@ This independent patch starts from published main `0b969ece2e5c999335f06f1a77b49
 
 - At 390×600, the baseline navigation contained 801px of content with no internal scrolling. Settings and Help could leave the screen. The panel now scrolls, has a visible Close button, preserves Escape focus return, and keeps 44px mobile navigation controls.
 - A simulated slow or failed email-list read previously displayed the first-use empty message. Home and Emails now show loading, unavailable and acknowledged-empty states separately. Retry is accessible and repeated clicks start one read. Previously loaded drafts stay visible with an explicit stale-data explanation when a subsequent read fails.
-- A long subject widened the baseline 390px viewport to 3545px. Draft rows now wrap long titles and unbroken subjects within the content column.
+- A valid 160-character title and 200-character unbroken subject widened the baseline 390px viewport to 1421px. Draft rows now wrap long titles and unbroken subjects within the content column.
 - Mobile public navigation previously hid Documentation and Status. Both links remain visible and wrap alongside Open workspace.
 - Shared headings, body copy, form inputs and list text use scalable sizes. Enlarged button labels retain adequate line spacing. Narrow dashboard headings wrap and decorative artwork is omitted where it competes with content.
 - Public docs include section navigation, acknowledged-save/checkpoint guidance, retry guidance, mobile/keyboard instructions and preview/export limitations. Full accessibility, real-client and provider acceptance are still required.

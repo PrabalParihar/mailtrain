@@ -17,15 +17,29 @@ const browser = await chromium.launch({ headless: true });
 const evidence: { check: string; detail: string }[] = [];
 const workspace = '11111111-1111-4111-8111-111111111111';
 const sample = {
-  id: '22222222-2222-4222-8222-222222222222', title: 'A long draft title '.repeat(18),
-  spec: { subject: 'UnbrokenSubject'.repeat(35) }, doc_version: 3, updated_at: '2026-10-01T10:00:00Z',
+  id: '22222222-2222-4222-8222-222222222222', title: 'A long draft title '.repeat(9).slice(0, 160),
+  spec: { subject: 'UnbrokenSubject'.repeat(14).slice(0, 200) }, doc_version: 3, updated_at: '2026-10-01T10:00:00Z',
 };
 let mode: 'empty' | 'rows' | 'delayed' | 'error' = 'empty';
-let release: (() => void) | undefined;
+let registerDelayedRead: ((finish: () => void) => void) | undefined;
+const pendingReads = new Set<() => void>();
 let emailReads = 0;
-let notifyRead: (() => void) | undefined;
 let unexpectedWrites = 0;
 const unexpectedReads: string[] = [];
+function delayRead() {
+  mode = 'delayed';
+  return new Promise<() => void>(resolve => { registerDelayedRead = resolve; });
+}
+async function registeredRead(read: Promise<() => void>) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([read, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('The delayed UI read was not registered within 15 seconds.')), 15_000);
+    })]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function noOverflow(page: Page, label: string) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), label + ' overflowed.');
 }
@@ -56,9 +70,21 @@ try {
       return;
     }
     emailReads++;
-    notifyRead?.();
     const responseMode = mode;
-    if (responseMode === 'delayed') await new Promise<void>(resolve => { release = resolve; });
+    if (responseMode === 'delayed') {
+      const register = registerDelayedRead;
+      registerDelayedRead = undefined;
+      if (!register) {
+        unexpectedReads.push('Unregistered delayed email read');
+        await route.abort();
+        return;
+      }
+      await new Promise<void>(resolve => {
+        const finish = () => { pendingReads.delete(finish); resolve(); };
+        pendingReads.add(finish);
+        register(finish);
+      });
+    }
     if (responseMode === 'error') {
       await route.fulfill({ status: 503, json: { error: { code: 'UI_FIXTURE_UNAVAILABLE', message: 'Emails could not be loaded. Try again.' } } });
       return;
@@ -78,7 +104,9 @@ try {
       await noOverflow(page, path + ' at ' + width);
     }
     await page.goto(origin);
-    await page.getByRole('navigation', { name: 'Product navigation' }).getByRole('link', { name: 'Documentation', exact: true }).waitFor({ state: 'visible' });
+    const publicNavigation = page.getByRole('navigation', { name: 'Product navigation' });
+    await publicNavigation.getByRole('link', { name: 'Documentation', exact: true }).waitFor({ state: 'visible' });
+    await publicNavigation.getByRole('link', { name: 'Status', exact: true }).waitFor({ state: 'visible' });
     await page.screenshot({ path: join(output, 'landing-' + width + '.png'), fullPage: true });
   }
   evidence.push({ check: 'responsive public and workspace screens', detail: '8 real screens at 320, 390, 768 and 1440 CSS pixels; mobile documentation/status links visible.' });
@@ -116,19 +144,17 @@ try {
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'main');
   evidence.push({ check: 'short-screen keyboard navigation', detail: 'Hidden menu excluded from Tab; Enter, scroll to Help, Escape, explicit Close, link navigation and skip-link focus passed.' });
 
-  mode = 'delayed';
+  const initialRead = delayRead();
   await page.goto(origin + '/app/emails');
   await page.getByRole('status').filter({ hasText: 'Loading emails…' }).waitFor();
   assert.equal(await page.getByRole('heading', { name: 'Begin with a blank page.' }).count(), 0);
-  assert.ok(release);
-  release();
+  (await registeredRead(initialRead))();
   await page.getByRole('heading', { name: 'Begin with a blank page.' }).waitFor();
 
-  mode = 'delayed';
+  const interruptedRead = delayRead();
   await page.reload();
   await page.getByRole('status').filter({ hasText: 'Loading emails…' }).waitFor();
-  const finishInterruptedRead = release;
-  assert.ok(finishInterruptedRead);
+  const finishInterruptedRead = await registeredRead(interruptedRead);
   mode = 'empty';
   await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await page.getByRole('link', { name: 'Integrations', exact: true }).click();
@@ -145,16 +171,13 @@ try {
   await page.reload();
   await page.getByRole('alert').filter({ hasText: 'Emails could not be loaded.' }).waitFor();
   assert.equal(await page.getByRole('heading', { name: 'Begin with a blank page.' }).count(), 0);
-  mode = 'delayed';
+  const retryRead = delayRead();
   const beforeRetry = emailReads;
-  const retryStarted = new Promise<void>(resolve => { notifyRead = resolve; });
   await page.getByRole('button', { name: 'Retry loading emails', exact: true }).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
   await page.waitForFunction(() => (document.querySelector('.alert button') as HTMLButtonElement)?.disabled === true);
-  await retryStarted;
-  notifyRead = undefined;
+  const finishRetryRead = await registeredRead(retryRead);
   assert.equal(emailReads, beforeRetry + 1, 'Repeated Retry started duplicate reads.');
-  assert.ok(release);
-  release();
+  finishRetryRead();
   await page.getByRole('heading', { name: 'Begin with a blank page.' }).waitFor();
   mode = 'error';
   await page.goto(origin + '/app');
@@ -170,6 +193,7 @@ try {
     await page.locator('.email-rows strong').waitFor();
     await noOverflow(page, 'Long titles and unbroken subjects at ' + width);
     assert.equal(await page.locator('.email-rows strong').innerText(), sample.title.trim());
+    assert.equal(await page.locator('.email-rows span:not(.badge)').innerText(), sample.spec.subject);
   }
   await page.screenshot({ path: join(output, 'email-long-title.png'), fullPage: true });
   mode = 'error';
@@ -207,6 +231,6 @@ try {
   await writeFile(join(output, 'report.json'), JSON.stringify({ status: 'pass', fixture: 'simulated read-only UI data; real Chromium/Next rendering', evidence, unexpectedWrites, pageErrors: errors }, null, 2));
   console.log('Usability PASS: ' + evidence.length + ' groups; no database/provider calls or mutations. Evidence: ' + output);
 } finally {
-  release?.();
+  for (const finish of pendingReads) finish();
   await browser.close();
 }
