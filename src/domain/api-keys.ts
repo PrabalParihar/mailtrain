@@ -40,7 +40,7 @@ export function scopeForResource(
   if (root === 'assets') return read ? 'assets:read' : 'assets:write';
   if(root==='sender-identities') return read?'sender:read':'sender:write';
   if (root === 'brands'||root==='brand-sources') return read||command==='memory-preview' ? 'brands:read' : 'brands:write';
-  if (root === 'emails') return read ? 'emails:read' : 'emails:write';
+  if (root === 'emails' || root === 'templates') return read ? 'emails:read' : 'emails:write';
   if (root === 'email-revisions')
     return ['download','export','destination-review','destination-artifact','hubspot-review','hubspot-artifact'].includes(command??'')
       ? 'emails:export'

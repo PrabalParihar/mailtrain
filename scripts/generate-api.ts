@@ -1,4 +1,5 @@
 import {HubSpotFooterSettings,HubSpotReview,HubSpotReviewInput,HubSpotArtifactInput,HUBSPOT_MAPPING_VERSION,HUBSPOT_COMPARISON_VERSION} from '../src/domain/hubspot-footer-contracts';
+import {SaveEmailTemplateInput,ArchiveEmailTemplateInput,RemixEmailTemplateInput,EmailTemplateViewSchema} from '../src/domain/email-templates';
 import{KlaviyoReview,KLAVIYO_MAPPING_VERSION}from'../src/domain/esp-export-contracts';
 import{MailchimpReview,MAILCHIMP_MAPPING_VERSION}from'../src/domain/mailchimp-export-contracts';
 import{OmnisendReview,OMNISEND_MAPPING_VERSION}from'../src/domain/omnisend-export-contracts';
@@ -46,6 +47,10 @@ const nullable = (schema: unknown) => ({ anyOf: [schema, { type: 'null' }] });
 const fromZod = (schema: z.ZodType) =>
   z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }) as Schema;
 const schemas: Record<string, Schema> = {
+  SaveEmailTemplateInput: fromZod(SaveEmailTemplateInput),
+  ArchiveEmailTemplateInput: fromZod(ArchiveEmailTemplateInput),
+  RemixEmailTemplateInput: fromZod(RemixEmailTemplateInput),
+  EmailTemplateView: fromZod(EmailTemplateViewSchema),
   HubSpotFooterSettings:{...fromZod(HubSpotFooterSettings),description:'Seven explicit locally declared footer values. Server validation additionally enforces composed address length, well-formed Unicode, controls, nonblank required values and authored delimiters; JSON Schema omits these refinements.'},
   HubSpotReview:fromZod(HubSpotReview),
   HubSpotReviewInput:fromZod(HubSpotReviewInput),
@@ -264,6 +269,7 @@ for(const [name,item] of Object.entries({SenderIdentities:'SenderView',SenderVer
 for (const [name, item] of Object.entries({
   Members:'Membership',MemberChanges:'MembershipChange',
   Emails: 'Email',
+  EmailTemplates: 'EmailTemplateView',
   Brands: 'BrandVersion',
   Keys: 'Key',
   Revisions: 'Revision',
@@ -292,6 +298,7 @@ for(const [name,item]of Object.entries({WebhookDeliveries:'WebhookDelivery',Webh
 schemas.WebhookDeliveryResponse=envelope({delivery:ref('WebhookDelivery'),configuration:ref('WebhookConfiguration')});
 schemas.EventResponse = envelope({event:ref('EventEnvelope')});
 schemas.EmailResponse = envelope({ email: ref('Email') });
+schemas.EmailTemplateResponse = envelope({template: ref('EmailTemplateView')});
 schemas.ConversionProposalResponse=object({request_id:string,proposal:ref('ConversionProposal')},undefined,false);
 schemas.ConversionAcceptResponse=object({request_id:string,email:object({id:uuid,title:string,doc_version:{type:'integer',minimum:1},spec:ref('EmailSpec'),updated_at:time},undefined,false)},undefined,false);
 const comparisonDraft=object({id:uuid,title:{type:'string',maxLength:160},doc_version:{type:'integer',minimum:1},spec:ref('EmailSourceSpec')},undefined,false);
@@ -416,6 +423,9 @@ type Definition = {
 const exampleId = '11111111-1111-4111-8111-111111111111';
 const hubspotSettingsExample={company_name:'Example Company',company_street_address_1:'10 Example Road',company_street_address_2:'',company_city:'Example City',company_state:'Example State',company_zip:'12345',company_country:'Example Country'};
 const examples: Record<string, unknown> = {
+  SaveEmailTemplateInput: {name:'Example template',source_revision_id:exampleId,expected_artifact_hash:'a'.repeat(64)},
+  ArchiveEmailTemplateInput: {expected_version:1},
+  RemixEmailTemplateInput: {title:'New independent draft',expected_version:1,expected_artifact_hash:'a'.repeat(64)},
   HubSpotReviewInput:{settings:hubspotSettingsExample},
   HubSpotArtifactInput:{settings:hubspotSettingsExample,format:'html',expected_destination_hash:'a'.repeat(64)},
   SourceForkInput:{expected_artifact_hash:'a'.repeat(64)},
@@ -507,7 +517,7 @@ function add(d: Definition) {
       description:
         'Keep the same key and exact payload during uncertain recovery; mismatch409. Raw key secret is never stored in receipts.',
     });
-  if(d.hubspotBody||d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
+  if(d.hubspotBody||d.sourceCommand||d.sourceJson||d.path.startsWith('/v1/sender-identities')||d.path.startsWith('/v1/templates')||['prepareEmailConversion','acceptEmailConversion','getEmail','compareLocaleSource'].includes(d.id))parameters.push({name:'X-Actor-Id',in:'header',required:false,schema:{type:'string',minLength:1},description:'Optional account-change fence compared with the authenticated actor. It grants no delegation and never changes the actor-scoped receipt namespace; mismatch409 ACTOR_CHANGED.'});
   if (d.etag)
     parameters.push({
       name: 'If-Match',
@@ -756,6 +766,12 @@ add({
   scope: 'emails:write',
   example: { title: 'Example draft' },
 });
+const templateNotice='Metadata pins an immutable workspace revision and exact hash. Templates preserve their original brand/source; reuse creates a separate draft under current authority and asset checks. No AI, send or production acceptance is implied.';
+add({id:'listEmailTemplates',path:'/v1/templates',method:'GET',response:'EmailTemplatesPage',paged:true,scope:'emails:read',query:[{name:'state',in:'query',required:false,schema:{type:'string',enum:['active','archived'],default:'active'}}],description:templateNotice});
+add({id:'saveEmailTemplate',path:'/v1/templates',method:'POST',body:'SaveEmailTemplateInput',response:'EmailTemplateResponse',status:201,keyed:true,explicitKey:true,scope:'emails:write',description:templateNotice});
+add({id:'getEmailTemplate',path:'/v1/templates/{id}',method:'GET',response:'EmailTemplateResponse',scope:'emails:read',description:templateNotice});
+add({id:'archiveEmailTemplate',path:'/v1/templates/{id}/archive',method:'POST',body:'ArchiveEmailTemplateInput',response:'EmailTemplateResponse',keyed:true,explicitKey:true,scope:'emails:write',description:'Version CAS archives active templates and blocks new reuse while preserving revision and child history. '+templateNotice});
+add({id:'remixEmailTemplate',path:'/v1/templates/{id}/remix',method:'POST',body:'RemixEmailTemplateInput',response:'DerivationResponse',status:201,keyed:true,explicitKey:true,scope:'emails:write',description:'Version/hash CAS and same-key original-child recovery. '+templateNotice});
 add({
   id: 'getEmail',
   path: '/v1/emails/{id}',

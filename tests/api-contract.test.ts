@@ -58,6 +58,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
     'integrations',
     'brands',
     'emails',
+    'templates',
     'email-revisions',
     'operations',
     'contacts',
@@ -76,6 +77,7 @@ test('OpenAPI3.1 documents every enabled method, all request examples validate a
   const ids = ['', '{id}', 'uploads', 'generate', 'from-url', 'inspect', 'current', 'workspace', 'summary', 'calendar', 'timezone'];
   const commands = [
     'source-import','source-fork',
+    'archive',
     'fallback', 'publish',
     'dns-checks','conversion-proposal','convert-to-blocks',
     'role','transfer-owner',
@@ -234,6 +236,6 @@ test('HubSpot POST contracts are private strict bounded bodies with honest recei
  for(const name of ['X-Artifact-Hash','X-Source-Artifact-Hash','X-Content-SHA256','X-Request-Id','Content-Disposition','Content-Type','Cache-Control','X-Content-Type-Options','Content-Security-Policy','X-Mailcraft-Notice'])assert.ok(headers[name]);
  assert.deepEqual(headers['X-Destination-Mapping'].schema.enum,['hubspot-coded-footer-1']);assert.equal(headers['X-Remote-Export-Enabled'].schema.const,'false');assert.equal(headers['X-Artifact-Hash'].description.includes('API revision'),false);
  assert.equal(spec.components.schemas.DestinationReviewResponse.properties.review.oneOf.length,4);
- assert.equal(Object.keys(operationRegistry).length,124);
+ assert.equal(Object.keys(operationRegistry).length,129);
  assert.match(spec['x-lettercape-json-semantics'],/HubSpot.*composed address.*Unicode.*delimiter.*authoritative/);
 });

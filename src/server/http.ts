@@ -78,6 +78,11 @@ export function assertRouteMethod(path: string[], method: string) {
       else if (['preflight', 'export', 'remix', 'localize', 'hubspot-review', 'hubspot-artifact'].includes(command)) methods = ['POST'];
     }
   }
+  if (root === 'templates') {
+    if (!id) methods = ['GET', 'POST'];
+    else if (uuid.test(id) && !command) methods = ['GET'];
+    else if (uuid.test(id) && ['archive', 'remix'].includes(command)) methods = ['POST'];
+  }
   if(root==='operations'&&!id)methods=['GET'];
   if (root === 'operations' && id && uuid.test(id)) {
     if (!command||command==='attempts') methods = ['GET'];

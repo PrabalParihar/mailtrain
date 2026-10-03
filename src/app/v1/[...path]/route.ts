@@ -1,4 +1,5 @@
 import {hubspotExportResponse} from '@/server/hubspot-export-review';
+import { emailTemplateRoute } from '@/server/email-template-route';
 import{destinationReviewResponse}from'@/server/esp-export-review';
 import {prepareRecipientAssessment,assessmentDetail,assessmentHistory,assessmentObservations,cancelRecipientAssessment} from '@/server/recipient-assessments';
 import {RecipientAssessmentInput} from '@/domain/recipient-assessments';
@@ -77,6 +78,7 @@ async function handle(req: Request, ctx: Context) {
     const recipientBody=root==='recipient-assessments'||(root==='campaigns'&&command==='recipient-assessments');
     const body=recipientBody?await readJson(req,16*1024):sourceBody?await readEmailSourceJson(req):await readJson(req);
     const key = req.headers.get('idempotency-key');
+    if (root === 'templates') return json(await emailTemplateRoute(req, path, body, key), method === 'POST' && command !== 'archive' ? 201 : 200);
     const version = () => {
       const raw = req.headers.get('if-match');
       const v = Number(raw?.replaceAll('"', '').replace('draft-', ''));

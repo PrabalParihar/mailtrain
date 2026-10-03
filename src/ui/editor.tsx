@@ -48,6 +48,7 @@ import type { Role } from '@/domain/permissions';
 import { allowed } from '@/domain/permissions';
 import type { EmailSpec, Block, Finding } from '@/domain/email';
 import { DerivedEmails } from './derived-emails';
+import { SaveEmailTemplate } from './email-templates';
 import {EmailUTM}from'./email-utm';
 import{assertEmailUTMTargets,trackingFingerprint,copyProposalWithCurrentUTM}from'@/domain/email-utm';
 import type{UTMParameterData}from'@/domain/utm';
@@ -666,6 +667,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
                 >
                   Restore as new head
                 </button>
+                <SaveEmailTemplate workspace={workspace} actor={actor} role={role} revisionId={r.id} artifactHash={r.artifact_hash} />
               </div>
             ))
           ) : (

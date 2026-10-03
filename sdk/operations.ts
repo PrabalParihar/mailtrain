@@ -684,6 +684,66 @@ export const operationRegistry = {
     "explicitKey": false,
     "blocked": false
   },
+  "listEmailTemplates": {
+    "method": "GET",
+    "path": "/v1/templates",
+    "keyed": false,
+    "paged": true,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "saveEmailTemplate": {
+    "method": "POST",
+    "path": "/v1/templates",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": true,
+    "blocked": false
+  },
+  "getEmailTemplate": {
+    "method": "GET",
+    "path": "/v1/templates/{id}",
+    "keyed": false,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": false,
+    "blocked": false
+  },
+  "archiveEmailTemplate": {
+    "method": "POST",
+    "path": "/v1/templates/{id}/archive",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": true,
+    "blocked": false
+  },
+  "remixEmailTemplate": {
+    "method": "POST",
+    "path": "/v1/templates/{id}/remix",
+    "keyed": true,
+    "paged": false,
+    "binary": false,
+    "binaryBody": false,
+    "textBody": false,
+    "sourceCommand": false,
+    "explicitKey": true,
+    "blocked": false
+  },
   "getEmail": {
     "method": "GET",
     "path": "/v1/emails/{id}",

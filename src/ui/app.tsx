@@ -25,6 +25,7 @@ import { api, ApiError } from './api';
 import { BrandPanel } from './brand';
 import {SenderDomainPanel} from './sender-domain';
 import { CreatePanel } from './create';
+import { EmailTemplatesPanel } from './email-templates';
 import { Editor } from './editor';
 import { AudiencePanel, CampaignPanel, SettingsPanel } from './operations';
 import { integrations } from '@/server/adapters';
@@ -33,6 +34,7 @@ import type { EmailSpec } from '@/domain/email';
 const navigation = [
   ['', 'Home', Home],
   ['emails', 'Emails', Mail],
+  ['templates', 'Templates', BookOpen],
   ['campaigns', 'Campaigns', CalendarDays],
   ['brand', 'Brand', Palette],
   ['audience', 'Audience', Users],
@@ -412,6 +414,7 @@ export function MailcraftApp({
             </>
           )}
           {section === 'brand' && <BrandPanel key={workspace} workspace={workspace} />}
+          {section === 'templates' && <EmailTemplatesPanel key={JSON.stringify([workspace, actor, current?.role])} workspace={workspace} actor={actor} role={current?.role ?? 'Viewer'} />}
           {section === 'emails' && !screen[1] && (
             <>
               <div className="page-heading">
