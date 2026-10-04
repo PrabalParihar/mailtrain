@@ -172,6 +172,7 @@ try {
     page.on('request',request=>{if(request.resourceType()==='document'||request.headers().rsc)navigationEvents.push({event:'request',path:new URL(request.url()).pathname});});
     page.on('response',response=>{if(response.request().resourceType()==='document'||response.request().headers().rsc)navigationEvents.push({event:'response',path:new URL(response.url()).pathname,status:response.status()});});
     page.on('requestfailed',request=>{if(request.resourceType()==='document'||request.headers().rsc)navigationEvents.push({event:'requestfailed',path:new URL(request.url()).pathname,message:request.failure()?.errorText});});
+    page.on('requestfinished',request=>{if(request.resourceType()==='document'||request.headers().rsc)navigationEvents.push({event:'requestfinished',path:new URL(request.url()).pathname});});
     await page.goto(origin + '/app/settings');
     try{await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();}catch(error){console.error('Owned key initial navigation diagnostic '+JSON.stringify({path:new URL(page.url()).pathname,headings:await page.getByRole('heading').allTextContents(),statuses:await page.getByRole('status').allTextContents(),events:navigationEvents.slice(-12)}));throw error;}
     await page.getByLabel('API key name').fill('QA lost response');
@@ -293,12 +294,29 @@ try {
       .screenshot({ path: 'output/playwright/lettercape-api-keys.png' });
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await page.getByRole('link', { name: 'Home', exact: true }).click();
-    try{await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();}catch(error){console.error('Owned key navigation diagnostic '+JSON.stringify({path:new URL(page.url()).pathname,headings:await page.getByRole('heading').allTextContents(),sidebarOpen:await page.locator('.sidebar.open').count(),events:navigationEvents.slice(-12)}));throw error;}
+    try{await page.waitForURL(url=>url.pathname==='/app');await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();}catch(error){console.error('Owned key navigation diagnostic '+JSON.stringify({path:new URL(page.url()).pathname,headings:await page.getByRole('heading').allTextContents(),sidebarOpen:await page.locator('.sidebar.open').count(),events:navigationEvents.slice(-12)}));throw error;}
     await page.getByRole('button', { name: 'Open navigation' }).click();
     await page.locator('.sidebar.open').waitFor();
     await page.locator('.sidebar.open').getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();
     assert.equal(await page.getByLabel('New API key secret').count(), 0);
+    // Qualify committed mobile routes again through keyboard activation after offline/key recovery.
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+    await page.locator('.sidebar.open').waitFor();
+    await page.locator('.sidebar.open').getByRole('link', { name: 'Home', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(url=>url.pathname==='/app');
+    await page.getByRole('heading', { name: 'Make something worth opening.', exact: true }).waitFor();
+    assert.equal(await page.locator('.sidebar.open').count(),0);
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+    await page.locator('.sidebar.open').waitFor();
+    await page.locator('.sidebar.open').getByRole('link', { name: 'Settings', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(url=>url.pathname==='/app/settings');
+    await page.getByRole('heading', { name: 'Workspace API keys', exact: true }).waitFor();
+    assert.equal(await page.getByLabel('New API key secret').count(),0);
+    assert.deepEqual(navigationEvents.filter(event=>event.event==='pageerror'),[]);
+    console.log('Owned post-recovery mobile navigation PASS: original Home click retained; committed Home/Settings keyboard routes, closed sidebar and no secret reappearance.');
     await db.query(
       "INSERT INTO api_keys(workspace_id,key_hash,name,scopes,prefix,created_by,expires_at) SELECT $1::uuid,$1::text||':'||g::text,'Pagination fixture '||g::text,'[\"emails:read\"]'::jsonb,'fixture',$2,now()+interval '1 hour' FROM generate_series(1,101) g",
       [w, user],
