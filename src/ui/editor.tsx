@@ -2,6 +2,7 @@
 import{RevisionComparisonPanel}from'./revision-comparison';
 import{SaveConflictComparison}from'./save-conflict-comparison';
 import{LiveVoiceGuard}from'./live-voice-guard';
+import{LiveAuthoringHygiene}from'./live-authoring-hygiene';
 import{readComparisonSelection}from'./revision-comparison-selection';
 import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
@@ -621,6 +622,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           {error || validationError}
         </div>
       )}
+      <LiveAuthoringHygiene key={JSON.stringify(['live-authoring-hygiene',workspace,actor,id])} scope={{workspace,actor,email:id}} spec={doc.spec}/>
       <LiveVoiceGuard key={JSON.stringify(['live-voice-guard',workspace,actor,id])} scope={{workspace,actor,email:id}} spec={doc.spec}/>
       {conflict && (
         <div className="panel conflict-panel" role="alert">

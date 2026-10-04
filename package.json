@@ -72,7 +72,8 @@
     "smoke:invitation-planning": "node --import tsx scripts/smoke-invitation-planning.ts",
     "smoke:revision-comparison": "node --import tsx scripts/smoke-revision-comparison.ts",
     "smoke:save-conflict-comparison": "node --import tsx scripts/smoke-save-conflict-comparison.ts",
-    "smoke:live-voice-guard": "node --import tsx scripts/smoke-live-voice-guard.ts"
+    "smoke:live-voice-guard": "node --import tsx scripts/smoke-live-voice-guard.ts",
+    "smoke:live-authoring-hygiene": "node --import tsx scripts/smoke-live-authoring-hygiene.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "7.9.9",

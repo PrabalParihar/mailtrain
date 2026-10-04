@@ -62,6 +62,7 @@ jobs:
           npm run smoke:revision-comparison
           npm run smoke:save-conflict-comparison
           npm run smoke:live-voice-guard
+          npm run smoke:live-authoring-hygiene
           npm run smoke:invitation-planning
           npm run smoke:recipient-assessments
           npm run smoke:klaviyo-export

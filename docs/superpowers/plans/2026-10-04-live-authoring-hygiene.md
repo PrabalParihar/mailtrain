@@ -11,10 +11,10 @@
 - [x] Observe RED then implement src/domain/live-authoring-hygiene.ts; all focused tests GREEN; commit.
 
 ## Task2 — panel, native qualification and checklist
-- [ ] Owned HTTP/Chromium regression initially RED: live panel absent. Then integrate read-only src/ui/live-authoring-hygiene.tsx keyed by scope in Editor.
-- [ ] Qualify keyboard/repeated current subject/preheader/alt edits, decorative toggle, undo, unacknowledged recovery/pending-command witnesses, close/navigation/RTL/mobile/pages, raw/custom coverage. Add ordinary same-email Restore pin change during held liveVoice brand read, no source mocking/actor forgery. Clean owned app/database.
-- [ ] Refresh docs/REMAINING-WORK.md with65 IDs: working development capability, unfinished implementation, external prerequisites;43Partial/17Requiredpending/5Roadmap/zero whole accepted. Keep historical evidence separate from present publication state.
-- [ ] API/type/lint/build/closed-startup and relevant focused/native checks; commit.
+- [x] Owned HTTP/Chromium regression initially RED: live panel absent. Then integrate read-only src/ui/live-authoring-hygiene.tsx keyed by scope in Editor.
+- [x] Qualify keyboard/repeated current subject/preheader/alt edits, decorative toggle, undo, unacknowledged recovery/pending-command witnesses, close/navigation/RTL/mobile/pages, raw/custom coverage. Add ordinary same-email Restore pin change during held liveVoice brand read, no source mocking/actor forgery. Clean owned app/database.
+- [x] Refresh docs/REMAINING-WORK.md with65 IDs: working development capability, unfinished implementation, external prerequisites;44Partial/16Requiredpending/5Roadmap/zero whole accepted. Keep historical evidence separate from present publication state.
+- [x] API/type/lint/build/closed-startup and relevant focused/native checks; commit.
 
 ## Task3 — final independent review and publication
 - [ ] One fresh independent final whole substantive review; immutable base..head, explicit focus, only own ledger, no original/private/paused/services. Grade findings; one material TDD fix pass as needed, no re-review; exhaustive exclusions/rulings/costs/minors.
