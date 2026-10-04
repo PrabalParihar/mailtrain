@@ -42,7 +42,7 @@
 
 ### Task3: Focused final review, preservation and main delivery
 **Interfaces:** Consumes committed whole patch and Task1/2 evidence; produces qualified Desktop/main exact commit and delivery report.
-- [ ] Dispatch one fresh strongest bounded whole-change reviewer with five focus items, plan/spec/only this ledger, immutable base..head; no services/DB/private/flagged work. Grade and ledger every exclusion/cost.
-- [ ] One Important/Critical TDD fix pass if needed; Minor findings deferred; no re-review. Required checks/build after changes.
+- [x] Dispatch one fresh strongest bounded whole-change reviewer with five focus items, plan/spec/only this ledger, immutable base..head; no services/DB/private/flagged work. Grade and ledger every exclusion/cost.
+- [x] One Important/Critical TDD fix pass if needed; Minor findings deferred; no re-review. Required checks/build after changes.
 - [ ] Before/after original77table/private4metadata/unrelated hashes; retain original physical recovery; fast-forward mirror/Desktop; authorized nonforcepushmain.
 - [ ] All3required CI jobs terminalSUCCESS on exact commit, then final preservation/remote/source/Desktop checks. Archive own ledger and remove only own scratch. Report delivered capability, blockers, all rulings/costs, deferred minors and next independent PRD slice.
