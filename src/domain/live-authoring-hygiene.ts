@@ -1,0 +1,16 @@
+import type{EmailSpec,Block}from'./email-schema';
+export const LIVE_HYGIENE_RULES_VERSION='draft-hygiene-1';
+export type HygieneFinding={key:string;code:'SUBJECT_REQUIRED'|'SUBJECT_LENGTH'|'PREHEADER_EMPTY'|'PREHEADER_LENGTH'|'ALT_REQUIRED';severity:'blocking'|'warning';location:string;field_label:string;message:string;excerpt:string;length?:number;limit?:number};
+export type HygieneReport={rules_version:typeof LIVE_HYGIENE_RULES_VERSION;findings:HygieneFinding[];coverage:{key:string;message:string}[];checked_fields:number};
+// Advisory live copy only. The separate frozen preflight keeps its own authority.
+export function liveHygieneReport(spec:EmailSpec):HygieneReport{
+ const findings:HygieneFinding[]=[],coverage:HygieneReport['coverage']=[];let checked_fields=2;
+ const add=(code:HygieneFinding['code'],severity:HygieneFinding['severity'],location:string,field_label:string,message:string,text:string,length?:number,limit?:number)=>findings.push({key:JSON.stringify([location,code]),code,severity,location,field_label,message,excerpt:Array.from(text.slice(0,400)).slice(0,200).join(''),...(length===undefined?{}:{length,limit})});
+ if(!spec.subject.trim())add('SUBJECT_REQUIRED','blocking','subject','Subject','Add a subject in the Subject field.',spec.subject);
+ if(!spec.preheader.trim())add('PREHEADER_EMPTY','warning','preheader','Preheader','Add useful context in the Preheader field.',spec.preheader);
+ if(spec.subject.length>70)add('SUBJECT_LENGTH','warning','subject','Subject','Review or shorten the subject. Length '+spec.subject.length+' exceeds the proposed warning threshold70; client truncation varies.',spec.subject,spec.subject.length,70);
+ if(spec.preheader.length>150)add('PREHEADER_LENGTH','warning','preheader','Preheader','Review or shorten the preheader. Length '+spec.preheader.length+' exceeds the proposed warning threshold150; client truncation varies.',spec.preheader,spec.preheader.length,150);
+ const visit=(block:Block,label:string)=>{if(block.type==='image'&&!block.decorative){checked_fields++;if(!block.alt.trim())add('ALT_REQUIRED','blocking',JSON.stringify(['block',block.id,'alt']),label+' · Alternative text','Describe the image in Alternative text, or mark it decorative if it adds no information.',block.alt);}else if(block.type==='columns')block.columns.forEach((column,c)=>column.forEach((child,i)=>visit(child,label+' / Column '+(c+1)+' / Item '+(i+1))));else if(block.type==='custom_html')coverage.push({key:JSON.stringify(['block',block.id,'html']),message:label+' · Custom HTML: image alt was not checked. Opaque markup requires the separate frozen preflight and client accessibility review.'});};
+ if(spec.editing_mode==='structured'){spec.sections.forEach((b,i)=>visit(b,'Block '+(i+1)+' ['+b.id+']'));if(spec.raw_html!==undefined)coverage.push({key:'inactive_raw',message:'Inactive retained raw HTML is not checked in structured mode.'});}else{coverage.push({key:'raw_html',message:'Raw HTML: image alt was not checked. Opaque markup requires the separate frozen preflight and client accessibility review.'});if(spec.sections.length)coverage.push({key:'inactive_blocks',message:'Inactive retained blocks are not checked in raw HTML mode.'});}
+ return{rules_version:LIVE_HYGIENE_RULES_VERSION,findings,coverage,checked_fields};
+}
