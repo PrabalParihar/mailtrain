@@ -1,5 +1,6 @@
 'use client';
 import{RevisionComparisonPanel}from'./revision-comparison';
+import{SaveConflictComparison}from'./save-conflict-comparison';
 import{readComparisonSelection}from'./revision-comparison-selection';
 import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
@@ -622,17 +623,8 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
       {conflict && (
         <div className="panel conflict-panel" role="alert">
           <h2>A newer version is saved.</h2>
-          <p>Your local work is preserved. Compare the subjects and choose how to continue.</p>
-          <div className="field-row">
-            <div>
-              <strong>Your local draft</strong>
-              <p>{doc.spec.subject || '(empty subject)'}</p>
-            </div>
-            <div>
-              <strong>Server · v{conflict.doc_version}</strong>
-              <p>{conflict.spec.subject || '(empty subject)'}</p>
-            </div>
-          </div>
+          <p>Your local work is preserved. Compare the full authoring values and choose how to continue.</p>
+          <SaveConflictComparison key={JSON.stringify([workspace,actor,id])} scope={{workspace,actor,email:id}} local={doc} server={conflict}/>
           <button
             disabled={!writable}
             onClick={() =>

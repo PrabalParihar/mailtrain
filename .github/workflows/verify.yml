@@ -60,6 +60,7 @@ jobs:
           npm run smoke:linear-editor
           npm run smoke:column-editor
           npm run smoke:revision-comparison
+          npm run smoke:save-conflict-comparison
           npm run smoke:invitation-planning
           npm run smoke:recipient-assessments
           npm run smoke:klaviyo-export
