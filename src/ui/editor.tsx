@@ -1,6 +1,7 @@
 'use client';
 import{RevisionComparisonPanel}from'./revision-comparison';
 import{SaveConflictComparison}from'./save-conflict-comparison';
+import{LiveVoiceGuard}from'./live-voice-guard';
 import{readComparisonSelection}from'./revision-comparison-selection';
 import{DestinationExportPanel}from'./klaviyo-export';
 import{KlaviyoReview as KlaviyoReviewSchema,type KlaviyoReview}from'../domain/esp-export-contracts';
@@ -620,6 +621,7 @@ export function Editor({ workspace, id, actor, role }: { workspace: string; id: 
           {error || validationError}
         </div>
       )}
+      <LiveVoiceGuard key={JSON.stringify(['live-voice-guard',workspace,actor,id])} scope={{workspace,actor,email:id}} spec={doc.spec}/>
       {conflict && (
         <div className="panel conflict-panel" role="alert">
           <h2>A newer version is saved.</h2>

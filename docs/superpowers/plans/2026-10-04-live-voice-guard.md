@@ -1,6 +1,6 @@
 # Live mechanical Voice Guard Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Preserve the existing native method and one fresh final reviewer.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking. Preserve the existing native method and one fresh final reviewer.
 
 **Goal:** Give the unsaved draft actionable deterministic brand/style feedback without saving, rewriting, approving or changing recovery.
 
@@ -28,17 +28,17 @@
 ### Task1: Browser-safe live evaluation and pinned-page admission
 **Files:** Create src/domain/live-voice-guard.ts; tests/live-voice-guard.test.ts.
 **Interfaces:** Consumes EmailSpec, BrandSchema, toneFindings. Produces liveVoiceReport(spec:EmailSpec,brand:Brand):LiveVoiceReport and checkedVoiceBrandPage(input:unknown,workspace:string):VoiceBrandPage; exports LIVE_VOICE_RULES_VERSION and MAX_VOICE_HTML_BYTES=65536.
-- [ ] Write tests for current located subject/preheader/nested copy/alt, per-field tone boundaries, literal phrase semantics, decorative/destination/inactive exclusion, inert Unicode/inline/paragraph/hidden/deep/oversized HTML, exact source purity and strict page admission.
-- [ ] Run node --import tsx --test tests/live-voice-guard.test.ts tests/voice-guard.test.ts tests/voice-review.test.ts. Expected: new behavior assertions RED; existing7tests PASS.
-- [ ] Implement evaluator/page admission using existing client-safe types and iterative inert HTML traversal; no shared authoritative preflight changes.
-- [ ] Run same command. Expected: all focused tests PASS/0skip; commit independently.
+- [x] Write tests for current located subject/preheader/nested copy/alt, per-field tone boundaries, literal phrase semantics, decorative/destination/inactive exclusion, inert Unicode/inline/paragraph/hidden/deep/oversized HTML, exact source purity and strict page admission.
+- [x] Run node --import tsx --test tests/live-voice-guard.test.ts tests/voice-guard.test.ts tests/voice-review.test.ts. Expected: new behavior assertions RED; existing7tests PASS.
+- [x] Implement evaluator/page admission using existing client-safe types and iterative inert HTML traversal; no shared authoritative preflight changes.
+- [x] Run same command. Expected: all focused tests PASS/0skip; commit independently.
 
 ### Task2: Independent editor panel and real native qualification
 **Files:** Create src/ui/live-voice-guard.tsx; scripts/smoke-live-voice-guard.ts. Modify src/ui/editor.tsx; package.json; .github/workflows/verify.yml; docs/CAPABILITIES.md; create docs/LIVE-VOICE-GUARD-CHECKPOINT.md.
 **Interfaces:** Consumes liveVoiceReport/checkedVoiceBrandPage. Produces LiveVoiceGuard({scope:{workspace,actor,email},spec:EmailSpec}); no draft/recovery setter. Existing /v1/brands paged reads supply exact kit.
-- [ ] Write owned disposable HTTP/Chromium regression: live unsaved field findings, old pinned kit through page2/current-kit mismatch, witnesses/recovery unchanged, held reads with local edits/pin change/close/navigation, repeated clicks, malformed/wrong-workspace/cursor/error/offline retry, unset/no-findings, deep/oversized/raw/RTL/nested/alt, many finding pages, keyboard320px controls. Expected initial RED: Show live Voice Guard button absent.
-- [ ] Implement open/close/refresh/older-page controls, scope/pin fences, synchronous current-draft evaluation, located actionable instructions, rule/pin labels, bounded20findings display pages and clear pending/unavailable/coverage/no-finding states.
-- [ ] Run focused tests/native/API151/typecheck/lint/build and closed-production assertion. Expected all pass; inspected mobile/RTL pixels; fixture app/database cleaned; commit.
+- [x] Write owned disposable HTTP/Chromium regression: live unsaved field findings, old pinned kit through page2/current-kit mismatch, witnesses/recovery unchanged, held reads with local edits/pin change/close/navigation, repeated clicks, malformed/wrong-workspace/cursor/error/offline retry, unset/no-findings, deep/oversized/raw/RTL/nested/alt, many finding pages, keyboard320px controls. Expected initial RED: Show live Voice Guard button absent.
+- [x] Implement open/close/refresh/older-page controls, scope/pin fences, synchronous current-draft evaluation, located actionable instructions, rule/pin labels, bounded20findings display pages and clear pending/unavailable/coverage/no-finding states.
+- [x] Run focused tests/native/API151/typecheck/lint/build and closed-production assertion. Expected all pass; inspected mobile/RTL pixels; fixture app/database cleaned; commit.
 
 ### Task3: Focused final review, preservation and main delivery
 **Interfaces:** Consumes committed whole patch and Task1/2 evidence; produces qualified Desktop/main exact commit and delivery report.
