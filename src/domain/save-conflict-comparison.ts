@@ -8,7 +8,7 @@ import {z} from 'zod';
 export type ConflictDocument={id:string;title:string;doc_version:number;spec:EmailSpec;raw_source_profile?:SourceProfile|null};
 export type ConflictScope={workspace:string;actor:string;email:string};
 export function saveConflictRows(local:ConflictDocument,server:ConflictDocument):RevisionChange[]{
- const metadata=(key:string,label:string,a:unknown,b:unknown):RevisionChange=>({key,label,kind:'metadata',before:a===undefined?'(Absent)':typeof a==='string'?a:canonicalSpecString(a),after:b===undefined?'(Absent)':typeof b==='string'?b:canonicalSpecString(b),changed:canonicalSpecString(a)!==canonicalSpecString(b),before_present:a!==undefined,after_present:b!==undefined});
+ const metadata=(key:string,label:string,a:unknown,b:unknown):RevisionChange=>({key,label,kind:'metadata',before:a===undefined?'(Absent)':typeof a==='string'?a:canonicalSpecString(a),after:b===undefined?'(Absent)':typeof b==='string'?b:canonicalSpecString(b),changed:a===undefined||b===undefined?a!==b:canonicalSpecString(a)!==canonicalSpecString(b),before_present:a!==undefined,after_present:b!==undefined});
  return [metadata('document_title','Document title',local.title,server.title),metadata('document_source_profile','Source profile',local.raw_source_profile,server.raw_source_profile),...revisionComparisonRows(local.spec,server.spec).map(row=>row.key==='raw_html'||row.key==='stored_sections'?{...row,label:row.label.replace('checkpoints','documents')}:row)];
 }
 export function conflictComparisonIdentity(scope:ConflictScope,doc:ConflictDocument):string{return canonicalSpecString([scope.workspace,scope.actor,scope.email,doc.id,doc.title,doc.doc_version,doc.raw_source_profile===undefined?[]:[doc.raw_source_profile],doc.spec]);}

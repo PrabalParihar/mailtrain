@@ -38,3 +38,11 @@ test('bounded conflict excerpt reaches late changes escapes literal source and n
  const literal=conflictExcerpt('\ufeff<p>é 😀</p>\r\n<script>bad()</script>','',true);assert.equal(literal.partial,false);assert.ok(literal.value.includes('\\ufeff'));assert.ok(literal.value.includes('\\r\\n'));assert.ok(literal.value.includes('<script>'));
  assert.deepEqual(conflictExcerpt('','',false),{value:'',partial:false});
 });
+
+test('optional source profile absence renders safely and remains distinct from null and a present profile',()=>{
+ const present=doc(),absent:import('../src/domain/save-conflict-comparison').ConflictDocument={...present};delete absent.raw_source_profile;
+ const profile=(a:typeof absent,b:typeof absent)=>saveConflictRows(a,b).find(row=>row.key==='document_source_profile')!;
+ assert.equal(saveConflictRows(absent,structuredClone(absent)).filter(row=>row.changed).length,0);
+ for(const[a,b,before,after]of[[absent,present,false,true],[present,absent,true,false],[absent,{...present,raw_source_profile:'exact-utf8-1'},false,true]] as const){const row=profile(a,b);assert.equal(row.changed,true);assert.equal(row.before_present,before);assert.equal(row.after_present,after);}
+ assert.equal(profile(absent,absent).before_present,false);assert.equal(profile(absent,absent).after_present,false);
+});
